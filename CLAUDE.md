@@ -71,6 +71,10 @@ Two skills are available. Load them before starting work.
 - The built-in retry notes carry a mark worked out from their text. Changing
   their text tells every user who took them that they have changed, so do it on
   purpose.
+- Any other default that changes after it was released goes in
+  `MOVED_DEFAULTS`. A user still on the old one is then told, and can take the
+  new one. A setting added in the version being written has no old value, so
+  it is not listed.
 - Refusal and cut-off detection has corpus tests in `test/detection-corpus.test.ts`
   and `test/truncation-corpus.test.ts`. A new pattern gets a line in the corpus
   that it catches and one close to it that it must not.
