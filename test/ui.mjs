@@ -2451,8 +2451,8 @@ console.log("\nseveral tries at once");
     await wait(40);
     const fbAfter = clicks - c3;
 
-    // Every reply an error: the next try is an error retry, which presses
-    // the button rather than sending several more into a provider in trouble.
+    // Every reply an error: the next try is an error retry, which goes out
+    // several at once too.
     const c4 = clicks;
     await twoFailures("allerr", { content: REFUSAL });
     const errAsk = asks("allerr")[0] || null;
@@ -2485,7 +2485,8 @@ console.log("\nseveral tries at once");
     const hangStopped = !!hangAsk && sent.some((m) => m.type === "stop_at_once" && m.requestId === hangAsk.requestId);
     const hangNext = asks("hang").length;
 
-    // An error is never sent several at once.
+    // An error from the provider is sent several at once from its second try,
+    // the same as a reply that failed a check.
     const c5 = clicks;
     await twoFailures("error", { error: "upstream connection reset" });
     const errorAsks = asks("error").length;
@@ -2515,9 +2516,9 @@ console.log("\nseveral tries at once");
   check("nothing is pressed after a reply passed", out.clicksAfterPass === 1, out);
   check("none passing asks again with one more", out.firstCount === 2 && out.secondCount === 3, out);
   check("a backend that cannot run them falls back to the button", out.fbBefore === 1 && out.fbAfter === 2, out);
-  check("every reply an error makes the next try press the button", out.allErrAsks === 1 && out.allErrClicks === 2, out);
+  check("every reply an error makes the next try go out several at once again", out.allErrAsks === 2 && out.allErrClicks === 1, out);
   check("a reply the reader starts stops the tries", out.takenStopped === true, out);
-  check("an error is never sent several at once", out.errorAsks === 0 && out.errorClicks === 2, out);
+  check("an error from the provider goes out several at once on its second try", out.errorAsks === 1 && out.errorClicks === 1, out);
   check("a try that never comes back is stopped after the wait", out.hangStopped === true, out);
   check("and the next try goes out", out.hangNext === 2, out);
   check("no console errors", errors.length === 0, errors);

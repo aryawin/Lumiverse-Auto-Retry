@@ -19,6 +19,7 @@ _2026-10-15_
 
 ### Changed
 
+- **Several tries at once takes provider errors too.** An error from the provider, and a reply that froze or never started, now go out several at once from the second try, the same as a reply that failed a check. A wait the provider asks for, such as for a rate limit, is still waited out first.
 - **Fewer notifications.** Switching Auto Retry off or on in one chat no longer sends a notification, since the line under the switch says it. A warning still comes when this browser cannot remember the choice after a reload. The floating button and the Extras entry still send one, since nothing else there shows the change.
 
 ### Removed

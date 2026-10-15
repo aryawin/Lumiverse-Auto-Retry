@@ -9545,9 +9545,13 @@ export function setup(ctx, opts) {
     // are stopped. When none pass, that counts as one failed try and the next is
     // scheduled as usual.
     //
-    // Only for a reply that came back and failed a check. An error or a stall
-    // is a provider in trouble, and several calls at once would add to it.
+    // Every reason a try can have: a reply that failed a check, an error from the
+    // provider, and a reply that stalled or never started. A wait the provider
+    // asked for, such as for a rate limit, is still waited out first.
     const AT_ONCE_REASONS = new Set([
+        "error",
+        "stalled",
+        "stuck",
         "empty",
         "cut off mid-reasoning",
         "thinking only, no reply",

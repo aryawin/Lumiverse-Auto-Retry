@@ -53,12 +53,15 @@ Every reply sent at once is a whole reply, and your provider charges for each on
 
 It suits a model that refuses or cuts off often, where waiting for one try after another takes a long time.
 
-## When it is not used
+## When it is used
 
-These cases always use a normal retry, even with the setting on:
+Every reason for a retry uses it: a reply that failed a check, a refusal, an error from the provider, and a reply that froze or never started.
 
-- **An error from the provider, or a rate limit.** A provider in trouble gets more trouble from several calls at once. An error that is a refusal, such as "prohibited_content", is not one of these. It is sent at once like any other refusal.
-- **A reply that froze or never started.**
+- A wait the provider asks for, such as for a rate limit, is waited out first. Then the tries go out at once.
+- Every reply sent at once to a provider in trouble can fail the same way, and each one may still be charged. If your provider is often busy, a lower **Most at once** costs less.
+
+This case always uses a normal retry, even with the setting on:
+
 - **No reply to add a reroll to.** If the last message in the chat is not a reply, the try is made by pressing the retry button instead. The log says why.
 
 ## What is sent
