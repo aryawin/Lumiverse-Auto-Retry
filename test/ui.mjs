@@ -5439,7 +5439,7 @@ console.log("\npicking a preset loads it, so a save cannot land on the wrong one
   if (!errors.length) check("no console errors", true);
 }
 
-console.log("\npresets across both kinds");
+console.log("\nnote presets from the account and the reset");
 {
   const errors = [];
   const fresh = async (fn, arg) => {
@@ -5457,11 +5457,11 @@ console.log("\npresets across both kinds");
     return out;
   };
 
-  // The account knows about one kind, the browser about the other. Whichever
-  // way round, both have to survive.
+  // The account's note presets arrive in this browser, and a slot this
+  // extension no longer has is not kept.
   const sync = await fresh(async (account) => {
     const KEY = "lv-auto-retry:presets:v1";
-    localStorage.setItem(KEY, JSON.stringify({ swap: [{ name: "localswap", values: {} }], notes: [] }));
+    localStorage.setItem(KEY, JSON.stringify({ swap: [{ name: "old", values: {} }], notes: [] }));
     const listeners = [];
     window.__setup({
       events: { on: () => () => {} },
@@ -5476,17 +5476,17 @@ console.log("\npresets across both kinds");
     }, { toast: false });
     await new Promise((r) => setTimeout(r, 250));
     const s = JSON.parse(localStorage.getItem(KEY));
-    return { swap: (s.swap || []).map((p) => p.name), notes: (s.notes || []).map((p) => p.name) };
-  }, { swap: [], notes: [{ name: "accountnote", values: {} }] });
-  check("a kind the account has arrives", sync.notes.join() === "accountnote", sync);
-  check("and a kind only this browser has is not dropped", sync.swap.join() === "localswap", sync);
+    return { keys: Object.keys(s).sort(), notes: (s.notes || []).map((p) => p.name) };
+  }, { notes: [{ name: "accountnote", values: {} }] });
+  check("the account's note presets arrive", sync.notes.join() === "accountnote", sync);
+  check("and the store holds only note presets", sync.keys.join() === "notes", sync);
 
   // The reset line names presets, so it has to mean all of them: counted,
-  // cleared, and with no key left missing for the next read to trip over.
+  // cleared, and with the notes key left in place for the next read.
   const del = await fresh(async () => {
     const KEY = "lv-auto-retry:presets:v1";
     localStorage.setItem(KEY, JSON.stringify({
-      swap: [{ name: "s", values: {} }], notes: [{ name: "n", values: {} }] }));
+      notes: [{ name: "n", values: {} }, { name: "m", values: {} }] }));
     window.__acts = {};
     window.__setup({ events: { on: () => () => {} }, sendToBackend: () => {}, onBackendMessage: () => () => {},
       ui: { showModal: () => ({ root: document.getElementById("modal"), onDismiss: () => {}, dismiss: () => {} }),
@@ -5507,13 +5507,11 @@ console.log("\npresets across both kinds");
       .find((x) => /^Yes/.test(x.textContent.trim())).click();
     await frame();
     const s = JSON.parse(localStorage.getItem(KEY));
-    return { shown, keys: Object.keys(s).sort(), swap: (s.swap || []).length, notes: (s.notes || []).length };
+    return { shown, keys: Object.keys(s).sort(), notes: (s.notes || []).length };
   });
-  check("the count offered covers every kind", /2 saved/.test(del.shown), del.shown);
-  check("and deleting clears every kind", del.swap === 0 && del.notes === 0, del);
-  // A cleared store that dropped a key reads back as a store with that kind
-  // missing, which is how the note presets vanished in the first place.
-  check("leaving no kind missing from the store", del.keys.join() === "notes,swap", del.keys);
+  check("the count offered covers every preset", /2 saved/.test(del.shown), del.shown);
+  check("and deleting clears them", del.notes === 0, del);
+  check("leaving the notes key in the store", del.keys.join() === "notes", del.keys);
   check("no console errors", errors.length === 0, errors);
 }
 
