@@ -162,7 +162,6 @@ function sameSettings(a, b) {
 // The addresses the extension points at. Pinned to the released branch rather
 // than to a tag, so an old install still opens the page as it stands today.
 const SAFETY_URL = "https://github.com/starlitcode/Lumiverse-Auto-Retry/blob/stable/docs/safety.md";
-const REFINE_URL = "https://github.com/starlitcode/Lumiverse-Auto-Refine";
 // A link in the panel's own colours. Names are linked rather than printed as
 // bare addresses, which read as noise and cannot be followed on a phone.
 function linkTo(url, text) {
