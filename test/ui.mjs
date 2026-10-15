@@ -7042,10 +7042,10 @@ console.log("\na retry never clicks the extension's own panel");
 }
 
 // ---- turning it on and off from the settings ----
-// The floating button and the chat switch each say so with a notification.
-// The switch in the settings takes effect on Save, and Save says so the same
-// way when it was changed, and says nothing about it when it was not.
-console.log("\nturning it off and on from the settings says so");
+// The switch in the settings shows its own state, and Save says "Saved", so
+// Save sends no notification about it. The floating button and the Extras
+// entry do, since nothing else there shows the change.
+console.log("\nturning it off and on from the settings sends no notification");
 {
   const page = await browser.newPage();
   const errors = [];
@@ -7078,21 +7078,12 @@ console.log("\nturning it off and on from the settings says so");
     await wait(20);
     save();
     await wait(40);
-    const off = notes.slice();
-    notes.length = 0;
-    save();
-    await wait(40);
-    const unchanged = notes.slice();
-    box().click();
-    await wait(20);
-    save();
-    await wait(40);
-    return { off, unchanged, on: notes.slice() };
+    const status = [...document.querySelectorAll("#modal *")].some((n) => n.children.length === 0 && /^Saved\./.test((n.textContent || "").trim()));
+    return { notes: notes.slice(), status, off: box().checked === false };
   });
   await page.close();
-  check("turning it off and pressing Save says it is off", out.off.indexOf("Auto Retry is off.") >= 0, out);
-  check("pressing Save with it left as it was says nothing about it", out.unchanged.filter((t) => /Auto Retry is (on|off)\./.test(t)).length === 0, out);
-  check("turning it back on and pressing Save says it is on", out.on.indexOf("Auto Retry is on.") >= 0, out);
+  check("turning it off and pressing Save sends no notification about it", !out.notes.some((t) => /Auto Retry is (on|off)\./.test(t)), out);
+  check("the switch shows it is off, and Save says Saved", out.off && out.status, out);
   check("no console errors", errors.length === 0, errors);
 }
 
@@ -8876,8 +8867,10 @@ console.log("\none-off messages are Lumiverse notifications, and the box is the 
   });
   await page.close();
   const CAP = Math.round(412 * 0.92);
-  check("switching this chat off says so in a Lumiverse notification",
-    out.afterSwitch.said.some((t) => /off in this chat/.test(t)), out.afterSwitch);
+  // The line under the switch says what changed, so the switch adds no
+  // notification of its own.
+  check("switching this chat off sends no notification, since the line under the switch says it",
+    !out.afterSwitch.said.some((t) => /in this chat/.test(t)), out.afterSwitch);
   check("and does not open the box on the page", out.afterSwitch.up === false, out.afterSwitch);
   check("turning Auto Retry off says so in a Lumiverse notification too",
     out.afterToggle.said.some((t) => /^info: Auto Retry is o(n|ff)\./.test(t)), out.afterToggle);

@@ -13020,9 +13020,6 @@ export function setup(ctx, opts) {
         });
         const save = btn("Save", true);
         save.addEventListener("click", () => {
-            // Whether Auto Retry was on before this Save, so turning it on or off
-            // here says so with the same notification as the floating button.
-            const wasOn = modalBaseline ? modalBaseline.enabled !== false : null;
             commit();
             const storedHere = applyAndSave();
             if (!storedHere) {
@@ -13035,8 +13032,6 @@ export function setup(ctx, opts) {
             }
             status.textContent = "Saved. Takes effect on the next reply.";
             log("settings saved", cfg);
-            if (wasOn !== null && wasOn !== (cfg.enabled !== false))
-                showToast(cfg.enabled === false ? "Auto Retry is off." : "Auto Retry is on.", { force: true });
             setTimeout(() => {
                 status.textContent = "";
             }, 2600);
@@ -13254,20 +13249,16 @@ export function setup(ctx, opts) {
         act.addEventListener("click", () => {
             const off = chatIsOff(lastChatId);
             // setChatOff repaints this row along with everything else that describes
-            // the chat, so there is nothing to do here but say what happened.
+            // the chat, and the line under the switch says what changed, so no
+            // notification is needed. The one exception is a choice this browser
+            // could not save, which nothing on the row says. A temporary chat is not
+            // kept, and its row already says the choice lasts while it is open.
             // Read before the change, since the row repaints during it.
             const temporary = isCardless(lastChatId);
             const remembered = setChatOff(lastChatId, !off);
-            const said = off
-                ? "Auto Retry is back on in this chat."
-                : "Auto Retry is off in this chat. Other chats are unaffected.";
-            showToast(remembered
-                ? said
-                : temporary
-                    // Not a failure to save, which is what the other wording means. A
-                    // temporary chat is not kept, so neither is anything about it.
-                    ? said + " It lasts while this temporary chat is open."
-                    : said + " This browser will not remember it after a reload.", { force: true, kind: remembered || temporary ? "info" : "warning" });
+            if (!remembered && !temporary)
+                showToast((off ? "Auto Retry is back on in this chat." : "Auto Retry is off in this chat.") +
+                    " This browser will not remember it after a reload.", { force: true, kind: "warning" });
         });
         paint();
         // Held so the row can be repainted from outside. It is built once when the
