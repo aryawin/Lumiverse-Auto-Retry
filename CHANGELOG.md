@@ -8,6 +8,16 @@ Versions follow [Semantic Versioning](https://semver.org). A new major version m
 
 ---
 
+## 5.17.4
+
+_2026-10-15_
+
+### Fixed
+
+- **The settings window grows back to full height.** When the screen got shorter for a moment, the settings window got shorter with it and stayed that way. This happened when a phone keyboard opened and closed, or when a laptop window was made short and then tall again. A search with few results, cleared afterwards, did the same. The window now goes back to its full height each time.
+
+---
+
 ## 5.17.3
 
 _2026-10-15_

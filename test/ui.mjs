@@ -98,7 +98,7 @@ body{background:rgb(10,8,18);margin:0}#modal{background:rgb(35,30,48);padding:0;
 
 // Boots the extension in a page with the settings panel open, and hands the
 // callback the same helpers every check needs.
-async function inPanel(browser, { css = "", viewport, touch = false, settings = null, seed = null } = {}, fn) {
+async function inPanel(browser, { css = "", viewport, touch = false, settings = null, seed = null, body = "<div id=modal></div>" } = {}, fn) {
   const page = await browser.newPage(
     viewport ? { viewport, hasTouch: touch, isMobile: touch } : {},
   );
@@ -107,7 +107,7 @@ async function inPanel(browser, { css = "", viewport, touch = false, settings = 
   page.on("console", (m) => {
     if (m.type() === "error") errors.push("console: " + m.text());
   });
-  await stage(page, "<div id=modal></div>");
+  await stage(page, body);
   await page.addStyleTag({ content: THEME + css });
   // Written before the panel comes up, for the things it keeps in this browser
   // rather than in its settings. Reading one of those is the first thing some of
@@ -11828,6 +11828,69 @@ for (const [label, viewport, touch, boxH] of [
     check(label + ", zoom " + zoom + ": the host's window has nothing of its own to scroll", out.extra <= 1, out);
     check(label + ", zoom " + zoom + ": the settings list still scrolls", out.listScrolls, out);
     check(label + ", zoom " + zoom + ": no console errors", errors.length === 0, errors);
+  }
+}
+
+// Lumiverse's own window: a box with a fixed most-height, and a body inside it
+// that is only as tall as what it holds. The settings measure the space that
+// window can give them. A keyboard that opens and closes, or a search that
+// shows a few rows and is then cleared, makes the body short for a moment, and
+// the settings have to grow back afterwards rather than keep the short height.
+console.log("\nthe settings grow back after the screen or the list is short");
+for (const [label, viewport, touch] of [
+  ["phone", { width: 390, height: 844 }, true],
+  ["laptop", { width: 1280, height: 900 }, false],
+]) {
+  for (const zoom of [1, 1.25, 0.85]) {
+    const maxH = Math.min(720, viewport.height - 24);
+    const width = Math.min(460, viewport.width - 24);
+    const body =
+      '<div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center">' +
+      '<div id=hostbox style="width:' + width + "px;max-height:" + maxH + 'px;display:flex;flex-direction:column;overflow:hidden">' +
+      '<div style="padding:12px 16px"><h3 style="margin:0;font-size:15px">Auto Retry settings</h3></div>' +
+      '<div style="padding:16px;overflow-y:auto;flex:1"><div id=modal></div></div></div></div>';
+    const css = "html{zoom:" + zoom + "}body{margin:0}";
+    const { out, errors } = await inPanel(browser, { css, viewport, touch, body }, async (page) => {
+      const tall = () => page.evaluate(() => Math.round(document.getElementById("hostbox").getBoundingClientRect().height));
+      const settle = () => page.waitForTimeout(300);
+      await settle();
+      const before = await tall();
+      // A search that leaves one row, then cleared.
+      const search = await page.evaluate(() => {
+        const box = document.querySelector('#modal input[placeholder^="Search"]');
+        if (!box) return false;
+        box.value = "Longest reply";
+        box.dispatchEvent(new Event("input", { bubbles: true }));
+        return true;
+      });
+      await settle();
+      const searched = await tall();
+      await page.evaluate(() => {
+        const box = document.querySelector('#modal input[placeholder^="Search"]');
+        box.value = "";
+        box.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+      await settle();
+      const afterSearch = await tall();
+      // The keyboard takes half the screen, then goes away.
+      await page.setViewportSize({ width: viewport.width, height: Math.round(viewport.height / 2) });
+      await settle();
+      const squeezed = await tall();
+      await page.setViewportSize(viewport);
+      await settle();
+      const afterKeyboard = await tall();
+      return { before, squeezed, afterKeyboard, search, searched, afterSearch };
+    });
+    const tag = label + ", zoom " + zoom;
+    check(tag + ": the window starts at full height", out.before > 400, out);
+    check(tag + ": the search box was found", out.search, out);
+    // On a phone the settings keep their height through a search, so there
+    // is nothing to grow back from.
+    if (!touch) check(tag + ": a search with one result makes it shorter", out.searched < out.before, out);
+    check(tag + ": it grows back when the search is cleared", Math.abs(out.afterSearch - out.before) <= 2, out);
+    check(tag + ": a short screen makes it shorter", out.squeezed < out.before, out);
+    check(tag + ": it grows back when the keyboard closes", Math.abs(out.afterKeyboard - out.before) <= 2, out);
+    check(tag + ": no console errors", errors.length === 0, errors);
   }
 }
 

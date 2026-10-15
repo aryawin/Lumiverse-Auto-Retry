@@ -152,7 +152,7 @@ const STREAM_BUF_MAX = 200000;
 
 // Bumped on each release. Shown in the startup log and in the Copy debug info
 // report, so a bug report always says which version it came from.
-const VERSION = "5.17.3";
+const VERSION = "5.17.4";
 
 // Whether two saved settings hold the same values, whatever order their keys
 // were written in. A key left undefined counts as not there, the way it is
@@ -11373,11 +11373,20 @@ export function setup(ctx: Ctx, opts?: any) {
     // the layer have to fit in. Fitting the settings to it keeps the box
     // from scrolling a few pixels with a second scroll bar of its own.
     const cs = getComputedStyle(box);
-    const inner = box.clientHeight - (parseFloat(cs.paddingTop) || 0) - (parseFloat(cs.paddingBottom) || 0);
-    if (inner > 0) {
-      root.style.setProperty("--ar-view", inner + "px");
-      root.style.setProperty("--ar-fit", inner + "px");
-    }
+    const pads = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+    // The host's box is only as tall as what it holds, up to its own limit.
+    // Measured as it stands, it gives back the settings' own height, so once
+    // they were short (a keyboard open, a search with few results) they
+    // stayed that short. Holding the settings taller than any screen for the
+    // one measurement reads the limit instead. Both writes land before the
+    // page is drawn, so nothing is seen at the taller size.
+    const held = root.style.minHeight;
+    root.style.minHeight = "100000px";
+    const room = box.clientHeight - pads;
+    root.style.minHeight = held;
+    if (room > 0) root.style.setProperty("--ar-fit", room + "px");
+    const inner = box.clientHeight - pads;
+    if (inner > 0) root.style.setProperty("--ar-view", inner + "px");
   }
   function pinWallpaper(root: HTMLElement) {
     if (root !== wallRoot) {
