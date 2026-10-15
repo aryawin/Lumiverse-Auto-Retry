@@ -7053,6 +7053,61 @@ console.log("\na retry never clicks the extension's own panel");
   check("no console errors", errors.length === 0, errors);
 }
 
+// ---- turning it on and off from the settings ----
+// The floating button and the chat switch each say so with a notification.
+// The switch in the settings takes effect on Save, and Save says so the same
+// way when it was changed, and says nothing about it when it was not.
+console.log("\nturning it off and on from the settings says so");
+{
+  const page = await browser.newPage();
+  const errors = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await stage(page, '<div id=modal></div><button data-testid="regenerate">Regenerate</button>');
+  await page.addScriptTag({ content: SOURCE, type: "module" });
+  await page.waitForFunction(() => !!window.__setup);
+  const out = await page.evaluate(async () => {
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const acts = {};
+    const notes = [];
+    window.__setup(
+      { events: { on: () => () => {} },
+        sendToBackend: (m) => { if (m && m.type === "notify") notes.push(m.text); },
+        ui: {
+          showModal: () => ({ root: document.getElementById("modal"), onDismiss: () => {}, dismiss: () => {} }),
+          registerInputBarAction: (o) => {
+            const a = { onClick: (cb) => { a.cb = cb; return () => {}; }, destroy: () => {} };
+            acts[o.id] = a;
+            return a;
+          },
+        } },
+      { toast: false, retryDelayMs: 10, backoffFactor: 1, maxDelayMs: 10, jitter: false, stuckTimeoutMs: 0, idleTimeoutMs: 0 },
+    );
+    const save = () => [...document.querySelectorAll("#modal button")].find((b) => b.textContent.trim() === "Save").click();
+    const box = () => document.querySelector('#modal [data-ar-row="enabled"] input[type=checkbox]');
+    acts["auto-retry-settings"].cb();
+    await wait(40);
+    box().click();
+    await wait(20);
+    save();
+    await wait(40);
+    const off = notes.slice();
+    notes.length = 0;
+    save();
+    await wait(40);
+    const unchanged = notes.slice();
+    box().click();
+    await wait(20);
+    save();
+    await wait(40);
+    return { off, unchanged, on: notes.slice() };
+  });
+  await page.close();
+  check("turning it off and pressing Save says it is off", out.off.indexOf("Auto Retry is off.") >= 0, out);
+  check("pressing Save with it left as it was says nothing about it", out.unchanged.filter((t) => /Auto Retry is (on|off)\./.test(t)).length === 0, out);
+  check("turning it back on and pressing Save says it is on", out.on.indexOf("Auto Retry is on.") >= 0, out);
+  check("no console errors", errors.length === 0, errors);
+}
+
 // ---- another extension's buttons, and a refusal sent as an error ----
 // Another extension can draw its own chat with its own Regenerate button,
 // later on the page than the host's. A retry presses the host's. And a

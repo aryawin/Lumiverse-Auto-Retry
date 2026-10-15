@@ -16,6 +16,7 @@ _2026-10-15_
 
 - **A retry no longer presses another extension's button.** Another extension can have its own chat with its own **Regenerate** button, such as an agent's chat in a drawer tab. A retry could press that button instead of the chat's, and redo a message in that extension. A retry now never presses a button inside another extension. **Pick it for me** says so if you hold one. Reported by a Discord user.
 - **A refusal sent as an error gets a refusal retry.** With **It came back as an error** on, an error such as "prohibited_content", or one holding one of your own refusal phrases, was retried as an ordinary error. It went without the refusal note, and **Several tries at once** did not take it. It is now a refusal retry, so it gets both. A reply among several tries at once that is refused with such an error counts as a refusal too. Reported by a Discord user.
+- **Turning Auto Retry on or off in the settings says so.** The floating button and the switch for one chat each showed a notification, and **Turn Auto Retry on** in the settings did not. Pressing **Save** after changing it now shows the same notification.
 
 ---
 

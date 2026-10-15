@@ -13016,6 +13016,9 @@ export function setup(ctx: Ctx, opts?: any) {
 
     const save = btn("Save", true);
     save.addEventListener("click", () => {
+      // Whether Auto Retry was on before this Save, so turning it on or off
+      // here says so with the same notification as the floating button.
+      const wasOn = modalBaseline ? modalBaseline.enabled !== false : null;
       commit();
       const storedHere = applyAndSave();
       if (!storedHere) {
@@ -13028,6 +13031,8 @@ export function setup(ctx: Ctx, opts?: any) {
       }
       status.textContent = "Saved. Takes effect on the next reply.";
       log("settings saved", cfg);
+      if (wasOn !== null && wasOn !== (cfg.enabled !== false))
+        showToast(cfg.enabled === false ? "Auto Retry is off." : "Auto Retry is on.", { force: true });
       setTimeout(() => {
         status.textContent = "";
       }, 2600);
