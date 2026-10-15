@@ -57,9 +57,8 @@ It suits a model that refuses or cuts off often, where waiting for one try after
 
 These cases always use a normal retry, even with the setting on:
 
-- **An error from the provider, or a rate limit.** A provider in trouble gets more trouble from several calls at once.
+- **An error from the provider, or a rate limit.** A provider in trouble gets more trouble from several calls at once. An error that is a refusal, such as "prohibited_content", is not one of these. It is sent at once like any other refusal.
 - **A reply that froze or never started.**
-- **A provider that blocked the request before anything was written.**
 - **No reply to add a reroll to.** If the last message in the chat is not a reply, the try is made by pressing the retry button instead. The log says why.
 
 ## What is sent

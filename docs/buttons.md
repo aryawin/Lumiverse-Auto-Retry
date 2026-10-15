@@ -17,6 +17,8 @@ How a retry finds the button:
 - It presses the button on the newest message.
 - A button that is hidden or greyed out is skipped, because pressing it would do nothing and waste a retry.
 - If no button is on screen yet, it keeps looking for a couple of seconds. Lumiverse sometimes shows its buttons a moment after a reply ends.
+- It never presses a button inside another extension, such as a drawer tab, a floating widget or a pop-up that another extension added. Another extension can have its own chat with its own **Regenerate** button, and a retry is only for the chat.
+- **Pick it for me** says so if you hold a button inside another extension, and does not save it.
 
 ## Swipe or regenerate
 

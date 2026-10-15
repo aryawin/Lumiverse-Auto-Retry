@@ -207,7 +207,12 @@ Short lines that fit naturally in a scene, like "let's move on" or "I'll leave i
 
 ### Refusals that arrive as errors
 
-Some providers send a refusal as an error instead of reply text. An error retry already covers these. With error retries off and refusal retries on, it still retries an error about content moderation, and leaves network errors like a dropped connection alone.
+Some providers send a refusal as an error instead of reply text. An error about content moderation, such as "prohibited_content", is retried as a refusal:
+
+- It is read as a refusal before it is read as an error, so this holds whether **It came back as an error** is on or off.
+- It gets the refusal note, and **Several tries at once** takes it.
+- On the Stats tab it counts as **blocked before it was written**.
+- A network error, like a dropped connection, is not a refusal. It is retried as an error.
 
 **Skip hard failures** does the opposite job. An error that will be the same next time, like a missing model or a wrong key, is not retried. The built-in list cannot know every provider's wording, so **Your own hard failures** lets you add wording, one per line. It only shows while **Skip hard failures** is on.
 

@@ -7053,6 +7053,93 @@ console.log("\na retry never clicks the extension's own panel");
   check("no console errors", errors.length === 0, errors);
 }
 
+// ---- another extension's buttons, and a refusal sent as an error ----
+// Another extension can draw its own chat with its own Regenerate button,
+// later on the page than the host's. A retry presses the host's. And a
+// provider that refuses with an error, such as "prohibited_content", or with
+// one of your own refusal phrases, gets a refusal retry, which is what
+// Several tries at once takes.
+console.log("\nanother extension's buttons, and a refusal sent as an error");
+{
+  const page = await browser.newPage();
+  const errors = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await stage(page,
+    '<div id=modal></div><button data-testid="regenerate">Regenerate</button>' +
+    '<div data-spindle-extension-root="another_one"><div class="thread">' +
+    '<button title="Regenerate" aria-label="Regenerate response">R</button></div></div>');
+  await page.addScriptTag({ content: SOURCE, type: "module" });
+  await page.waitForFunction(() => !!window.__setup);
+  const out = await page.evaluate(async () => {
+    const handlers = {};
+    const sent = [];
+    let backs = [];
+    let host = 0;
+    let theirs = 0;
+    document.querySelector('[data-testid="regenerate"]').addEventListener("click", () => host++);
+    document.querySelector('[data-spindle-extension-root] button').addEventListener("click", () => theirs++);
+    window.__setup(
+      {
+        events: { on: (n, fn) => { handlers[n] = fn; return () => {}; } },
+        sendToBackend: (m) => sent.push(m),
+        onBackendMessage: (fn) => { backs.push(fn); return () => { backs = backs.filter((f) => f !== fn); }; },
+        ui: { showModal: () => ({ root: document.getElementById("modal"), onDismiss: () => {}, dismiss: () => {} }),
+              registerInputBarAction: () => ({ onClick: () => () => {}, destroy: () => {} }) },
+      },
+      { retryDelayMs: 10, backoffFactor: 1, maxDelayMs: 10, jitter: false, maxRetries: 3,
+        toast: false, stuckTimeoutMs: 0, idleTimeoutMs: 0, pauseWhenFailing: false,
+        tryAtOnce: true, tryAtOnceMax: 3, refusalExtraPhrases: "lantern_policy_hit" },
+    );
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const answer = (m) => { for (const f of backs.slice()) { try { f(m); } catch (_) {} } };
+    const asks = (chatId) => sent.filter((m) => m.type === "try_at_once" && m.chatId === chatId);
+    const end = async (chatId, n, body) => {
+      handlers.GENERATION_STARTED({ chatId, generationId: chatId + "-" + n });
+      handlers.GENERATION_ENDED(Object.assign({ chatId, generationId: chatId + "-" + n }, body));
+      await wait(60);
+    };
+
+    // The button: an ordinary error, with the other extension's Regenerate
+    // later on the page and matching the built-in pattern.
+    const matches = [...document.querySelectorAll('[title="Regenerate"], button[aria-label*="regenerate" i]')]
+      .filter((e) => e.closest("[data-spindle-extension-root]")).length;
+    await end("btn", 0, { error: "connection reset" });
+    const pressed = { host, theirs };
+
+    // A provider refusal sent as an error: the first retry presses the
+    // button, and the second goes out as several at once.
+    const PROHIBITED = "Generation failed: the provider blocked the response (prohibited_content)";
+    await end("prohibited", 0, { error: PROHIBITED });
+    await end("prohibited", 1, { error: PROHIBITED });
+    const prohibitedAsk = asks("prohibited")[0] || null;
+
+    // A reply among the several that is refused with an error is a refusal
+    // too: when none pass, the next try goes out at once again.
+    if (prohibitedAsk) {
+      answer({ type: "at_once", requestId: prohibitedAsk.requestId, stage: "sent", count: 2, from: "kept", messageId: "m2", swipeCount: 2 });
+      answer({ type: "at_once", requestId: prohibitedAsk.requestId, stage: "reply", index: 0, error: PROHIBITED });
+      answer({ type: "at_once", requestId: prohibitedAsk.requestId, stage: "reply", index: 1, error: PROHIBITED });
+      answer({ type: "at_once", requestId: prohibitedAsk.requestId, stage: "done" });
+    }
+    await wait(80);
+    const againAtOnce = asks("prohibited").length;
+
+    // One of your own refusal phrases, in an error.
+    await end("mine", 0, { error: "upstream said lantern_policy_hit" });
+    await end("mine", 1, { error: "upstream said lantern_policy_hit" });
+    const mineAsk = asks("mine").length;
+    return { matches, pressed, prohibitedAsk: !!prohibitedAsk, againAtOnce, mineAsk, finalTheirs: theirs };
+  });
+  await page.close();
+  check("the other extension's button matches the built-in pattern", out.matches > 0, out);
+  check("a retry presses the host's button, not the other extension's", out.pressed.host === 1 && out.pressed.theirs === 0, out);
+  check("a prohibited_content error goes out as several at once on its second try", out.prohibitedAsk === true, out);
+  check("and several refused with that error lead to several at once again", out.againAtOnce === 2, out);
+  check("an error holding one of your own refusal phrases goes out as several at once too", out.mineAsk === 1, out);
+  check("the other extension's button was never pressed", out.finalTheirs === 0, out);
+  check("no console errors", errors.length === 0, errors);
+}
+
 // ---- finding the button to press ----
 // A saved list is a copy of the defaults as they were when it was saved, so it
 // can match nothing on a newer Lumiverse while the button sits on screen. The

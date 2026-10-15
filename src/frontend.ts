@@ -152,7 +152,7 @@ const STREAM_BUF_MAX = 200000;
 
 // Bumped on each release. Shown in the startup log and in the Copy debug info
 // report, so a bug report always says which version it came from.
-const VERSION = "5.17.2";
+const VERSION = "5.17.3";
 
 // Whether two saved settings hold the same values, whatever order their keys
 // were written in. A key left undefined counts as not there, the way it is
@@ -8268,6 +8268,12 @@ export function setup(ctx: Ctx, opts?: any) {
   // Three guards were already written for this, all of them keyed on an id
   // nothing ever set, so all three were doing nothing.
   const OWN_UI = "[data-ar-ui]";
+  // Every part another extension puts on the page: a drawer tab, a floating
+  // widget, a pop-up, or HTML it added. Lumiverse marks each one. Another
+  // extension can draw its own Regenerate or Stop button with the same words
+  // as the host's, such as an agent's own chat in a drawer tab, and a retry
+  // must never press one of those.
+  const OTHER_UI = "[data-spindle-extension-root],[data-spindle-ext],[data-spindle-modal]";
   // Whether anything may move: off with Reduce motion on, or with the device
   // set to reduce motion.
   function noMotion(): boolean {
@@ -8436,10 +8442,13 @@ export function setup(ctx: Ctx, opts?: any) {
     });
     setTimeout(gone, 320);
   }
-  const clickable = (el: any): boolean => {
+  // raised is set for a dialog that the extension's own click just opened,
+  // which can belong to another extension and is still the one to answer.
+  const clickable = (el: any, raised?: boolean): boolean => {
     if (!el) return false;
     try {
       if (el.closest && el.closest(OWN_UI)) return false;
+      if (!raised && el.closest && el.closest(OTHER_UI)) return false;
       if (el.disabled) return false;
       if (el.getAttribute && el.getAttribute("aria-disabled") === "true")
         return false;
@@ -8751,7 +8760,7 @@ export function setup(ctx: Ctx, opts?: any) {
       const chosen = userConfirmLabels().indexOf(label.toLowerCase()) >= 0;
       if (!chosen && CONFIRM_DENY.test(label)) continue;
       if (!inDialog(el)) continue; // a bare toolbar button is not a confirmation
-      if (!clickable(el)) continue;
+      if (!clickable(el, true)) continue;
       try {
         // Never our own panels.
         if (el.closest && el.closest("[data-ar-ui]")) continue;
@@ -9526,6 +9535,7 @@ export function setup(ctx: Ctx, opts?: any) {
     "cut off",
     REFUSAL_REASON,
     BREAKOFF_REASON,
+    BLOCKED_REASON,
     CRISIS_REASON,
     "short",
   ]);
@@ -9688,6 +9698,14 @@ export function setup(ctx: Ctx, opts?: any) {
       armAtOnceWait(chatId, run);
       paintNow();
       if (msg.error) {
+        // A provider refusing the call is a refusal, the same as a reply that
+        // ends with one, and the next try is a refusal retry.
+        if (cfg.retryOnRefusal && looksLikeRefusalError(String(msg.error), cfg)) {
+          run.judged += 1;
+          run.reason = BLOCKED_REASON;
+          log("reply " + run.back + " of " + run.count + ": " + BLOCKED_REASON + " (" + String(msg.error) + ")");
+          return;
+        }
         run.lastError = String(msg.error);
         log("reply " + run.back + " of " + run.count + " failed: " + run.lastError);
         return;
@@ -10351,14 +10369,18 @@ export function setup(ctx: Ctx, opts?: any) {
         s.attempts = 0;
         return;
       }
-      if (cfg.retryOnError) {
-        scheduleRetry(chatId, "error", p.error);
-        return;
-      }
+      // Read as a refusal before it is read as an error. An error in refusal
+      // wording, such as "prohibited_content", or one of your own refusal
+      // phrases, takes the refusal retry: its note, its count on the Stats
+      // tab, and Several tries at once.
       if (cfg.retryOnRefusal && looksLikeRefusalError(errorText(p.error), cfg)) {
         // No reply text ever existed for this one: the provider refused before
         // anything was written, so it is not the phrase list that caught it.
         scheduleRetry(chatId, BLOCKED_REASON);
+        return;
+      }
+      if (cfg.retryOnError) {
+        scheduleRetry(chatId, "error", p.error);
         return;
       }
       return;
@@ -14835,6 +14857,14 @@ export function setup(ctx: Ctx, opts?: any) {
     const take = (node: any) => {
       held = null;
       eatClick();
+      // A retry never presses a button that belongs to another extension, so
+      // one picked there would never be pressed.
+      let other = false;
+      try { other = !!(node && node.closest && node.closest(OTHER_UI)); } catch (_) {}
+      if (other) {
+        finish(null, "That button belongs to another extension. Hold the button in the chat itself.");
+        return;
+      }
       const sel = deriveSelector(node);
       if (!sel) {
         finish(null, "Could not identify that one. Try holding the button itself rather than an icon inside it.");
