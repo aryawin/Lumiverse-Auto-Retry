@@ -3042,8 +3042,8 @@ console.log("\nswitching off a temporary chat");
   // The point of the whole thing.
   check("nothing is written to storage for a temporary chat",
     out.storedAfterTemp === "[]", out.storedAfterTemp);
-  // Switched off for the session, so backend word swaps leave it alone too.
-  check("the backend is still told, so word swaps skip it",
+  // Switched off for the session, so the backend leaves it alone too.
+  check("the backend is still told, so it leaves that chat alone",
     Array.isArray(out.backendToldTemp) && out.backendToldTemp.indexOf("temp1") >= 0, out.backendToldTemp);
   // Filtering at the point of writing, not at the point of the change: a later
   // switch in an ordinary chat must not carry the temporary one into storage.
@@ -3648,9 +3648,9 @@ console.log("\nfloat button menu");
     out.ringNearlyUp && out.ringNearlyUp.offset === 0, JSON.stringify(out.ringNearlyUp));
   check("the ring starts at the top rather than at three o'clock",
     out.ringMid && out.ringMid.spins, JSON.stringify(out.ringMid));
-  // Two, because nothing else is switched on here. The panel button and the
-  // two word swap buttons join them when their settings are on, which the
-  // "where the ways into the extension live" checks cover. This is the floor.
+  // Two, because nothing else is switched on here. The panel button joins
+  // them when its setting is on, which the "where the ways into the
+  // extension live" checks cover. This is the floor.
   check("with its two entries, nothing else being on", out.entries.length === 2, out.entries);
   check("and neither of them offers to move it, since dragging does that",
     !out.entries.some((t) => /corner|move/i.test(t)), out.entries);
@@ -5080,9 +5080,7 @@ console.log("\npreset controls");
 // take away the confirmation step, or move buttons around in your Extras menu.
 // This drives a real save and a real load to prove it, which was not possible
 // until these checks had working storage.
-// Two preset bars now, identical to look at and driving different stores. The
-// risk is that they are wired to the same one, which would look completely
-// normal until somebody loaded a note set and found their word swaps replaced.
+// The note preset bar saves into its own store and holds only its own keys.
 console.log("\none preset bar, holding only its own keys");
 {
   const { out, errors } = await inPanel(browser, {}, async (page) =>
@@ -5112,10 +5110,6 @@ console.log("\none preset bar, holding only its own keys");
       const store = JSON.parse(localStorage.getItem("lv-auto-retry:presets:v1"));
       return {
         barExists: !!b,
-        // The word swap bar went with the feature. Nothing should be left
-        // building one, and nothing should be left in the store under it.
-        swapBarGone: !bar("swap"),
-        swapStoreGone: !(store.swap && store.swap.length),
         noteNames: (store.notes || []).map((p) => p.name),
         noteKeys: Object.keys(((store.notes || [])[0] || {}).values || {}).sort(),
         // The bar saves the settings above it and reads as part of them; the
@@ -5129,7 +5123,6 @@ console.log("\none preset bar, holding only its own keys");
     }),
   );
   check("the note preset bar is on the panel", out.barExists, out);
-  check("and the word swap bar is gone with the feature", out.swapBarGone && out.swapStoreGone, out);
   check("it saves into its own store", out.noteNames.join() === "noteset", out);
   check("a note preset carries the notes and where they go, and nothing else",
     out.noteKeys.join() === "refusalNotePlacement,refusalNotes", out.noteKeys);
@@ -5298,10 +5291,8 @@ console.log("\nthe note preset bar follows the notes switch");
   check("no console errors", errors.length === 0, errors);
 }
 
-// Presets are stored as one object holding every kind, and three places used
-// to reach past that into one key. With a second kind that meant note presets
-// never followed the account, and the reset that names word swaps deleted them
-// as a side effect of writing an object without their key.
+// Presets are stored as one object holding every kind, and every place that
+// reads or writes them goes through the whole object.
 console.log("\npicking a preset loads it, so a save cannot land on the wrong one");
 {
   // The bug: picking only greyed the buttons in and out and left the settings
@@ -5528,9 +5519,8 @@ console.log("\npresets across both kinds");
 
 console.log("\npreset boundary");
 {
-  // What a preset owns and what stays yours whatever you load. The word swap
-  // kind is gone; the note kind keeps the same contract, expressed the other
-  // way round, as a list of what it carries rather than what it leaves out.
+  // What a preset owns and what stays yours whatever you load, as a list of
+  // what a note preset carries rather than what it leaves out.
   const { out, errors } = await inPanel(browser, { settings: { retryOnRefusal: true, refusalNote: true } }, async (page) =>
     page.evaluate(async () => {
       const frame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
@@ -7429,15 +7419,14 @@ console.log("\na reply that stopped partway with text in it");
 }
 
 // ---- telling the backend again after it restarts ----
-// The backend keeps the word swap rules, the on and off switch, and the list of
-// chats the reader turned Auto Retry off in. All three arrived over the bridge
+// The backend keeps the on and off switch and the list of chats the reader
+// turned Auto Retry off in. Both arrive over the bridge
 // and none of them survives the backend coming back, which happens on its own:
 // a tab closed and opened again is enough. It cannot look them up either, since
 // its own read runs before it knows whose settings to read.
 //
-// So the swaps stopped and nothing said why, and a chat switched off started
-// being swapped again. It says backend_ready when it comes up, and this is the
-// panel answering that.
+// It says backend_ready when it comes up, and this is the panel answering
+// that, so a chat switched off stays off.
 console.log("\ntelling the backend again after it restarts");
 {
   const page = await browser.newPage();
@@ -11682,7 +11671,7 @@ console.log("\npainted surfaces");
 // ---- resetting one part leaves the others alone ----
 // The picker exists because all or nothing is the wrong shape: putting the
 // button selectors back is the case that comes up, and doing it should not cost
-// the word swaps and refusal phrases. What is worth holding down is the promise
+// the refusal phrases. What is worth holding down is the promise
 // it makes on screen: what you do not tick is not touched.
 // The backend holds a copy of the replaced reply for the account, so a page
 // that was reloaded asks for it and shows it again.
@@ -12310,9 +12299,6 @@ console.log("\nreset urgency");
 }
 
 // ---- nothing is left behind ----
-// ---- what is left of find and replace ----
-// The feature is gone. The one thing left is a card handing somebody's rules
-// back to them, and it has to be absent for everyone who never used it.
 console.log("\na section that hangs off a switch opens and closes smoothly");
 {
   // Refusal tuning is a whole section that hangs off It looks like an
@@ -12379,101 +12365,6 @@ console.log("\na section that hangs off a switch opens and closes smoothly");
       check(say + "no console errors", errors.length === 0, errors);
     }
   }
-}
-
-console.log("\nfind and replace, retired");
-{
-  const { out, errors } = await inPanel(browser, {}, async (page) =>
-      page.evaluate(async () => {
-        const frame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-        // Written the way a real install holds them: in the saved blob, not as
-        // a live setting, because the panel has no field for them any more.
-        const raw = JSON.parse(localStorage.getItem("lv-auto-retry:settings:v1") || "{}");
-        raw.replaceRules = "cat => dog\nhot => cold";
-        localStorage.setItem("lv-auto-retry:settings:v1", JSON.stringify(raw));
-        window.__acts["auto-retry-settings"].cb();
-        await frame();
-        const box = document.querySelector("[data-ar-retired]");
-        const saved = [];
-        // The download is a link click in a real browser, so it is watched for
-        // rather than followed.
-        const realCreate = URL.createObjectURL;
-        URL.createObjectURL = (b) => { saved.push(b); return realCreate.call(URL, b); };
-        const text = box ? box.textContent : "";
-        const get = box && box.querySelector('[data-ar-retired-save]');
-        if (get) get.click();
-        await frame();
-        const file = saved.length ? await saved[0].text() : "";
-        const hide = box && box.querySelector('[data-ar-retired-hide]');
-        if (hide) hide.click();
-        await frame();
-        URL.createObjectURL = realCreate;
-        return {
-          there: !!box && !!box.textContent.trim(),
-          text: text,
-          saysWhy: /retired/i.test(text) && /Auto Refine/.test(text),
-          counted: /2 rules/.test(text),
-          file,
-          goneAfterHide: !document.querySelector("[data-ar-retired]") ||
-            !document.querySelector("[data-ar-retired]").textContent.trim(),
-          remembered: !!localStorage.getItem("lv-auto-retry:swaps-retired:v1"),
-        };
-      }),
-  );
-  check("somebody with rules is told the feature went", out.there && out.saysWhy, out);
-  check("and how much of theirs is still there", out.counted, out);
-  // The offer ends on a date, and a date nobody is told is a door that shuts
-  // without warning. Both places carrying the download name it.
-  check("and the date the offer ends on", /15 October 2026/.test(out.text || ""), out.text);
-  check("and that it is the last way to get them out",
-    /last place/.test(out.text || ""), out.text);
-  check("without reading as though the rules get wiped",
-    /not wiped/.test(out.text || ""), out.text);
-  check("the download holds the rules themselves", /cat => dog/.test(out.file), out.file.slice(0, 120));
-  check("hiding it takes it away", out.goneAfterHide && out.remembered, out);
-
-  // Hiding the card must not be a decision anybody has to get right first time.
-  // The same download stays under Import / export for as long as there is
-  // anything to hand back.
-  const { out: after, errors: e2 } = await inPanel(browser, {}, async (page) =>
-    page.evaluate(async () => {
-      const frame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-      const raw = JSON.parse(localStorage.getItem("lv-auto-retry:settings:v1") || "{}");
-      raw.replaceRules = "cat => dog";
-      localStorage.setItem("lv-auto-retry:settings:v1", JSON.stringify(raw));
-      // Already dismissed, the way somebody who pressed it by accident is.
-      localStorage.setItem("lv-auto-retry:swaps-retired:v1", "1");
-      window.__acts["auto-retry-settings"].cb();
-      await frame();
-      for (const h of document.querySelectorAll('[role="button"][aria-expanded="false"]')) h.click();
-      // A moment for rows that fade in as they appear. Waited out here rather
-      // than in every check below.
-      await new Promise((r) => setTimeout(r, 260));
-      await frame();
-      const saved = [];
-      const realCreate = URL.createObjectURL;
-      URL.createObjectURL = (b) => { saved.push(b); return realCreate.call(URL, b); };
-      const row = document.querySelector("[data-ar-old-swaps]");
-      const get = document.querySelector("[data-ar-old-swaps-save]");
-      if (get) get.click();
-      await frame();
-      const file = saved.length ? await saved[0].text() : "";
-      URL.createObjectURL = realCreate;
-      return {
-        cardGone: !document.querySelector("[data-ar-retired]") ||
-          !document.querySelector("[data-ar-retired]").textContent.trim(),
-        rowThere: !!row,
-        rowText: row ? row.textContent : "",
-        file,
-      };
-    }),
-  );
-  check("with the card dismissed, the way back is still in Import / export",
-    after.cardGone && after.rowThere, after);
-  check("and it hands over the same rules", /cat => dog/.test(after.file), after.file.slice(0, 100));
-  check("that line names the date too", /15 October 2026/.test(after.rowText || ""), after.rowText);
-  check("no console errors on the way back", e2.length === 0, e2);
-  check("no console errors", errors.length === 0, errors);
 }
 
 // A row that hangs off a switch opens and closes smoothly. Its space opens
@@ -12697,18 +12588,6 @@ for (const [label, viewport, touch] of [["phone", { width: 390, height: 860 }, t
     out.tickShown === "1" && out.tickHidden === "0", out);
   check("and the mark fades in rather than appearing", out.fades, out);
   check("and grows into the box with a spring", out.grows && out.springs, out);
-  check("no console errors", errors.length === 0, errors);
-}
-
-// Somebody who never used it should never learn it existed.
-{
-  const { out, errors } = await inPanel(browser, {}, async (page) =>
-    page.evaluate(() => {
-      const box = document.querySelector("[data-ar-retired]");
-      return { empty: !box || !box.textContent.trim() };
-    }),
-  );
-  check("and somebody who never used it sees nothing", out.empty, out);
   check("no console errors", errors.length === 0, errors);
 }
 

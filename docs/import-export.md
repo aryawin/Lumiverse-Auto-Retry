@@ -37,15 +37,6 @@ To share a refusal setup, tick only **Refusals and notes**. Button selectors in 
 - Imported presets are the exception. They are saved straight away. A preset with the same name as one of yours replaces it. New ones are added.
 - Every imported value is checked the same way your normal settings are. A file can only set known options to safe values. Anything it does not recognise is ignored.
 
-## If you used find and replace
-
-Find and replace was removed in 5.0.0. [Auto Refine](https://github.com/starlitcode/Lumiverse-Auto-Refine) does that job now.
-
-- Your old rules and word presets are still in this browser and your account.
-- The **Download my old word swaps** button, on this card, is the last place that gives them to you as a file.
-- **The button goes away on 15 October 2026.** Your rules are not deleted that day, but nothing in the panel will offer them to you after that. Take the copy while you can.
-- If you never used find and replace, you will never see the button.
-
 ---
 
 [Back to the README](../README.md)

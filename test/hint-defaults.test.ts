@@ -173,9 +173,7 @@ describe("defaults quoted in the docs", () => {
 
   const claims: Array<{ file: string; label: string; said: string }> = [];
   // Every page in docs, read off the folder rather than listed here. A written
-  // list skips what it does not name and says nothing about it: this one still
-  // held word-swaps.md long after that page was deleted, and would have gone on
-  // ignoring a new page without saying so.
+  // list skips what it does not name and says nothing about it.
   const docFiles = readdirSync(new URL("../docs/", import.meta.url))
     .filter((f) => f.slice(-3) === ".md")
     .sort();

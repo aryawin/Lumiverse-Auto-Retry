@@ -54,9 +54,8 @@ describe("the message bridge has no dead ends", () => {
 
   test("no send is hidden behind a wrapper this file does not read", () => {
     // A sendToBackend call handed a variable says nothing about what it sends,
-    // so the checks above cannot see through it. There were none left once the
-    // word swap wrapper went, and none is the state worth holding: every send
-    // now names its own type where the checks above can read it.
+    // so the checks above cannot see through it. Every send names its own type
+    // where the checks above can read it.
     const indirect = uniq(
       [...FRONT.matchAll(/sendToBackend\((?!\{)([A-Za-z_$][\w$]*)\)/g)].map((m) => m[1]),
     );
@@ -77,11 +76,3 @@ describe("no storage file is written and never read, or read and never written",
     expect(orphans).toEqual([]);
   });
 });
-
-// Both modules decide for themselves what counts as the model's thinking: the
-// frontend to keep a refusal inside it from causing a retry, the backend to
-// keep a word swap out of it. They are separate runtimes with no shared import,
-// so the lists are duplicated, and nothing but this notices when one grows a
-// tag the other has never heard of. The result of that drift is quiet: a swap
-// rewrites a reasoning block the refusal check knows to skip, or the other way
-// round, and both files look perfectly correct on their own.

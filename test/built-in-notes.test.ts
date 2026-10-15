@@ -8,9 +8,6 @@
 import { test, expect, describe } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { __testing } from "../src/frontend";
-
-const { swapsOffered, SWAPS_GONE_ON } = __testing as any;
 
 const root = join(import.meta.dir, "..");
 const src = readFileSync(join(root, "src/frontend.ts"), "utf8");
@@ -96,33 +93,14 @@ describe("the note sets that come with it", () => {
   });
 });
 
-// Find and replace went in 5.0.0 and the way back out goes on a date the panel
-// says out loud. The comparison is a pure one so a check can stand on either
-// side of that day without faking a clock.
-describe("when the way out of find and replace closes", () => {
-  test("the day before, it is still offered", () => {
-    expect(swapsOffered("2026-10-14")).toBe(true);
-  });
-
-  test("on the day itself, it is not", () => {
-    expect(swapsOffered(SWAPS_GONE_ON)).toBe(false);
-  });
-
-  test("and not after it either", () => {
-    expect(swapsOffered("2026-10-16")).toBe(false);
-    expect(swapsOffered("2027-01-01")).toBe(false);
-  });
-
-  // The retirement was 2026-09-05. A date before it would mean the way out shut
-  // before the feature went, which is the one way to get this wrong that nobody
-  // would notice until somebody lost their rules.
-  test("the date is after the release that retired it", () => {
-    expect(SWAPS_GONE_ON > "2026-09-05").toBe(true);
-  });
-
-  test("a day it cannot read is treated as still offered", () => {
-    // Better to go on offering than to shut the door on somebody because a
-    // clock came back empty.
-    expect(swapsOffered("")).toBe(true);
-  });
+// Find and replace went in 5.0.0, and the offer to download old word swaps
+// ended on 15 October 2026. Nothing of either is left, in the source or in the
+// file Lumiverse loads.
+describe("find and replace is gone", () => {
+  const built = readFileSync(join(root, "dist/frontend.js"), "utf8");
+  for (const [name, text] of [["the source", src], ["the built file", built]] as Array<[string, string]>) {
+    test("nothing of it is left in " + name, () => {
+      expect(text).not.toMatch(/find and replace|word swaps?|replaceRules|swaps-retired|data-ar-retired|data-ar-old-swaps/i);
+    });
+  }
 });

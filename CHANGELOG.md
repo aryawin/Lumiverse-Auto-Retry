@@ -18,6 +18,10 @@ _2026-10-15_
 - **A refusal sent as an error gets a refusal retry.** With **It came back as an error** on, an error such as "prohibited_content", or one holding one of your own refusal phrases, was retried as an ordinary error. It went without the refusal note, and **Several tries at once** did not take it. It is now a refusal retry, so it gets both. A reply among several tries at once that is refused with such an error counts as a refusal too. Reported by a Discord user.
 - **Turning Auto Retry on or off in the settings says so.** The floating button and the switch for one chat each showed a notification, and **Turn Auto Retry on** in the settings did not. Pressing **Save** after changing it now shows the same notification.
 
+### Removed
+
+- **The download for old word swaps.** Find and replace was removed in 5.0.0, and **Download my old word swaps** was kept until 15 October 2026 so anyone who used it could take a copy. That button and the card about it are now gone. The old rules and word presets are dropped from this browser the next time your settings or presets are saved.
+
 ---
 
 ## 5.17.2

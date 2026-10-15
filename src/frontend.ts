@@ -1778,33 +1778,6 @@ function normalizeForMatch(text: string): string {
 // matching on, and it leaves a provider's own codes like 402 usable.
 const PHRASE_MIN_CHARS = 3;
 
-// Find and replace was retired in 5.0.0, on the 5th of September 2026. What is
-// left of it is the way back out: the rules and the presets are still in this
-// browser and in the account, and the panel hands them over as a file.
-//
-// That offer ends on this date, which both places carrying it say out loud so
-// nobody finds it gone without having been told. Just under six weeks from the
-// retirement, so anybody who updates monthly gets two passes at it.
-//
-// On the day, everything gated on swapsOffered stops drawing and this whole
-// block can be deleted with nothing on screen changing. The rules themselves
-// are never touched: the offer ends, the data stays where it is, and anybody
-// who wants it later can still find it in their own storage.
-const SWAPS_GONE_ON = "2026-10-15";
-const SWAPS_GONE_SAID = "15 October 2026";
-
-// Date only, and the reader's own day rather than UTC: a cutoff people can read
-// off a calendar should turn over when their calendar does.
-function swapsOffered(today: string): boolean {
-  return String(today || "") < SWAPS_GONE_ON;
-}
-
-function todayHere(): string {
-  const d = new Date();
-  const pad = (n: number) => (n < 10 ? "0" + n : String(n));
-  return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
-}
-
 function splitPhrases(raw: any): string[] {
   return String(raw == null ? "" : raw)
     .split(/\r?\n/)
@@ -3795,13 +3768,6 @@ export function setup(ctx: Ctx, opts?: any) {
         settingsWaiting = null;
         const s = msg.settings;
         if (s && typeof s === "object" && Object.keys(s).length) {
-          // Held before the coercion below, which walks the panel's own fields
-          // and so drops anything no longer in it. Word swap rules are exactly
-          // that now: somebody whose settings live in their account and not in
-          // this browser would otherwise have theirs disappear with
-          // nothing offering them a copy.
-          if (typeof s.replaceRules === "string" && s.replaceRules.trim())
-            accountSwaps = s.replaceRules;
           Object.assign(cfg, coerceSaved(s));
           saveSaved();
           askReplaced();
@@ -7360,15 +7326,7 @@ export function setup(ctx: Ctx, opts?: any) {
   // check runs on the local copy and on anything the account returns, so a
   // malformed or hand-edited store cannot put junk into the dropdown.
   function coercePresets(data: any): Record<string, Preset[]> {
-    // swap is here on purpose and is not a leftover. Find and replace is gone
-    // and nothing offers a word preset any more, but somebody who had them
-    // still has them in this store, and the download in Import / export is the
-    // only way they get them back. This function decides what survives a load
-    // and a save: drop the key and the next save writes an object without it,
-    // which deletes the very thing that download exists to hand over.
-    //
-    // It goes when the download goes, and not before.
-    const out: Record<string, Preset[]> = { swap: [], notes: [] };
+    const out: Record<string, Preset[]> = { notes: [] };
     if (!data || typeof data !== "object") return out;
     for (const kind of Object.keys(out)) {
       const arr = Array.isArray(data[kind]) ? data[kind] : [];
@@ -12653,64 +12611,6 @@ export function setup(ctx: Ctx, opts?: any) {
         ),
       );
 
-      // The word swaps somebody had before the feature went. The card at the top
-      // of the panel says the same thing louder and can be put away; this line
-      // cannot, so putting that card away is not a decision anybody has to get
-      // right first time. It is here for as long as there is anything to hand
-      // back, and gone the moment there is not.
-      {
-        const held = retiredSwaps();
-        const count = held.rules.split("\n").filter((l) => l.indexOf("=>") > 0).length;
-        if ((count || held.presets.length) && swapsOffered(todayHere())) {
-          const row = document.createElement("div");
-          row.setAttribute("data-ar-old-swaps", "1");
-          row.style.cssText = "display:flex;flex-direction:column;gap:6px";
-          const bits: string[] = [];
-          if (count) bits.push(count + (count === 1 ? " rule" : " rules"));
-          if (held.presets.length)
-            bits.push(held.presets.length + (held.presets.length === 1 ? " preset" : " presets"));
-          const said = sectionDesc("Find and replace was retired and ", false);
-          said.appendChild(linkTo(REFINE_URL, "Auto Refine"));
-          said.appendChild(
-            document.createTextNode(
-              " does that job now. Your old word swaps are still here, " +
-                bits.join(" and ") +
-                " of them, and this is the last place that hands them over as a file. It goes on " +
-                SWAPS_GONE_SAID +
-                ". Your rules are not wiped that day, but nothing here will offer them to you after it.",
-            ),
-          );
-          row.appendChild(said);
-          const get = btn("Download my old word swaps", false);
-          get.setAttribute("data-ar-old-swaps-save", "1");
-          get.style.alignSelf = "flex-start";
-          get.addEventListener("click", () => {
-            const ok = downloadText(
-              "auto-retry-word-swaps.json",
-              JSON.stringify(
-                {
-                  extension: "auto-retry",
-                  what: "word swaps, exported when find and replace was retired",
-                  at: new Date().toISOString(),
-                  rules: held.rules,
-                  presets: held.presets,
-                },
-                null,
-                2,
-              ),
-            );
-            showToast(
-              ok
-                ? "Saved. The file holds your rules and your presets."
-                : "The browser would not save the file. Some private windows block downloads.",
-              { force: true, kind: ok ? "success" : "error" },
-            );
-          });
-          row.appendChild(get);
-          body.appendChild(row);
-        }
-      }
-
       // Two lists, not one. They were the same ticks for a long time, which
       // meant exporting everything and then importing one part was two rounds
       // of ticking: set them for the export, unset them for the import, set
@@ -12971,7 +12871,6 @@ export function setup(ctx: Ctx, opts?: any) {
     // Above the search box rather than below it. This is the panel's own state
     // and it stays put, while the line under the box is about the search and
     // comes and goes, so the lasting one reads first.
-    panel.appendChild(buildRetiredNotice());
     panel.appendChild(buildPermissionNotice());
     // Under the two above it. Both of those are about something that is not
     // working; this one is about a number that is, so it reads after them.
@@ -13052,135 +12951,6 @@ export function setup(ctx: Ctx, opts?: any) {
     ensureReadableTree(panel, 2.6);
   }
 
-
-  // ---- find and replace, retired ----
-  // The feature is gone. This card is the only thing left that knows it existed,
-  // and it exists to hand somebody's rules back to them rather than to argue
-  // about the removal.
-  //
-  // Read straight out of storage instead of out of cfg. The settings the panel
-  // holds no longer have a place for any of this, which is the point, so the
-  // stored blob is the only copy left.
-  const SWAPS_SEEN_KEY = "lv-auto-retry:swaps-retired:v1";
-  // Rules that came down from the account rather than out of this browser.
-  let accountSwaps = "";
-
-  function retiredSwaps(): { rules: string; presets: any[] } {
-    let rules = "";
-    let presets: any[] = [];
-    try {
-      if (typeof localStorage !== "undefined") {
-        const raw = JSON.parse(localStorage.getItem(STORE_KEY) || "{}");
-        if (raw && typeof raw.replaceRules === "string") rules = raw.replaceRules;
-        const all = JSON.parse(localStorage.getItem(PRESETS_KEY) || "{}");
-        if (all && Array.isArray(all.swap)) presets = all.swap;
-      }
-    } catch (_) {}
-    // Whichever copy has something in it. A browser that never saved them and
-    // an account that did are both somebody with rules to hand back.
-    if (!rules.trim() && accountSwaps.trim()) rules = accountSwaps;
-    return { rules: rules, presets: presets };
-  }
-
-  function swapsNoticeDone(): boolean {
-    try {
-      return typeof localStorage !== "undefined" && !!localStorage.getItem(SWAPS_SEEN_KEY);
-    } catch (_) {
-      return false;
-    }
-  }
-
-  function buildRetiredNotice(): HTMLElement {
-    const box = document.createElement("div");
-    box.setAttribute("data-ar-retired", "1");
-    const held = retiredSwaps();
-    const count = held.rules.split("\n").filter((l) => l.indexOf("=>") > 0).length;
-    // Nothing to restore, or already restored. Somebody who never used the
-    // feature should never learn it existed. Past the date the offer ends on,
-    // nobody sees it either.
-    if ((!count && !held.presets.length) || swapsNoticeDone() || !swapsOffered(todayHere()))
-      return box;
-    box.style.cssText =
-      "display:flex;flex-direction:column;gap:8px;flex:none;margin-bottom:12px;padding:12px;" +
-      "border-radius:var(--lumiverse-radius,8px);" +
-      "border:1px solid var(--lumiverse-warning,rgba(240,180,80,.45));" +
-      "background:var(--lumiverse-fill-subtle,rgba(0,0,0,.1))";
-    const title = document.createElement("div");
-    title.style.cssText = "font-weight:600;font-size:13px;color:var(--lumiverse-text,#eee)";
-    title.textContent = "Find and replace has been retired";
-    box.appendChild(title);
-    const body = document.createElement("div");
-    body.style.cssText =
-      "font-size:12px;line-height:1.5;color:var(--lumiverse-text-muted,rgba(255,255,255,.65))";
-    body.appendChild(
-      document.createTextNode(
-        "It swapped words in a reply after it arrived. Rewriting a reply well is a " +
-          "different job from retrying one. ",
-      ),
-    );
-    body.appendChild(linkTo(REFINE_URL, "Auto Refine"));
-    body.appendChild(
-      document.createTextNode(
-        " does that job, and this one is going back to retrying. Nothing else here has changed.",
-      ),
-    );
-    box.appendChild(body);
-    const what = document.createElement("div");
-    what.style.cssText =
-      "font-size:12px;line-height:1.5;color:var(--lumiverse-text-muted,rgba(255,255,255,.65))";
-    const bits: string[] = [];
-    if (count) bits.push(count + (count === 1 ? " rule" : " rules"));
-    if (held.presets.length)
-      bits.push(held.presets.length + (held.presets.length === 1 ? " preset" : " presets"));
-    what.textContent =
-      "You have " +
-      bits.join(" and ") +
-      " saved. This is the last place that hands them over as a file, and it goes on " +
-      SWAPS_GONE_SAID +
-      ". Your rules are not wiped that day, but nothing in the panel will offer them to you after it, so take the copy now.";
-    box.appendChild(what);
-
-    const row = document.createElement("div");
-    row.style.cssText = "display:flex;flex-wrap:wrap;gap:8px;margin-top:2px";
-    const get = btn("Download my word swaps", true);
-    get.setAttribute("data-ar-retired-save", "1");
-    get.addEventListener("click", () => {
-      const body2 = {
-        extension: "auto-retry",
-        what: "word swaps, exported when find and replace was retired",
-        at: new Date().toISOString(),
-        rules: held.rules,
-        presets: held.presets,
-      };
-      const ok = downloadText("auto-retry-word-swaps.json", JSON.stringify(body2, null, 2));
-      showToast(
-        ok
-          ? "Saved. The file holds your rules and your presets."
-          : "The browser would not save the file. Some private windows block downloads.",
-        { force: true, kind: ok ? "success" : "error" },
-      );
-    });
-    row.appendChild(get);
-    const gone = btn("I have it, hide this", false);
-    gone.setAttribute("data-ar-retired-hide", "1");
-    gone.addEventListener("click", () => {
-      try {
-        if (typeof localStorage !== "undefined") localStorage.setItem(SWAPS_SEEN_KEY, "1");
-      } catch (_) {}
-      try {
-        box.remove();
-      } catch (_) {}
-    });
-    row.appendChild(gone);
-    box.appendChild(row);
-    const where = document.createElement("div");
-    where.style.cssText =
-      "font-size:11px;line-height:1.5;color:var(--lumiverse-text-muted,rgba(255,255,255,.5))";
-    where.textContent =
-      "Hiding this keeps your swaps. The same download stays under Import / export.";
-    box.appendChild(where);
-    return box;
-  }
 
   // A default moved under somebody who was on it. Said at the top of the panel
   // rather than tucked beside the row it belongs to, because it is about a
@@ -15433,8 +15203,6 @@ export const __testing = {
   sayTime,
   normalizeForMatch,
   splitPhrases,
-  swapsOffered,
-  SWAPS_GONE_ON,
   parseSubs,
   applySubs,
   stripThinking,
