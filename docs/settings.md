@@ -36,7 +36,9 @@ Switching Auto Retry off does not change anything in the panel. Every setting st
 
 Press **?** to read what an option does. The description opens in a small box just below the option, over the panel, so nothing moves.
 
-- **What the notes say** is the one exception. Its description opens above, because the row below it is long.
+- Some descriptions open just above the option instead:
+  - **What the notes say**, because that option is a long row.
+  - The three button boxes under **Buttons it clicks**: **Your next / swipe button**, **Your regenerate button** and **Your stop button**.
 - A long description scrolls inside its box.
 - Only one shows at a time.
 - To close it, tap it, tap the **?** again, tap somewhere else, scroll the panel, or press Esc.

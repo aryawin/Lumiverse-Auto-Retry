@@ -10888,6 +10888,49 @@ console.log("\nhint placement");
     check("no console errors", errors.length === 0, errors);
   }
 
+  // The three button boxes under Buttons it clicks open theirs above as well.
+  for (const viewport of [{ width: 393, height: 800 }, { width: 1280, height: 800 }]) {
+    const { out, errors } = await inPanel(
+      browser, { css: PANEL, viewport },
+      async (page) => page.evaluate(async () => {
+        const frame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+        for (const h of document.querySelectorAll('[role="button"][aria-expanded="false"]')) h.click();
+        await new Promise((r) => setTimeout(r, 260));
+        await frame();
+        const rows = [];
+        for (const key of ["swipeNextSelector", "regenerateSelector", "stopSelector"]) {
+          const row = document.querySelector('[data-ar-row="' + key + '"]');
+          if (!row) { rows.push({ key, err: "no row" }); continue; }
+          row.scrollIntoView({ block: "center" });
+          await frame();
+          const hint = row.querySelector("[data-ar-hint]");
+          hint.dispatchEvent(new MouseEvent("mouseenter"));
+          await frame();
+          const tip = document.querySelector('[role="tooltip"]');
+          if (!tip) { rows.push({ key, err: "no tip" }); continue; }
+          const rr = row.getBoundingClientRect();
+          const tr = tip.getBoundingClientRect();
+          rows.push({
+            key,
+            above: tr.bottom <= rr.top + 1,
+            gapToTop: Math.round(rr.top - tr.bottom),
+            onScreen: tr.top >= 0 && tr.bottom <= innerHeight && tr.left >= 0 && tr.right <= innerWidth,
+          });
+          hint.dispatchEvent(new MouseEvent("mouseleave"));
+          await new Promise((r) => setTimeout(r, 300));
+        }
+        return rows;
+      }),
+    );
+    const w = viewport.width;
+    check(`at ${w}px, the three button boxes open their description above the row`,
+      out.length === 3 && out.every((r) => r.above === true), out);
+    check(`at ${w}px, and it sits just over the row`,
+      out.every((r) => r.gapToTop >= 0 && r.gapToTop <= 12), out);
+    check(`at ${w}px, and it stays on the screen`, out.every((r) => r.onScreen === true), out);
+    check("no console errors", errors.length === 0, errors);
+  }
+
   // Squeezed: the same row with almost no room above it must still open above
   // and still fit, rather than crossing over the row.
   {

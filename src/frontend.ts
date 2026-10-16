@@ -152,7 +152,7 @@ const STREAM_BUF_MAX = 200000;
 
 // Bumped on each release. Shown in the startup log and in the Copy debug info
 // report, so a bug report always says which version it came from.
-const VERSION = "5.17.5";
+const VERSION = "5.17.6";
 
 // Whether two saved settings hold the same values, whatever order their keys
 // were written in. A key left undefined counts as not there, the way it is
@@ -423,10 +423,10 @@ interface Field {
   // are offered. Anything else, from a hand-edited backup or an older version,
   // falls back to the first one.
   options?: Array<{ value: string; label: string }>;
-  // Puts this setting's description above its row instead of below it. Only
-  // worth setting on a row tall enough that "below the row" is a long way from
-  // the "?" that was pressed, which is the note list: the whole list, its
-  // roles, its buttons and its counter are all one row.
+  // Puts this setting's description above its row instead of below it. Set on
+  // the note list, whose whole list, roles, buttons and counter are one row, so
+  // "below the row" is a long way from the "?" that was pressed. Also set on
+  // the three button boxes under Buttons it clicks.
   hintAbove?: boolean;
   // Puts this row under a labelled run inside its group, named in RUNS below.
   // Consecutive rows naming the same run share one heading. It exists because
@@ -1017,6 +1017,7 @@ const SCHEMA: Group[] = [
         label: "Your next / swipe button",
         type: "text",
         selector: true,
+        hintAbove: true,
         hint: "The button it clicks first. A swipe adds a new reroll, so the old reply stays. Set it even if you never swipe yourself.",
       },
       {
@@ -1024,6 +1025,7 @@ const SCHEMA: Group[] = [
         label: "Your regenerate button",
         type: "text",
         selector: true,
+        hintAbove: true,
         hint: "Used when there is no swipe button, or when Retry by adding a new reroll is off. It replaces the reply.",
       },
       {
@@ -1031,6 +1033,7 @@ const SCHEMA: Group[] = [
         label: "Your stop button",
         type: "text",
         selector: true,
+        hintAbove: true,
         hint: "The stop button, so it can halt a frozen reply before retrying.",
       },
       {
@@ -10583,8 +10586,8 @@ export function setup(ctx: Ctx, opts?: any) {
     // long description opens somewhere none of the others do. Where it opens is
     // a property of the setting, so a given row is consistent.
     //
-    // Above is for a row tall enough that below it is a long way from the "?"
-    // that was pressed. Whichever side it is on, a description too tall for the
+    // Above is for the rows that ask for it in the schema, such as the note
+    // list. Whichever side it is on, a description too tall for the
     // room there is capped and scrolls rather than moving to the other side.
     let above = false;
     try {

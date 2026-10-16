@@ -141,7 +141,7 @@ const NOTE_FROM_TRY_MAX = 20;
 const STREAM_BUF_MAX = 200000;
 // Bumped on each release. Shown in the startup log and in the Copy debug info
 // report, so a bug report always says which version it came from.
-const VERSION = "5.17.5";
+const VERSION = "5.17.6";
 // Whether two saved settings hold the same values, whatever order their keys
 // were written in. A key left undefined counts as not there, the way it is
 // when saved. Used to tell an update or a put-back that would change nothing.
@@ -911,6 +911,7 @@ const SCHEMA = [
                 label: "Your next / swipe button",
                 type: "text",
                 selector: true,
+                hintAbove: true,
                 hint: "The button it clicks first. A swipe adds a new reroll, so the old reply stays. Set it even if you never swipe yourself.",
             },
             {
@@ -918,6 +919,7 @@ const SCHEMA = [
                 label: "Your regenerate button",
                 type: "text",
                 selector: true,
+                hintAbove: true,
                 hint: "Used when there is no swipe button, or when Retry by adding a new reroll is off. It replaces the reply.",
             },
             {
@@ -925,6 +927,7 @@ const SCHEMA = [
                 label: "Your stop button",
                 type: "text",
                 selector: true,
+                hintAbove: true,
                 hint: "The stop button, so it can halt a frozen reply before retrying.",
             },
             {
@@ -10706,8 +10709,8 @@ export function setup(ctx, opts) {
         // long description opens somewhere none of the others do. Where it opens is
         // a property of the setting, so a given row is consistent.
         //
-        // Above is for a row tall enough that below it is a long way from the "?"
-        // that was pressed. Whichever side it is on, a description too tall for the
+        // Above is for the rows that ask for it in the schema, such as the note
+        // list. Whichever side it is on, a description too tall for the
         // room there is capped and scrolls rather than moving to the other side.
         let above = false;
         try {

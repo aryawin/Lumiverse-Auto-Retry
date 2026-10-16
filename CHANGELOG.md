@@ -8,6 +8,16 @@ Versions follow [Semantic Versioning](https://semver.org). A new major version m
 
 ---
 
+## 5.17.6
+
+_2026-10-16_
+
+### Changed
+
+- **The button descriptions open above.** Under **Buttons it clicks**, press **?** on **Your next / swipe button**, **Your regenerate button** or **Your stop button**. The description now opens just above the box, not below it.
+
+---
+
 ## 5.17.5
 
 _2026-10-16_
