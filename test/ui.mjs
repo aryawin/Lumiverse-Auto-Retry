@@ -500,6 +500,73 @@ for (const [label, css] of [
 // made are only right for the theme they measured, and nothing rebuilds the
 // panel on a theme change, so without a watch they stay: text repainted white to
 // survive a dark card, still white once that card is white.
+
+console.log("\na theme's own custom CSS");
+// A theme's own custom CSS, written the way Lumiverse themes are written. Its
+// class selectors aim at Lumiverse's hashed class names, which carry an
+// underscore on each side, and none of them may reach the panel. Its element
+// rules reach every box on the page, Lumiverse's and the panel's alike, so a
+// box painted light with no text colour of its own still has to read.
+const THEME_CLASSES =
+  '[class*="_card_"],[class*="_btn_"],[class*="_button_"],[class*="_toggle_"],[class*="_switch_"],' +
+  '[class*="_container_"],[class*="_label_"],[class*="_row_"],[class*="_header_"],[class*="_input_"],' +
+  '[class*="_panel_"],[class*="_modal_"],[class*="_tab_"],[class*="_pill_"],[class*="_list_"]';
+const THEME_SHEET =
+  THEME_CLASSES + "{display:none!important;background:#ff00ff!important}" +
+  "input,textarea,select{background:#fff6e0!important}";
+const THEME_PROBE = ([rootSel, classes]) => {
+  const root = document.querySelector(rootSel);
+  const all = root ? [...root.querySelectorAll("*")] : [];
+  const reached = all.filter((e) => e.matches(classes)).map((e) => e.tagName.toLowerCase() + "." + String(e.className)).slice(0, 5);
+  const rgba = (c) => {
+    const n = (String(c).match(/[\d.]+/g) || []).map(Number);
+    return [n[0] || 0, n[1] || 0, n[2] || 0, n.length > 3 ? n[3] : 1];
+  };
+  const lum = ([r, g, b]) => {
+    const f = (v) => ((v /= 255) <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+    return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+  };
+  const fields = all.filter(
+    (e) => /^(INPUT|TEXTAREA|SELECT)$/.test(e.tagName) &&
+      !/^(checkbox|range|file|radio|hidden)$/.test(e.type) &&
+      e.getClientRects().length > 0 && e.getBoundingClientRect().width > 0,
+  );
+  let worst = 99, where = "";
+  for (const f of fields) {
+    const cs = getComputedStyle(f);
+    const bg = rgba(cs.backgroundColor);
+    const t = rgba(cs.color);
+    const mix = [0, 1, 2].map((i) => t[i] * t[3] + bg[i] * (1 - t[3]));
+    const a = lum(mix), b = lum(bg);
+    const ratio = (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+    if (ratio < worst) { worst = ratio; where = f.tagName.toLowerCase() + (f.getAttribute("aria-label") ? " " + f.getAttribute("aria-label") : ""); }
+  }
+  return { reached, fields: fields.length, worst: Math.round(worst * 100) / 100, where };
+};
+
+for (const [label, viewport, touch] of [["phone", { width: 390, height: 844 }, true], ["laptop", { width: 1280, height: 900 }, false]]) {
+  const { out, errors } = await inPanel(browser, { css: THEME_SHEET, viewport, touch }, (page) =>
+    page.evaluate(THEME_PROBE, ["#modal", THEME_CLASSES]),
+  );
+  check(`${label}: a theme's class selectors reach nothing in the panel`, out.reached.length === 0, out.reached);
+  check(`${label}: there are boxes to measure`, out.fields > 0, out);
+  check(`${label}: a box the theme paints light still reads (${out.worst}:1)`, out.worst >= 4.5, out);
+  check(`${label}: no console errors`, errors.length === 0, errors);
+}
+// A theme that changes Lumiverse's input colour changes every box here too.
+{
+  const { out } = await inPanel(browser, { css: ":root{--lumiverse-input-bg:rgb(12,34,56)}" }, (page) =>
+    page.evaluate(([rootSel]) => {
+    const root = document.querySelector(rootSel);
+    const boxes = [...root.querySelectorAll("input,textarea,select")].filter(
+      (e) => !/^(checkbox|range|file|radio|hidden)$/.test(e.type) && e.getClientRects().length > 0,
+    );
+    return { n: boxes.length, other: boxes.map((e) => getComputedStyle(e).backgroundColor).filter((c) => c !== "rgb(12, 34, 56)") };
+  }, ["#modal"]),
+  );
+  check("every box takes Lumiverse's input colour", out.n > 0 && out.other.length === 0, out);
+}
+
 console.log("\ntheme swapped under an open panel");
 for (const [label, before, after] of [
   ["dark to light", "", LIGHT],

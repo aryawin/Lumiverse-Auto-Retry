@@ -152,7 +152,7 @@ const STREAM_BUF_MAX = 200000;
 
 // Bumped on each release. Shown in the startup log and in the Copy debug info
 // report, so a bug report always says which version it came from.
-const VERSION = "5.17.4";
+const VERSION = "5.17.5";
 
 // Whether two saved settings hold the same values, whatever order their keys
 // were written in. A key left undefined counts as not there, the way it is
@@ -11544,7 +11544,7 @@ export function setup(ctx: Ctx, opts?: any) {
       const select = document.createElement("select");
       select.setAttribute("data-ar-field", "1");
       select.style.cssText =
-        "flex:1;min-width:150px;padding:8px 10px;border-radius:var(--lumiverse-radius,8px);border:1px solid var(--lumiverse-border,rgba(255,255,255,.16));background:var(--lumiverse-fill-subtle,rgba(0,0,0,.1));color:var(--lumiverse-text,#eee);font:13px var(--lumiverse-font-family,system-ui)";
+        "flex:1;min-width:150px;padding:8px 10px;border-radius:var(--lumiverse-radius,8px);border:1px solid var(--lumiverse-border,rgba(255,255,255,.16));background:var(--lumiverse-input-bg,var(--lumiverse-fill,rgba(0,0,0,.15)));color:var(--lumiverse-text,#eee);font:13px var(--lumiverse-font-family,system-ui)";
       // Picking already loads, so this is only for loading the one already
       // picked a second time, which is how you throw away changes and get the
       // saved settings back. Named for that, because "Load" next to a picker
@@ -12574,7 +12574,7 @@ export function setup(ctx: Ctx, opts?: any) {
       dArea.placeholder =
         "Press Build preview to fill this, then edit out anything private before copying.";
       dArea.style.cssText =
-        "width:100%;box-sizing:border-box;font-family:var(--lumiverse-font-mono,ui-monospace,monospace) !important;font-size:12px;padding:8px;border-radius:var(--lumiverse-radius,8px);border:1px solid var(--lumiverse-border,#3a3543);background:var(--lumiverse-bg,#1a1720);color:var(--lumiverse-text,#e9e4f0);resize:vertical";
+        "width:100%;box-sizing:border-box;font-family:var(--lumiverse-font-mono,ui-monospace,monospace) !important;font-size:12px;padding:8px;border-radius:var(--lumiverse-radius,8px);border:1px solid var(--lumiverse-border,#3a3543);background:var(--lumiverse-input-bg,var(--lumiverse-fill,rgba(0,0,0,.15)));color:var(--lumiverse-text,#e9e4f0);resize:vertical";
 
       const buildBtn = btn("Build preview", false);
       buildBtn.addEventListener("click", () => {
@@ -13797,7 +13797,9 @@ export function setup(ctx: Ctx, opts?: any) {
     input.style.cssText +=
       "padding:9px 10px;border-radius:var(--lumiverse-radius,8px);" +
       "border:1px solid var(--lumiverse-border,rgba(255,255,255,.16));" +
-      "background:var(--lumiverse-fill-subtle,rgba(0,0,0,.1));" +
+      // Lumiverse's own input colour, so a theme that changes its boxes
+      // changes these too. Older builds without it fall back to the fill.
+      "background:var(--lumiverse-input-bg,var(--lumiverse-fill,rgba(0,0,0,.15)));" +
       "color:var(--lumiverse-text,#eee);font:13px var(--lumiverse-font-family,system-ui);outline:none;" +
       // The ring fades in with the border it belongs to rather than appearing
       // out of nowhere. Nothing moves and nothing is laid out again: both of
@@ -14393,7 +14395,7 @@ export function setup(ctx: Ctx, opts?: any) {
     ta.value = initial;
     ta.setAttribute("aria-label", label);
     ta.style.cssText =
-      "flex:1;width:100%;box-sizing:border-box;resize:none;padding:10px;border-radius:var(--lumiverse-radius,8px);border:1px solid var(--lumiverse-border,rgba(255,255,255,.16));background:var(--lumiverse-fill-subtle,rgba(0,0,0,.1));color:var(--lumiverse-text,#eee);outline:none;font:13px/1.5 var(--lumiverse-font-family,system-ui)";
+      "flex:1;width:100%;box-sizing:border-box;resize:none;padding:10px;border-radius:var(--lumiverse-radius,8px);border:1px solid var(--lumiverse-border,rgba(255,255,255,.16));background:var(--lumiverse-input-bg,var(--lumiverse-fill,rgba(0,0,0,.15)));color:var(--lumiverse-text,#eee);outline:none;font:13px/1.5 var(--lumiverse-font-family,system-ui)";
     const row = document.createElement("div");
     row.style.cssText =
       "display:flex;justify-content:flex-end;gap:8px;flex:none";

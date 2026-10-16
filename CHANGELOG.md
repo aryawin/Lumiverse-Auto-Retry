@@ -8,6 +8,16 @@ Versions follow [Semantic Versioning](https://semver.org). A new major version m
 
 ---
 
+## 5.17.5
+
+_2026-10-16_
+
+### Changed
+
+- **The boxes match Lumiverse's own.** Every text box, list and search box in the settings now uses Lumiverse's own input colour. They were a lighter shade than Lumiverse's boxes. A theme that changes the colour of Lumiverse's boxes now changes these too.
+
+---
+
 ## 5.17.4
 
 _2026-10-15_
