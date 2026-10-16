@@ -14,7 +14,12 @@ _2026-10-16_
 
 ### Changed
 
-- **The button descriptions open above.** Under **Buttons it clicks**, press **?** on **Your next / swipe button**, **Your regenerate button** or **Your stop button**. The description now opens just above the box, not below it.
+- **Descriptions open above.** Press **?** on any option, and its description now opens just above the option, not below it. If the option is near the top of the screen and there is no room above, it opens below. It fades in and rises 4 pixels into place, and sinks back as it closes.
+
+### Fixed
+
+- **A description over its option moved the wrong way.** The description of **What the notes say** opens above the option. As it faded in, it moved down toward the option instead of up, away from it.
+- **A description rests the same distance from its option.** Every description sat a few pixels from where it was meant to be: closer to its option when above it, further when below. It now sits 6 pixels from it on either side.
 
 ---
 

@@ -57,9 +57,8 @@ function longestHintKey() {
   for (const b of blocks) {
     const k = /^\s*key:\s*"([A-Za-z0-9_]+)"/.exec(b);
     if (!k) continue;
-    // Behind a switch, so not on screen by default; or opens above on purpose.
+    // Behind a switch, so not on screen by default.
     if (/\n\s*needs:\s*\[/.test(b.split("\n},")[0])) continue;
-    if (/\n\s*hintAbove:\s*true/.test(b.split("\n},")[0])) continue;
     const h = /\n\s*hint:\s*"((?:[^"\\]|\\.)*)"/.exec(b.split("\n},")[0]);
     if (!h) continue;
     if (h[1].length > len) {
@@ -806,7 +805,7 @@ console.log("\nhints");
         await frame();
         await new Promise((r) => setTimeout(r, 220));
         const afterScroll = pops();
-        // The last row on the page has to flip above its "?" rather than run off.
+        // The last row on the page opens above its "?" and stays on the screen.
         infos[infos.length - 1].scrollIntoView();
         await frame();
         infos[infos.length - 1].click();
@@ -839,7 +838,7 @@ console.log("\nhints");
   check("a second tap closes it", out.afterRetap === 0);
   check("a tap elsewhere closes it", out.afterOutside === 0);
   check("scrolling closes it", out.afterScroll === 0);
-  check("the last row's hint flips above", out.lastOnScreen);
+  check("the last row's hint stays on the screen", out.lastOnScreen);
   check("no console errors", errors.length === 0, errors);
 }
 
@@ -10684,14 +10683,13 @@ console.log("\nbutton edges");
 // A note can answer the one before it, so the list needs a way to grow and
 // shrink. Ten is the ceiling and one is the floor: removing the last note would
 // leave nothing to type into.
-// ---- a description opens under the setting it describes ----
-// Flipping above the row when there is no room below opens a long description
-// somewhere none of the others do: you look under the setting and the text is
-// over it instead. It stays below and scrolls.
+// ---- a description opens over the setting it describes ----
+// Every description opens above its row, the same as Auto Refine's. Only a row
+// near the top of the screen, with no room for it above, has it below instead.
 console.log("\nhint placement");
 {
-  // A short viewport with a scrolling panel, so a row can be pushed low enough
-  // that its description will not fit underneath.
+  // A short viewport with a scrolling panel, so a row can be placed where its
+  // description will not fit on either side.
   const PANEL = "#modal{position:fixed;inset:12px;overflow:auto;background:rgb(24,20,34);padding:10px;box-sizing:border-box}";
   // Shared by the checks below: they all want the longest description there is.
   const want = longestHintKey();
@@ -10701,15 +10699,14 @@ console.log("\nhint placement");
     // stale as soon as that row moves behind a switch or its description is
     // shortened, so the longest one is worked out from the schema instead.
     // Rows behind a switch are skipped, since they are not on screen by
-    // default, and so is the note list, which opens above on purpose.
+    // default.
     //
-    // The height is what leaves less room under the row than the description
-    // needs, so the cap has something to fire on. At 280 the longest one fits.
-    // At 240 it does not, and 220 leaves a margin below that.
-    // Shorten the descriptions again and this has to come down with them, or
+    // The row is moved to 100px from the top, which leaves less room over it
+    // than the description needs, and less again under it, so it opens above
+    // and the cap has something to fire on. Shorten the descriptions a lot and
     // the cap stops being exercised.
     const { out, errors } = await inPanel(
-      browser, { css: PANEL, viewport: { width: 393, height: 220 }, settings: { refusalNote: true } },
+      browser, { css: PANEL, viewport: { width: 393, height: 260 }, settings: { refusalNote: true } },
       async (page) => page.evaluate(async (want) => {
         const frame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
         for (const h of document.querySelectorAll('[role="button"][aria-expanded="false"]')) h.click();
@@ -10719,7 +10716,12 @@ console.log("\nhint placement");
         await frame();
         const row = document.querySelector('[data-ar-row="' + want + '"]');
         if (!row) return { err: "no row" };
-        row.scrollIntoView({ block: "end" });
+        row.scrollIntoView({ block: "start" });
+        await frame();
+        let box = row.parentElement;
+        while (box && !(box.scrollHeight > box.clientHeight && /auto|scroll/.test(getComputedStyle(box).overflowY)))
+          box = box.parentElement;
+        box.scrollTop -= 100 - row.getBoundingClientRect().top;
         await frame();
         row.querySelector("[data-ar-hint]").dispatchEvent(new MouseEvent("mouseenter"));
         await frame();
@@ -10729,11 +10731,12 @@ console.log("\nhint placement");
         const tr = tip.getBoundingClientRect();
         const cs = getComputedStyle(tip);
         const res = {
-          below: tr.top >= rr.bottom - 1,
-          withinBottom: tr.bottom <= innerHeight,
+          above: tr.bottom <= rr.top + 1,
+          withinTop: tr.top >= 0,
           capped: cs.maxHeight !== "none",
           scrolls: tip.scrollHeight > tip.clientHeight,
           contains: cs.overscrollBehaviorY === "contain",
+          rowTop: Math.round(rr.top), rowBottom: Math.round(rr.bottom), vh: innerHeight,
         };
         tip.scrollTop = 20;
         tip.dispatchEvent(new Event("scroll", { bubbles: true }));
@@ -10748,8 +10751,8 @@ console.log("\nhint placement");
         return res;
       }, want),
     );
-    check("a long description opens below the row, not above it", out.below, out);
-    check("and stays on screen", out.withinBottom, out);
+    check("a long description opens above the row", out.above, out);
+    check("and stays on screen", out.withinTop, out);
     check("capped to the room there is", out.capped, out);
     check("and scrolls instead of moving", out.scrolls, out);
     check("its scroll does not chain to the panel", out.contains, out);
@@ -10809,7 +10812,7 @@ console.log("\nhint placement");
 
   // Under a host that applies its UI Scale as a zoom, the room on the screen
   // and the element's own units are not the same. A cap written in the wrong
-  // one ran the popover off the bottom of the screen at 1.4.
+  // one runs the popover off the screen at 1.4.
   {
     const { out, errors } = await inPanel(
       browser, { css: PANEL + "body{zoom:1.4}", viewport: { width: 500, height: 360 },
@@ -10833,22 +10836,22 @@ console.log("\nhint placement");
         const rr = row.getBoundingClientRect();
         const tr = tip.getBoundingClientRect();
         return {
-          below: tr.top >= rr.bottom - 1,
-          withinBottom: tr.bottom <= innerHeight,
+          above: tr.bottom <= rr.top + 1,
+          withinTop: tr.top >= 0,
           capped: getComputedStyle(tip).maxHeight !== "none",
-          rowBottom: Math.round(rr.bottom), tipTop: Math.round(tr.top),
+          rowTop: Math.round(rr.top), tipTop: Math.round(tr.top),
           tipBottom: Math.round(tr.bottom), vh: innerHeight,
         };
       }, want),
     );
-    check("a zoomed host still opens it below the row", out.below, out);
+    check("a zoomed host still opens it above the row", out.above, out);
     check("and caps it against the room on the screen, not its own units",
-      out.capped && out.withinBottom, out);
+      out.capped && out.withinTop, out);
     check("no console errors", errors.length === 0, errors);
   }
 
-  // The note list asks for its description above instead. That row holds the
-  // whole list, every role, both buttons and the counter, so below it is a long
+  // The note list is the tallest row. It holds the whole list, every role,
+  // both buttons and the counter, so a description under it would be a long
   // way from the "?" that was pressed.
   {
     const { out, errors } = await inPanel(
@@ -10882,60 +10885,67 @@ console.log("\nhint placement");
     check("the note list's description opens above its row", out.above === true, out);
     check("and sits just over it, not somewhere else",
       out.gapToTop >= 0 && out.gapToTop <= 12, out);
-    check("the row really is a tall one, so this is worth doing",
+    check("the row really is a tall one",
       out.rowHeight > 150, out);
     check("and it stays on the screen", out.onScreen === true, out);
     check("no console errors", errors.length === 0, errors);
   }
 
-  // The three button boxes under Buttons it clicks open theirs above as well.
+  // Every row, at a phone width and a laptop width, each one in the middle of
+  // the screen so there is room on both sides.
   for (const viewport of [{ width: 393, height: 800 }, { width: 1280, height: 800 }]) {
     const { out, errors } = await inPanel(
-      browser, { css: PANEL, viewport },
+      browser, { css: PANEL, viewport, settings: { refusalNote: true } },
       async (page) => page.evaluate(async () => {
         const frame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
         for (const h of document.querySelectorAll('[role="button"][aria-expanded="false"]')) h.click();
         await new Promise((r) => setTimeout(r, 260));
         await frame();
-        const rows = [];
-        for (const key of ["swipeNextSelector", "regenerateSelector", "stopSelector"]) {
-          const row = document.querySelector('[data-ar-row="' + key + '"]');
-          if (!row) { rows.push({ key, err: "no row" }); continue; }
+        const res = { n: 0, above: 0, notAbove: [], covering: [], offscreen: [] };
+        for (const row of document.querySelectorAll("#modal [data-ar-row]")) {
+          const hint = row.querySelector("[data-ar-hint]");
+          if (!hint || row.getBoundingClientRect().height === 0) continue;
           row.scrollIntoView({ block: "center" });
           await frame();
-          const hint = row.querySelector("[data-ar-hint]");
           hint.dispatchEvent(new MouseEvent("mouseenter"));
           await frame();
           const tip = document.querySelector('[role="tooltip"]');
-          if (!tip) { rows.push({ key, err: "no tip" }); continue; }
+          const key = row.getAttribute("data-ar-row");
+          res.n++;
+          if (!tip) { res.notAbove.push(key + ": no tip"); continue; }
           const rr = row.getBoundingClientRect();
-          const tr = tip.getBoundingClientRect();
-          rows.push({
-            key,
-            above: tr.bottom <= rr.top + 1,
-            gapToTop: Math.round(rr.top - tr.bottom),
-            onScreen: tr.top >= 0 && tr.bottom <= innerHeight && tr.left >= 0 && tr.right <= innerWidth,
-          });
+          // Where it comes to rest. Read a frame after it opens, it is still
+          // partway through its 4px slide.
+          const raw = tip.getBoundingClientRect();
+          const shift = new DOMMatrix(getComputedStyle(tip).transform).m42 *
+            (tip.offsetWidth > 0 ? raw.width / tip.offsetWidth : 1);
+          const tr = { left: raw.left, right: raw.right, top: raw.top - shift, bottom: raw.bottom - shift };
+          if (tr.bottom <= rr.top + 1 && rr.top - tr.bottom <= 12) res.above++;
+          else res.notAbove.push(key);
+          if (tr.bottom > rr.top + 1 && tr.top < rr.bottom - 1) res.covering.push(key);
+          if (tr.top < 0 || tr.bottom > innerHeight || tr.left < 0 || tr.right > innerWidth) res.offscreen.push(key);
           hint.dispatchEvent(new MouseEvent("mouseleave"));
-          await new Promise((r) => setTimeout(r, 300));
+          await frame();
         }
-        return rows;
+        return res;
       }),
     );
     const w = viewport.width;
-    check(`at ${w}px, the three button boxes open their description above the row`,
-      out.length === 3 && out.every((r) => r.above === true), out);
-    check(`at ${w}px, and it sits just over the row`,
-      out.every((r) => r.gapToTop >= 0 && r.gapToTop <= 12), out);
-    check(`at ${w}px, and it stays on the screen`, out.every((r) => r.onScreen === true), out);
+    check(`at ${w}px, every description opens just above its row (${out.above} of ${out.n})`,
+      out.n > 20 && out.above === out.n, out.notAbove);
+    check(`at ${w}px, none cover their row`, out.covering.length === 0, out.covering);
+    check(`at ${w}px, none run off the screen`, out.offscreen.length === 0, out.offscreen);
     check("no console errors", errors.length === 0, errors);
   }
 
-  // Squeezed: the same row with almost no room above it must still open above
-  // and still fit, rather than crossing over the row.
+  // Squeezed: the same row at the top of the screen, with too little room
+  // above it. It opens below instead, rather than as a sliver or over the row.
+  // The panel starts 40px above the screen, so the room above is well short of
+  // the description and not within a pixel of it.
   {
+    const SQUEEZED = "#modal{position:fixed;left:12px;right:12px;top:-40px;bottom:12px;overflow:auto;background:rgb(24,20,34);padding:10px;box-sizing:border-box}";
     const { out, errors } = await inPanel(
-      browser, { css: PANEL, viewport: { width: 393, height: 620 }, settings: { refusalNote: true } },
+      browser, { css: SQUEEZED, viewport: { width: 393, height: 620 }, settings: { refusalNote: true } },
       async (page) => page.evaluate(async () => {
         const frame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
         for (const h of document.querySelectorAll('[role="button"][aria-expanded="false"]')) h.click();
@@ -10952,22 +10962,25 @@ console.log("\nhint placement");
         const rr = row.getBoundingClientRect();
         const tr = tip.getBoundingClientRect();
         return {
-          above: tr.bottom <= rr.top + 1,
+          below: tr.top >= rr.bottom - 1,
           onScreen: tr.top >= 0 && tr.bottom <= innerHeight,
-          capped: getComputedStyle(tip).maxHeight !== "none",
+          // The gap over the row and the margin at the screen's edge.
+          roomAbove: Math.round(rr.top - 6 - 12),
+          tipHeight: Math.round(tr.height),
         };
       }),
     );
-    check("with little room above it is still above", out.above === true, out);
+    check("the row really has too little room above it",
+      out.roomAbove < out.tipHeight, out);
+    check("with too little room above it opens below", out.below === true, out);
     check("still on the screen", out.onScreen === true, out);
-    check("and capped to what room there was", out.capped === true, out);
     check("no console errors", errors.length === 0, errors);
   }
 
   // A row pushed off the top of the screen by the host's own layout leaves
   // negative room above it. A negative max-height is invalid CSS, which the
-  // browser drops, and the popover rendered at full height straight over the
-  // row it belongs to. Measured at a row top of -5, covering it from 12 to 273.
+  // browser drops, and the popover would render at full height straight over
+  // the row it belongs to.
   {
     // Pushed far enough up that the row genuinely has nothing above it. The
     // fixed chrome above the scroll area, the quick setup row included, means
@@ -10992,7 +11005,7 @@ console.log("\nhint placement");
         const tr = tip.getBoundingClientRect();
         return {
           rowTop: Math.round(rr.top),
-          // Nothing painted, rather than an empty frame over the setting.
+          below: tr.top >= rr.bottom - 1,
           painted: tr.width > 0 && tr.height > 0,
           coversRow: tr.height > 0 && tr.bottom > rr.top && tr.top < rr.bottom,
           maxH: getComputedStyle(tip).maxHeight,
@@ -11001,7 +11014,7 @@ console.log("\nhint placement");
     );
     check("a row pushed off the top really is off the top", out.rowTop < 20, out);
     check("and its description never lands on top of it", out.coversRow === false, out);
-    check("nothing is painted when there is nowhere to paint it", out.painted === false, out);
+    check("it opens below, where there is room", out.painted && out.below, out);
     check("no console errors", errors.length === 0, errors);
   }
 
@@ -11013,7 +11026,7 @@ console.log("\nhint placement");
         const frame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
         const row = [...document.querySelectorAll("[data-ar-row]")]
           .find((r) => (r.textContent || "").includes("Turn Auto Retry on"));
-        row.scrollIntoView({ block: "start" });
+        row.scrollIntoView({ block: "center" });
         await frame();
         row.querySelector("[data-ar-hint]").dispatchEvent(new MouseEvent("mouseenter"));
         await frame();
@@ -11021,14 +11034,78 @@ console.log("\nhint placement");
         const rr = row.getBoundingClientRect();
         const tr = tip.getBoundingClientRect();
         return {
-          below: tr.top >= rr.bottom - 1,
+          above: tr.bottom <= rr.top + 1,
           capped: getComputedStyle(tip).maxHeight !== "none",
           scrolls: tip.scrollHeight > tip.clientHeight,
         };
       }),
     );
-    check("a short description with room is below the row too", out.below, out);
+    check("a short description with room is above the row too", out.above, out);
     check("and is not capped or scrolled", !out.capped && !out.scrolls, out);
+    check("no console errors", errors.length === 0, errors);
+  }
+
+  // The motion follows the side it opens on. Over the row, it rises 4px into
+  // place as it fades in and sinks 4px as it fades out, so it moves away from
+  // the row and back. Under the row it is the other way round. With reduce
+  // motion it does neither.
+  for (const [zoom, still] of [[1, false], [1.25, false], [0.85, false], [1, true]]) {
+    const { out, errors } = await inPanel(
+      browser, { css: PANEL + (zoom === 1 ? "" : "body{zoom:" + zoom + "}"), viewport: { width: 393, height: 800 }, settings: { reduceMotion: still } },
+      async (page) => page.evaluate(async () => {
+        const frame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+        const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+        const ty = (n) => new DOMMatrix(getComputedStyle(n).transform).m42;
+        const row = [...document.querySelectorAll("[data-ar-row]")]
+          .find((r) => (r.textContent || "").includes("Turn Auto Retry on"));
+        const hint = row.querySelector("[data-ar-hint]");
+        const run = async () => {
+          await frame();
+          hint.dispatchEvent(new MouseEvent("mouseenter"));
+          const tip = document.querySelector('[role="tooltip"]');
+          await wait(40);
+          const opening = ty(tip);
+          const above = tip.getBoundingClientRect().bottom <= row.getBoundingClientRect().top + 5;
+          await wait(200);
+          const open = ty(tip);
+          const tr = tip.getBoundingClientRect(), rr = row.getBoundingClientRect();
+          const gap = Math.round(above ? rr.top - tr.bottom : tr.top - rr.bottom);
+          hint.dispatchEvent(new MouseEvent("mouseleave"));
+          await wait(60);
+          const closing = ty(tip);
+          await wait(300);
+          return { above, opening, open, closing, gap, gone: !tip.isConnected };
+        };
+        row.scrollIntoView({ block: "center" });
+        const over = await run();
+        // The panel moved up until the row is 30px from the top of the screen,
+        // where there is no room above it.
+        const panel = document.getElementById("modal");
+        // The move is written in CSS pixels and the row is read in screen
+        // pixels, which differ under a zoom.
+        const z = panel.offsetWidth > 0 ? panel.getBoundingClientRect().width / panel.offsetWidth : 1;
+        panel.style.top = Math.round((panel.getBoundingClientRect().top - (row.getBoundingClientRect().top - 30)) / z) + "px";
+        if (row.getBoundingClientRect().top > 40) return { over, under: {}, missed: Math.round(row.getBoundingClientRect().top) };
+        const under = await run();
+        return { over, under, rowTop: Math.round(row.getBoundingClientRect().top) };
+      }),
+    );
+    const what = still ? "with reduce motion" : "with motion at zoom " + zoom;
+    const o = out.over, u = out.under;
+    if (!still) {
+      check(what + ": over the row, it rises into place as it fades in",
+        o.above && o.opening > 0.2 && o.opening < 4.01 && Math.abs(o.open) < 0.01, o);
+      check(what + ": and sinks back toward the row as it fades out", o.closing > 0.2, o);
+      check(what + ": under the row, it drops into place and lifts back as it goes",
+        !u.above && u.opening < -0.2 && Math.abs(u.open) < 0.01 && u.closing < -0.2, out);
+    } else {
+      check("with reduce motion it does not move at all",
+        o.opening === 0 && o.closing === 0 && u.opening === 0 && u.closing === 0, out);
+    }
+    check(what + ": each one is gone after it fades", o.gone && u.gone, out);
+    // The slide's offset is not counted into where it rests.
+    check(what + ": at rest it is 6px from its row, over it or under it",
+      Math.abs(o.gap - 6) <= 1 && Math.abs(u.gap - 6) <= 1, out);
     check("no console errors", errors.length === 0, errors);
   }
 }

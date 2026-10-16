@@ -423,11 +423,6 @@ interface Field {
   // are offered. Anything else, from a hand-edited backup or an older version,
   // falls back to the first one.
   options?: Array<{ value: string; label: string }>;
-  // Puts this setting's description above its row instead of below it. Set on
-  // the note list, whose whole list, roles, buttons and counter are one row, so
-  // "below the row" is a long way from the "?" that was pressed. Also set on
-  // the three button boxes under Buttons it clicks.
-  hintAbove?: boolean;
   // Puts this row under a labelled run inside its group, named in RUNS below.
   // Consecutive rows naming the same run share one heading. It exists because
   // two settings sitting under the note list read as belonging to whichever
@@ -978,7 +973,6 @@ const SCHEMA: Group[] = [
       {
         key: "refusalNotes",
         needs: ["refusalNote"],
-        hintAbove: true,
         label: "What the notes say",
         type: "notes",
         hint: "Sent exactly as you type them, up to ten. Each has its own Role and From try. Keep each to a line or two, so the model follows it.",
@@ -1017,7 +1011,6 @@ const SCHEMA: Group[] = [
         label: "Your next / swipe button",
         type: "text",
         selector: true,
-        hintAbove: true,
         hint: "The button it clicks first. A swipe adds a new reroll, so the old reply stays. Set it even if you never swipe yourself.",
       },
       {
@@ -1025,7 +1018,6 @@ const SCHEMA: Group[] = [
         label: "Your regenerate button",
         type: "text",
         selector: true,
-        hintAbove: true,
         hint: "Used when there is no swipe button, or when Retry by adding a new reroll is off. It replaces the reply.",
       },
       {
@@ -1033,7 +1025,6 @@ const SCHEMA: Group[] = [
         label: "Your stop button",
         type: "text",
         selector: true,
-        hintAbove: true,
         hint: "The stop button, so it can halt a frozen reply before retrying.",
       },
       {
@@ -10492,7 +10483,9 @@ export function setup(ctx: Ctx, opts?: any) {
     try {
       going.removeAttribute("role");
       going.style.opacity = "0";
-      going.style.transform = going.getAttribute("data-ar-hint-up") ? "translateY(4px)" : "translateY(-4px)";
+      // With reduce motion it only goes, without moving.
+      if (!noMotion())
+        going.style.transform = going.getAttribute("data-ar-hint-up") ? "translateY(4px)" : "translateY(-4px)";
     } catch (_) {}
     const one: any = { box: going, timer: null };
     one.timer = setTimeout(() => {
@@ -10523,10 +10516,12 @@ export function setup(ctx: Ctx, opts?: any) {
       "border:1px solid var(--lumiverse-border,rgba(255,255,255,.16));" +
       "box-shadow:var(--lumiverse-shadow-md,0 8px 24px rgba(0,0,0,.4));" +
       "color:var(--lumiverse-text,#eee);font:12px/1.45 var(--lumiverse-font-family,system-ui);" +
-      // Fades in where it opens and out where it stood, and slides 4px from
-      // the row it belongs to, the same as Auto Refine's. The direction is set
-      // once it is known whether it opens under the row or over it.
-      "opacity:0;transform:translateY(-4px);transition:opacity 140ms ease-out,transform 140ms ease-out;" +
+      // Fades in where it opens and out where it stood, and slides 4px away
+      // from the row it belongs to, the same as Auto Refine's. It is placed
+      // with no offset, since placeFixed reads the box's rect and would count
+      // an offset into its position. The offset and the transition are set
+      // once it is placed and the side is known.
+      "opacity:0;transform:none;transition:none;" +
       // Off screen until it has been measured, so it is never seen in the wrong
       // place for a frame.
       "left:0;top:-9999px";
@@ -10581,30 +10576,19 @@ export function setup(ctx: Ctx, opts?: any) {
     // Lined up with the row's left edge rather than centred on the "?", which
     // reads as belonging to the row, and nudged back inside a narrow screen.
     const left = Math.max(EDGE, Math.min(r.left, vw - w - EDGE));
-    // Below the row it belongs to unless the field asked otherwise, and never
-    // flipped between the two on the fly. Flipping on available room means a
-    // long description opens somewhere none of the others do. Where it opens is
-    // a property of the setting, so a given row is consistent.
-    //
-    // Above is for the rows that ask for it in the schema, such as the note
-    // list. Whichever side it is on, a description too tall for the
-    // room there is capped and scrolls rather than moving to the other side.
-    let above = false;
-    try {
-      above = !!(anchor.getAttribute && anchor.getAttribute("data-ar-hint-above"));
-    } catch (_) {}
-    // However little room there is, it is not bought by moving over the row.
-    // Covering the setting is the thing the popover exists to avoid, and a
-    // short popover still scrolls, so nothing in it is out of reach.
-    // Never below zero. A row pushed to the very top of the screen by the host's
-    // own layout leaves negative room above it, and a negative max-height is
-    // invalid CSS, which the browser drops: the popover then rendered at full
-    // height straight over the row it belongs to, which is the one thing it
-    // exists not to do. Measured at a row top of -5, covering it from 12 to 273.
-    const room = Math.max(
-      0,
-      above ? r.top - GAP - EDGE : vh - EDGE - (r.bottom + GAP),
-    );
+    // Room on each side, never below zero. A row pushed to the very top of the
+    // screen by the host's own layout leaves negative room above it, and a
+    // negative max-height is invalid CSS, which the browser drops, and the
+    // popover would render at full height straight over the row it belongs to.
+    const over = Math.max(0, r.top - GAP - EDGE);
+    const under = Math.max(0, vh - EDGE - (r.bottom + GAP));
+    // Above the row, the same as Auto Refine's. Below only when it does not fit
+    // above and there is more room below, which is a row near the top of the
+    // screen. Whichever side it is on, a description too tall for the room
+    // there is capped and scrolls rather than moving over the row: covering the
+    // setting is the thing the popover exists to avoid.
+    const above = over >= Math.min(h, under);
+    const room = above ? over : under;
     // Above, the bottom edge is pinned a gap over the row and the top follows
     // from however tall it ends up, capped included. Below, the top is pinned
     // and the bottom follows.
@@ -10632,14 +10616,16 @@ export function setup(ctx: Ctx, opts?: any) {
     if (room <= 0) el.style.display = "none";
 
     placeFixed(el, left, top);
-    // Reading the layout between building it and turning the opacity up is what
-    // makes the browser treat this as a fade rather than as a value that was
-    // always one. The read is the placement above, which has already asked for
-    // the box's rect.
-    if (noMotion()) el.style.transition = "none";
-    if (above) {
-      el.setAttribute("data-ar-hint-up", "1");
-      el.style.transform = "translateY(4px)";
+    if (above) el.setAttribute("data-ar-hint-up", "1");
+    // Over the row it starts 4px low and rises into place. Under the row it
+    // starts 4px high and drops into place. Either way it moves away from the
+    // row. The start is read with the transition still off, and the
+    // transition is read before the box is shown, so the browser runs the
+    // fade and the move from there. With reduce motion it appears at once.
+    if (!noMotion()) {
+      el.style.transform = above ? "translateY(4px)" : "translateY(-4px)";
+      void el.offsetWidth;
+      el.style.transition = "opacity " + HINT_FADE + "ms ease-out,transform " + HINT_FADE + "ms ease-out";
       void el.offsetWidth;
     }
     el.style.opacity = "1";
@@ -13249,7 +13235,6 @@ export function setup(ctx: Ctx, opts?: any) {
       // Marks it for the dismiss handler, which leaves the "?" alone so its own
       // click can close a popover rather than closing and reopening it.
       info.setAttribute("data-ar-hint", "1");
-      if (f.hintAbove) info.setAttribute("data-ar-hint-above", "1");
       // Size and text size are in the panel stylesheet, not here, so the
       // coarse-pointer rule can raise them. Everything else is inline.
       info.style.cssText =
