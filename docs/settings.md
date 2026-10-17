@@ -57,6 +57,8 @@ The search box still finds a hidden setting by name. A row found that way says w
 
 Only **Save** keeps your changes. Closing with the X, or tapping outside the panel, throws them away, so you can try things freely.
 
+If nothing has changed since you last saved, **Save** says the settings are already saved and does not save them again. A setting changed and then changed back counts as nothing changed.
+
 - Saved settings follow your Lumiverse account to other browsers and devices.
 - A tab left open catches up. Opening the settings, or coming back to the tab after more than 30 seconds, loads your settings and presets from your account first. So a tab left open on your phone does not save older settings over newer ones.
 - Saves reach your account in the order you make them, so an older save never ends up as the stored copy.

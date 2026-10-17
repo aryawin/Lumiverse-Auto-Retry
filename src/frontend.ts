@@ -152,7 +152,7 @@ const STREAM_BUF_MAX = 200000;
 
 // Bumped on each release. Shown in the startup log and in the Copy debug info
 // report, so a bug report always says which version it came from.
-const VERSION = "5.17.7";
+const VERSION = "5.18.0";
 
 // Whether two saved settings hold the same values, whatever order their keys
 // were written in. A key left undefined counts as not there, the way it is
@@ -12917,6 +12917,20 @@ export function setup(ctx: Ctx, opts?: any) {
     const save = btn("Save", true);
     save.addEventListener("click", () => {
       commit();
+      // The baseline is what was saved last. When every setting still matches
+      // it, the panel says so and writes nothing, the same as Update selected
+      // on a preset that already holds these settings.
+      if (modalBaseline) {
+        const now: any = {};
+        for (const g of SCHEMA) for (const fl of g.fields) now[fl.key] = cfg[fl.key];
+        if (sameSettings(now, modalBaseline)) {
+          status.textContent = "These settings are already saved. Nothing changed.";
+          setTimeout(() => {
+            if (status.textContent === "These settings are already saved. Nothing changed.") status.textContent = "";
+          }, 2600);
+          return;
+        }
+      }
       const storedHere = applyAndSave();
       if (!storedHere) {
         // Left on screen rather than cleared after a moment: this one is not a

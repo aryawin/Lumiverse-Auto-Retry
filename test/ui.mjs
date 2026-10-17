@@ -1716,7 +1716,10 @@ console.log("\nthe panel survives a re-sync");
           await frame();
           const before = { on: selected(), body: bodyText().slice(0, 40) };
 
-          // Save is one of the five things that re-sync the panel.
+          // Save is one of the five things that re-sync the panel. A setting is
+          // changed first, since Save with nothing changed saves nothing.
+          document.getElementById("modal")
+            .querySelector('[data-ar-row="showFloatingToggle"] input[type="checkbox"]').click();
           [...document.getElementById("modal").querySelectorAll("button")]
             .find((b) => b.textContent.trim() === "Save").click();
           await frame();
@@ -12112,6 +12115,57 @@ for (const [label, viewport, touch] of [
     check(tag + ": it grows back when the keyboard closes", Math.abs(out.afterKeyboard - out.before) <= 2, out);
     check(tag + ": no console errors", errors.length === 0, errors);
   }
+}
+
+console.log("\nsave with nothing changed");
+// Save compares every setting with what was saved last. With nothing changed
+// it says the settings are already saved and writes nothing. A real change is
+// saved as usual, and changing a setting and changing it back counts as
+// nothing changed.
+for (const [label, viewport, touch] of [["phone", { width: 393, height: 820 }, true], ["laptop", { width: 1280, height: 860 }, false]]) {
+  const { out, errors } = await inPanel(browser, { viewport, touch }, (page) =>
+    page.evaluate(async () => {
+      const frame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      let writes = 0;
+      const realSet = Storage.prototype.setItem;
+      Storage.prototype.setItem = function (k, v) {
+        if (k === "lv-auto-retry:settings:v1") writes++;
+        return realSet.call(this, k, v);
+      };
+      const modal = document.getElementById("modal");
+      const save = () => [...modal.querySelectorAll("button")].find((b) => b.textContent.trim() === "Save").click();
+      const said = () => (modal.querySelector("[data-ar-save-status]") || {}).textContent || "";
+      const box = modal.querySelector('[data-ar-row="showFloatingToggle"] input[type="checkbox"]');
+      if (!box) return { err: "no checkbox" };
+      const flip = () => { box.click(); };
+      const res = {};
+      save();
+      await frame();
+      res.untouched = { said: said(), writes };
+      flip();
+      await frame();
+      save();
+      await frame();
+      res.changed = { said: said(), writes };
+      save();
+      await frame();
+      res.again = { said: said(), writes };
+      flip();
+      flip();
+      await frame();
+      save();
+      await frame();
+      res.back = { said: said(), writes };
+      return res;
+    }),
+  );
+  const ALREADY = "These settings are already saved. Nothing changed.";
+  check(label + ": Save with nothing changed says it is already saved", out.untouched && out.untouched.said === ALREADY, out);
+  check(label + ": and writes nothing", out.untouched && out.untouched.writes === 0, out);
+  check(label + ": a real change is saved", out.changed && /^Saved\./.test(out.changed.said) && out.changed.writes === 1, out);
+  check(label + ": Save again straight after says it is already saved", out.again && out.again.said === ALREADY && out.again.writes === 1, out);
+  check(label + ": a setting changed and changed back counts as nothing changed", out.back && out.back.said === ALREADY && out.back.writes === 1, out);
+  check(label + ": no console errors", errors.length === 0, errors);
 }
 
 console.log("\nreset picker");

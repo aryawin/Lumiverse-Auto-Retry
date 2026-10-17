@@ -8,6 +8,16 @@ Versions follow [Semantic Versioning](https://semver.org). A new major version m
 
 ---
 
+## 5.18.0
+
+_2026-10-17_
+
+### Changed
+
+- **Save says when nothing has changed.** If every setting is the same as when you last saved, **Save** says "These settings are already saved. Nothing changed." and does not save again. A setting changed and then changed back counts as nothing changed. **Update selected** on a preset already worked this way.
+
+---
+
 ## 5.17.7
 
 _2026-10-17_
