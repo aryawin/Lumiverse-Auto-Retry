@@ -9013,8 +9013,12 @@ console.log("\nSave tells the truth about the browser copy");
       if (!storageWorks) {
         Storage.prototype.setItem = function () { throw new Error("site data is blocked"); };
       }
+      // A setting is changed first, since Save with nothing changed saves
+      // nothing and so never meets the blocked storage.
+      const box = document.querySelector('[data-ar-row="showFloatingToggle"] input[type="checkbox"]');
+      if (box) box.click();
       const save = [...document.querySelectorAll("button")].find((b) => b.textContent.trim() === "Save");
-      const pressed = !!save;
+      const pressed = !!save && !!box;
       if (save) save.click();
       await frame();
       const el = document.querySelector("[data-ar-save-status]");
