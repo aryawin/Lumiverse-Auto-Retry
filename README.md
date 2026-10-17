@@ -50,6 +50,10 @@ It works with no setup. Everything else is optional.
 - **Cancel** on the pop-up belongs to the extension, so it always works.
 - To switch it off for one chat, or everywhere, see [Turning it off](docs/settings.md#turning-it-off-in-one-chat).
 
+## Made for adults
+
+Auto Retry is made for adults, 18 and older. Lumiverse itself can be used by anyone, and it has no adult content of its own. This extension is not meant for anyone under 18.
+
 ## Not for sexual content involving minors
 
 Auto Retry is not intended for sexual content involving minors, and I do not condone or support anybody using it for that.
@@ -75,7 +79,7 @@ I cannot control what somebody does with an extension once they have it. What I 
 - [The on-screen panel](docs/settings.md#the-on-screen-panel): the log, the prompt viewer and the stats
 - [Import and export](docs/import-export.md): moving your setup between devices
 - [Reporting a bug](docs/troubleshooting.md)
-- [Safety](docs/safety.md): who this is built for, the one setting that asks before it turns on, and what the retry loop can turn into
+- [Safety](docs/safety.md): who this is for, the one setting that asks before it turns on, and what the retry loop can turn into
 - [Privacy](docs/privacy.md): what the extension can and cannot reach, what it keeps, and how to check any of it
 - [Security policy](SECURITY.md): how to report a security problem
 - [Changelog](CHANGELOG.md): what changed in every version

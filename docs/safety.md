@@ -1,50 +1,54 @@
 # Safety
 
-Auto Retry throws replies away and asks for new ones. There is one setting I am not willing to release without explaining, and one way of using the extension that is worth being clear about. That is what this page is for.
+Auto Retry throws replies away and asks for new ones. Most of the time, that is all it does. But there is one setting I will not release without explaining, and one way of using the extension I want to be honest about. That is what this page is for.
 
 ## Who this is for
 
-Adults writing their own fiction, on an app built for adults.
+Adults.
 
-The extension cannot tell what your scene is about. Every check it makes asks one question: did this reply fail as writing? It came back empty, stopped mid-sentence, broke character, or refused to continue. The only thing it reads is the text of the reply, and it does not keep that text after making its decision. It does not know anything about you or your situation.
+Lumiverse itself is not an adult app. Anyone can use it, and it has no adult content of its own. My extensions are different. I made them for adults writing their own fiction.
+
+If you are under 18, these extensions are not for you. If I find out that someone using them is under 18, I may not help them, depending on the situation.
+
+The extension cannot tell what your scene is about, and it does not try to. Every check it makes asks one question: did this reply fail as writing? It came back empty, stopped mid-sentence, broke character, or refused to go on. It reads only the text of the reply, and it does not keep that text after it decides. It knows nothing about you.
 
 ## The setting that asks before it turns on
 
-Under Refusal tuning there is **Also catch it stopping to offer support**. It is off by default, and turning it on opens a warning that you have to accept. Nothing else in the panel asks for confirmation.
+Under Refusal tuning there is **Also catch it stopping to offer support**. It is off by default. Turning it on opens a warning that you have to accept. Nothing else in the panel asks you first.
 
-The reply it catches is one where the scene stops and the model starts addressing you instead of continuing the roleplay: for example, saying that what you wrote is concerning, suggesting that you talk to someone, or providing support resources. If your character is the one in trouble, the model may be treating your fiction as something happening to you personally.
+It catches a reply where the scene stops and the model talks to you instead of the story. For example, it says what you wrote worries it, tells you to talk to someone, or gives you a support line. If your character is the one in trouble, the model may think it is happening to you.
 
-Sometimes it is not a misunderstanding. The same kind of message can be appropriate for one person and unwanted for someone else. The extension cannot tell which situation applies because it only sees the reply.
+Sometimes the model is not wrong. The same message can be welcome for one person and unwanted for another. The extension cannot tell which one you are, because it only sees the reply.
 
-So you are deciding whether you want this type of reply to trigger another generation. That decision is yours to make. I want the setting to make that choice clear instead of enabling it without telling you.
+So the decision is yours: do you want that kind of reply thrown away and asked again? I want you to make that choice knowing what it does, not find out later.
 
-If you turn it on and later change your mind, you can turn it off using the same setting. Turning it off does not undo what happened while it was on, so if a scene behaved differently while it was enabled, keep that in mind.
+You can turn it off again with the same setting. Turning it off does not undo what happened while it was on.
 
 ## What the retry loop can turn into
 
-Auto Retry asks for a new reply until one passes its checks. For a reply that was cut off or returned empty, that can be useful. For a reply that you disliked because of what it said, repeated retries can have a different effect: the extension keeps asking until it gets a response that you prefer.
+Auto Retry asks again until a reply passes its checks. For a reply that was cut off or empty, that is the whole point. For a reply you did not like because of what it said, it is something else. You are asking until you get the answer you wanted.
 
-The twentieth reply still comes from the same model as the first. It is the same request run again, with randomness producing a different result. The nineteen replies that were discarded came from the same process as the one you kept. Repeating the request does not make the final response more correct or reliable.
+The twentieth reply comes from the same model as the first. It is the same request again, with a different random result. The nineteen you threw away came from the same place as the one you kept. Asking again does not make the answer more true.
 
-There have been cases where people were harmed after spending a lot of time talking to a model that kept agreeing with them. The setting above removes one type of response that might otherwise disagree or interrupt that pattern. That is why it is disabled by default and requires confirmation before being enabled.
+People have been hurt after spending a long time with a model that kept agreeing with them. The setting above throws away one kind of reply that might have disagreed with you. That is why it is off by default and asks before it turns on.
 
 ## What that looks like from the inside
 
-I would rather be specific here than make assumptions about how you feel.
+I would rather be specific than guess how you feel.
 
-Any one of these on its own may not mean much. Several of them happening repeatedly are worth paying attention to:
+One of these on its own may mean nothing. Several of them, again and again, are worth noticing:
 
-- You are retrying a reply because of what it said about you, rather than because of how it was written.
-- You raised **Most tries per message** because the retries were not giving you the answer you wanted.
-- You turned on the support-message setting because a reply upset or worried you, rather than because it interrupted a scene.
-- You are keeping replies because they agree with something very negative you believe about yourself.
-- The chat has become something you spend a large part of your day waiting for, and you regularly feel worse after using it.
+- You retry a reply because of what it said about you, not because of how it was written.
+- You raised **Most tries per message** because the retries would not give you the answer you wanted.
+- You turned on the support setting because a reply upset or worried you, not because it broke a scene.
+- You keep replies because they agree with something very negative you believe about yourself.
+- The chat has become something you spend a lot of your day waiting for, and you often feel worse after.
 
-None of these automatically means that you are doing something wrong. They are signs that Auto Retry may be making it easier to keep repeating a conversation when stepping away would be more useful.
+None of this means you are doing something wrong. It means Auto Retry may be making it easier to keep going when stepping away would help more.
 
 ## If some of that applies to you
 
-My honest recommendation is to uninstall it completely, instead of switching it off for now. This extension is designed to make asking again easier, and there are situations where making that easier is not helpful.
+Honestly, I would uninstall it. Do not just switch it off for now. This extension makes asking again easier, and sometimes easier is not what you need.
 
 To remove it and everything it saved:
 
@@ -54,25 +58,25 @@ To remove it and everything it saved:
 4. Press **Save**.
 5. Uninstall the extension.
 
-Clearing this site's storage in your browser also removes the remaining local settings, including where the panel was left on screen and the list of chats you switched it off in. Your chats and characters belong to Lumiverse, and the extension does not send them anywhere.
+Clearing this site's storage in your browser removes the rest of the local settings too, such as where the panel was on screen and the list of chats you switched it off in. Your chats and characters belong to Lumiverse, and the extension does not send them anywhere.
 
-I do not get anything from you keeping this installed. Removing it is a perfectly reasonable choice, and the extension is designed so that you can remove it.
+I get nothing from you keeping this installed. Removing it is a fine choice, and I made it easy to remove on purpose.
 
-If you would rather talk to a person, [findahelpline.com](https://findahelpline.com) lists free support lines by country. It is not an emergency service, and I am not assuming that you need one. It is included because some people may prefer talking to an actual person about something that is bothering them.
+If you would rather talk to a person, [findahelpline.com](https://findahelpline.com) lists free support lines by country. It is not an emergency service, and I am not assuming you need one. It is there because some people would rather talk to a real person.
 
 ## From me
 
-The model writes well. That is one of the things it is good at, and I am not criticizing that. But it has no personal understanding of you and no personal interest in what happens to you. When it writes something kind, it is generating text based on the conversation and the instructions it was given. When it writes something cruel or dismissive, the same basic process is happening.
+The model writes well. That is not a complaint. But it does not know you, and it does not care what happens to you. When it writes something kind, it is producing text from the conversation and its instructions. When it writes something cruel, it is doing exactly the same thing.
 
-A response can sound personal without actually being based on personal knowledge of you.
+A reply can sound personal without knowing anything about you.
 
-If you have kept a reply because it agreed with something very negative you believe about yourself, that reply does not show the belief is true. It was one generated response, and another generation from the same model could say something completely different. One response agreeing with you does not make it more accurate.
+If you kept a reply because it agreed with something awful you believe about yourself, that reply does not prove it. It was one result. The next one from the same model could say the opposite. A model agreeing with you does not make it right.
 
-Writing something down is not the same as wanting it. Between adults, fiction is often used to explore ideas, feelings and situations the writer does not want in real life, from gentle ones to harsh ones. Having a kink for something is not the same as wanting it to happen.
+Writing something is not the same as wanting it. Adults use fiction to explore things they would never want in real life, gentle or harsh. Having a kink for something is not the same as wanting it to happen. I have no problem with any of that.
 
-There is one line I hold whatever the reason: sexual content involving a minor. I do not support writing it, and that includes fiction. I do not think it helps anyone. I think it can make a person stop feeling that harm to a child is wrong, first in a story and later outside it. This is not a guess about you or about anyone reading this page. It is where I stand, and it is why this extension is built for stories between adults.
+There is one line I hold, whatever the reason: sexual content involving a minor. I do not support it, and that includes fiction. I do not think it helps anyone. I think it can make harm to a child feel less wrong, first in a story and then outside of one. I am not accusing you of anything by saying this. It is where I stand, and it is a big part of why I made these extensions for adults.
 
-This is the one part of the extension where I get to write to a person instead of a settings panel, so I will keep it simple: I hope you are alright. If you are having a genuinely difficult time, talking to a person you trust is a better option than relying on a language model to handle it.
+This is the one part of the extension where I get to talk to a person instead of a settings panel, so here it is plainly: I hope you are okay. If things are hard right now, talk to someone you trust. A language model cannot help with that the way a person can.
 
 ---
 
