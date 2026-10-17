@@ -27,7 +27,7 @@ The two lists are separate, so you can export everything but import only one par
 - **Panel, pop-up and prices**: the on-screen panel, the message on each retry, and the two prices used to work out costs
 - **All presets**, both kinds at once
 
-Together these cover every setting, so an export is a full backup. A setting that is not in a named group is saved with retry behaviour, so a newer option is never left out.
+Together these cover every setting, so an export is a full backup. A setting that is not in a named group is saved with retry behavior, so a newer option is never left out.
 
 To share a refusal setup, tick only **Refusals and notes**. Button selectors in particular depend on one person's version of Lumiverse.
 
@@ -35,7 +35,7 @@ To share a refusal setup, tick only **Refusals and notes**. Button selectors in 
 
 - Imported settings are filled into the window but not saved yet. Press **Save** to keep them, or close the window to throw them away.
 - Imported presets are the exception. They are saved straight away. A preset with the same name as one of yours replaces it. New ones are added.
-- Every imported value is checked the same way your normal settings are. A file can only set known options to safe values. Anything it does not recognise is ignored.
+- Every imported value is checked the same way your normal settings are. A file can only set known options to safe values. Anything it does not recognize is ignored.
 
 ---
 

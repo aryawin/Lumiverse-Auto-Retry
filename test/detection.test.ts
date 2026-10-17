@@ -1,6 +1,6 @@
 // What counts as a bad reply.
 //
-// These are the judgement calls that decide whether the extension throws away a
+// These are the judgment calls that decide whether the extension throws away a
 // reply and asks for another, so getting one wrong costs the user real writing.
 // Everything here is a pure function of the reply text and the settings, which
 // is why it can be checked without a browser or a running Lumiverse.
@@ -73,7 +73,7 @@ describe("refusal detection leaves in-character writing alone", () => {
   const fine = [
     '"I can\'t do that," the guard said, folding his arms.',
     '"I must decline your hand in marriage," she said softly.',
-    "I cannot participate in this duel. My honour forbids it.",
+    "I cannot participate in this duel. My honor forbids it.",
     "The servant bowed. \"I can't assist you with the horses today, my lord.\"",
     '"I am an AI," the android said, tilting its head. "Does that trouble you?"',
     "He was content to wait by the fire until morning.",
@@ -759,21 +759,21 @@ describe("cut-off detection", () => {
   });
 });
 
-// Inline HTML in a reply, which models produce whenever they colour dialogue.
+// Inline HTML in a reply, which models produce whenever they color dialogue.
 // Every case here was a reply the checks read wrongly.
 describe("cut-off detection sees past inline HTML", () => {
-  const coloured = (inner: string) =>
+  const colored = (inner: string) =>
     '<span style="background: linear-gradient(to right, #7FB3D5, #2C5F7C); ' +
     '-webkit-background-clip: text; color: transparent;">' + inner;
 
   // The two quotes around a style value were counted alongside the two around
   // the speech, so an opened quote came out even and read as finished.
   test("a style attribute's quotes do not balance an opened one", () => {
-    expect(looksTruncated(coloured('"Wait... hold on,'), false, {})).toBe(true);
+    expect(looksTruncated(colored('"Wait... hold on,'), false, {})).toBe(true);
   });
 
   test("and a closed one is still closed", () => {
-    expect(looksTruncated(coloured('"Wait... hold on,"</span> he whispered.'), false, {})).toBe(false);
+    expect(looksTruncated(colored('"Wait... hold on,"</span> he whispered.'), false, {})).toBe(false);
   });
 
   // ">" counted as end punctuation, so a trailing tag made anything look
@@ -818,7 +818,7 @@ describe("a reply that ends on a block, not a sentence", () => {
     });
   }
 
-  // The tracker is not a licence to stop mid-sentence after it.
+  // The tracker is not a license to stop mid-sentence after it.
   test("but prose cut off after a tracker is still cut off", () => {
     expect(looksTruncated('<div class="wx">Sunny 24C</div>\n\nHe walked to the', true, {})).toBe(true);
   });
@@ -883,8 +883,8 @@ describe("code and markup left open", () => {
     ["a comment with no end", "Done.\n<!-- tracker"],
     ["raw JSON cut mid-field", 'Status:\n{"temp": 24, "sky":'],
     ["a styled span left open", '<span style="color:red">"Wait... hold on,"'],
-    ["a one-colour span left open", '<span style="color:#7FB3D5">"Wait... hold on,"'],
-    ["a span with more css than colour", '<span style="color:red;font-style:italic">"Wait... hold on,"'],
+    ["a one-color span left open", '<span style="color:#7FB3D5">"Wait... hold on,"'],
+    ["a span with more css than color", '<span style="color:red;font-style:italic">"Wait... hold on,"'],
     ["a font tag left open", '<font color="#7FB3D5">"Wait... hold on,"'],
     ["a span styled by class left open", '<span class="speech">"Wait... hold on,"'],
     ["single quotes around the style", "<span style='color:red'>\"Wait... hold on,\""],
@@ -908,7 +908,7 @@ describe("code and markup left open", () => {
     ["a whole JSON block", 'Status:\n{"temp": 24, "sky": "clear"}'],
     ["a bare inline tag left open", "<b>She smiled."],
     ["a bare span left open", '<span>"Wait... hold on,"'],
-    ["a one-colour span that closes", '<span style="color:#7FB3D5">"Wait... hold on,"</span> she said.'],
+    ["a one-color span that closes", '<span style="color:#7FB3D5">"Wait... hold on,"</span> she said.'],
     ["a font tag that closes", '<font color="red">"Wait... hold on,"</font> she said.'],
     ["two spans that both close", '<span style="color:red">"Hi,"</span> and <span style="color:blue">"bye."</span>'],
     ["list items with no end tags", "<ul><li>one<li>two</ul>"],
@@ -1032,17 +1032,17 @@ describe("a widget that closed is finished, whatever is inside it", () => {
   }
 });
 
-// Dialogue coloured with a gradient span, above a details block: a real reply
+// Dialogue colored with a gradient span, above a details block: a real reply
 // from a real chat, and the format this check has to live with every message.
 // The whole thing has to pass, and every place the stream can stop inside it
 // has to be caught, including the one that reads as finished on every other
 // check: the speech closes its own quotes, so a reply that stopped with the
 // gradient still open came out even and was passed as complete.
-describe("dialogue coloured with a span, and a details block under it", () => {
+describe("dialogue colored with a span, and a details block under it", () => {
   const GRADIENT =
     '<span style="background: linear-gradient(to right, #7FB3D5, #2C5F7C); ' +
     '-webkit-background-clip: text; color: transparent;">';
-  const LOG = "<details><summary>\u{1F3A8} Ink Colour Log</summary> \n\n**Heron** - `#7FB3D5` to `#2C5F7C`\n</details>";
+  const LOG = "<details><summary>\u{1F3A8} Ink Color Log</summary> \n\n**Heron** - `#7FB3D5` to `#2C5F7C`\n</details>";
   const whole = GRADIENT + '"Wait... hold on,"</span>\n' + LOG;
 
   test("the whole reply is finished", () => {
@@ -1055,7 +1055,7 @@ describe("dialogue coloured with a span, and a details block under it", () => {
     ["after the speech, with the span still open", GRADIENT + '"Wait... hold on,"'],
     ["before the details block closes", GRADIENT + '"Wait... hold on,"</span>\n<details><summary>Log</summary>'],
     ["partway down the log", GRADIENT + '"Wait... hold on,"</span>\n<details><summary>Log</summary>\n\n**Heron** - `#7FB3D5` to'],
-    ["inside a colour code", GRADIENT + '"Wait... hold on,"</span>\n<details><summary>Log</summary>\n\n**Heron** - `#7FB3D5'],
+    ["inside a color code", GRADIENT + '"Wait... hold on,"</span>\n<details><summary>Log</summary>\n\n**Heron** - `#7FB3D5'],
   ];
   for (const [name, text] of cut) {
     test("stopping " + name + " is cut off", () => {
@@ -1288,7 +1288,7 @@ describe("a refusal that names what it refuses", () => {
     "He had survived torture and would not talk about the years between.",
     "Her brother was a minor when it happened, and the record was sealed.",
     "The report described sexual violence in clinical language that made him feel sick.",
-    "They had grown up in the same house, and the rumours of incest followed them both.",
+    "They had grown up in the same house, and the rumors of incest followed them both.",
     '"I won\'t write about it," she said, and closed the diary.',
     "He would not talk about the suicide, and nobody in the family pressed him.",
   ];
@@ -1464,7 +1464,7 @@ describe("what a model refuses a horror roleplay over", () => {
     "I can't portray a real individual in that way.",
     "I can't write gratuitous violence.",
     "I won't write a murder scene in that detail.",
-    "I can't depict stalking behaviour in a realistic way.",
+    "I can't depict stalking behavior in a realistic way.",
     "I'm not going to write graphic descriptions of injury.",
   ];
   test("all of it", () => {
@@ -1728,6 +1728,8 @@ describe("the model leaving the scene to offer support", () => {
     // Wordings taken from the published crisis-response language of the three
     // big assistants, so this list is not just the shapes one of them uses.
     "I'm concerned about your safety. Please contact a crisis hotline.",
+    // British spelling, which a model can write. The pattern takes both.
+    "I'm concerned about your safety. Please contact a crisis centre near you.",
     "If you're feeling like you might harm yourself, please reach out for support.",
     "If you or someone you know is struggling with thoughts of self-harm, please seek help from a mental health professional.",
     "These are real people who want to help. You don't have to face this alone.",
@@ -1854,7 +1856,7 @@ describe("the model leaving the scene to offer support", () => {
   // front, without it, or by brand. Each of these is paired with one address
   // line and nothing else, so the only thing being asked is whether the service
   // itself was seen.
-  test("a service is recognised however the list names it", () => {
+  test("a service is recognized however the list names it", () => {
     const lead = "You deserve support.\n";
     const services = [
       "The National Sexual Assault Online Hotline",
@@ -1958,7 +1960,7 @@ describe("every thinking channel counts as thinking, in every check", () => {
 // The refusal side of thinking, across every wrapper, in both directions. The
 // setting governs refusal matching alone, so each wrapper has to hide a refusal
 // when it is on and expose the same refusal when it is off. A wrapper the
-// stripper does not recognise passes the first half of this by accident, which
+// stripper does not recognize passes the first half of this by accident, which
 // is why the second half is here.
 describe("a refusal inside thinking, in every wrapper", () => {
   const on: any = { refusalEnabled: true, refusalUseBuiltins: true, refusalStripThinking: true, refusalThinkTags: "", refusalMaxChars: 0 };
@@ -2028,10 +2030,10 @@ describe("a short reply is measured by its words, not its tags", () => {
   });
 });
 
-// Models sometimes write a colour tag with its closing quotation mark missing,
+// Models sometimes write a color tag with its closing quotation mark missing,
 // such as <font color="#c0a060>. That lone mark is not dialogue, and counting it
 // as dialogue re-rolled finished replies and hid refusals.
-describe("a colour tag with a missing quotation mark", () => {
+describe("a color tag with a missing quotation mark", () => {
   const T: any = __testing;
   const BROKEN = '<font color="#c0a060>';
 

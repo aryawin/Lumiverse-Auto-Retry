@@ -15,7 +15,7 @@ How a retry finds the button:
 - Your own selectors are tried first, then the built-in list. So a list you saved in an older version can never hide a button the built-in list would find.
 - The built-in list starts with the mark Lumiverse puts on its own Regenerate button. It keeps working if the button's title or language changes.
 - It presses the button on the newest message.
-- A button that is hidden or greyed out is skipped, because pressing it would do nothing and waste a retry.
+- A button that is hidden or grayed out is skipped, because pressing it would do nothing and waste a retry.
 - If no button is on screen yet, it keeps looking for a couple of seconds. Lumiverse sometimes shows its buttons a moment after a reply ends.
 - It never presses a button inside another extension, such as a drawer tab, a floating widget or a pop-up that another extension added. Another extension can have its own chat with its own **Regenerate** button, and a retry is only for the chat.
 - **Pick it for me** says so if you hold a button inside another extension, and does not save it.
@@ -62,7 +62,7 @@ You do not need to change any setting for this.
 
 This is behind a switch, **My dialog's button says something else**, which is off by default. Almost nobody needs it.
 
-Turn it on only if the Regeneration Feedback box stays on screen after a retry opens it. That means Auto Retry did not recognise its button. It already knows `Skip`, `Regenerate`, `Confirm`, `Proceed`, `Submit` and `OK`. If your button says something else, for example in another language, add that word here.
+Turn it on only if the Regeneration Feedback box stays on screen after a retry opens it. That means Auto Retry did not recognize its button. It already knows `Skip`, `Regenerate`, `Confirm`, `Proceed`, `Submit` and `OK`. If your button says something else, for example in another language, add that word here.
 
 - Type the button's text exactly as shown, one per line. Capitals do not matter. **Expand** opens a bigger editor.
 

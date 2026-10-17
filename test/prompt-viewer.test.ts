@@ -512,7 +512,7 @@ describe("reporting which permissions are granted", () => {
   });
 });
 
-// Lumiverse counts with a real tokeniser where it has one for the model, and
+// Lumiverse counts with a real tokenizer where it has one for the model, and
 // says so when it has none and fell back to characters over four. That fallback
 // is the same guess the panel makes for itself, so taking it for a count would
 // put an exact-looking figure over a guess.
@@ -524,7 +524,7 @@ describe("the token count under the prompt", () => {
       userId: "u1",
       model: "a-model",
     });
-    // The count is sent after the snapshot so a slow tokeniser never holds one
+    // The count is sent after the snapshot so a slow tokenizer never holds one
     // up, so it has to be waited for rather than read straight away.
     await new Promise((r) => setTimeout(r, 60));
     return h;

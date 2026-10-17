@@ -4,7 +4,7 @@
 // points at, would leave a row hidden forever with no error anywhere.
 //
 // These read the source rather than the built panel, because the fault they
-// are looking for is a name that does not match, not a behaviour.
+// are looking for is a name that does not match, not a behavior.
 import { expect, test, describe } from "bun:test";
 import { readFileSync } from "node:fs";
 

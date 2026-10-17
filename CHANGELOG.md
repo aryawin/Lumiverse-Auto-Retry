@@ -8,6 +8,18 @@ Versions follow [Semantic Versioning](https://semver.org). A new major version m
 
 ---
 
+## 5.17.7
+
+_2026-10-17_
+
+### Changed
+
+- **American spelling.** Every word in the panel, the docs and the changelog now uses American spelling, such as "color" and "canceled". Refusals in British spelling, such as "I cannot fulfil that", are still caught.
+- **Times say "milliseconds".** The five wait settings, such as **Wait before the first retry**, end in "(milliseconds)" instead of "(ms)".
+- **Clearer hints.** The hints under **Extra dialog buttons it may press**, **Your own refusal phrases** and **Output price, per million tokens** are shorter. The note under the cost in the stats now says plainly that the figure is an estimate, not your bill.
+
+---
+
 ## 5.17.6
 
 _2026-10-16_
@@ -29,7 +41,7 @@ _2026-10-16_
 
 ### Changed
 
-- **The boxes match Lumiverse's own.** Every text box, list and search box in the settings now uses Lumiverse's own input colour. They were a lighter shade than Lumiverse's boxes. A theme that changes the colour of Lumiverse's boxes now changes these too.
+- **The boxes match Lumiverse's own.** Every text box, list and search box in the settings now uses Lumiverse's own input color. They were a lighter shade than Lumiverse's boxes. A theme that changes the color of Lumiverse's boxes now changes these too.
 
 ---
 
@@ -90,8 +102,8 @@ _2026-10-09_
 ### Added
 
 - **Keep it through an update.** A new switch under **Keep the reply a retry replaced**, in **How it retries**. It is off by default. On, the replies on the **Replaced** tab are saved on your server for your account, so an update or a restart of Lumiverse does not clear them. Turning it off empties the saved copy.
-- **Two more thinking formats are recognised.** Kimi's `◁think▷` … `◁/think▷`, and `<|begin_of_thought|>` … `<|end_of_thought|>`. A refusal inside them no longer counts as a refusal, and thinking that opens and never closes reads as cut off.
-- **Your own thinking markers are recognised.** A **Prefix** and **Suffix** saved on a connection in Lumiverse's **Reasoning** settings are read, and thinking between them is treated like any other thinking. Markers set only in the global Reasoning settings cannot be read by an extension.
+- **Two more thinking formats are recognized.** Kimi's `◁think▷` … `◁/think▷`, and `<|begin_of_thought|>` … `<|end_of_thought|>`. A refusal inside them no longer counts as a refusal, and thinking that opens and never closes reads as cut off.
+- **Your own thinking markers are recognized.** A **Prefix** and **Suffix** saved on a connection in Lumiverse's **Reasoning** settings are read, and thinking between them is treated like any other thinking. Markers set only in the global Reasoning settings cannot be read by an extension.
 
 ### Changed
 
@@ -156,8 +168,8 @@ _2026-10-08_
 
 ### Changed
 
-- **The boxes over a pattern use the theme's raised colour.** The settings sections and the log over a pattern are drawn in the colour Lumiverse uses for its own panels. It is light on a light theme and dark on a dark one.
-- **Copy and Clear keep dark text on a light theme.** With a pattern on, the floating panel's colour under the pattern comes from the theme, so its buttons stay easy to read.
+- **The boxes over a pattern use the theme's raised color.** The settings sections and the log over a pattern are drawn in the color Lumiverse uses for its own panels. It is light on a light theme and dark on a dark one.
+- **Copy and Clear keep dark text on a light theme.** With a pattern on, the floating panel's color under the pattern comes from the theme, so its buttons stay easy to read.
 
 ---
 
@@ -167,7 +179,7 @@ _2026-10-08_
 
 ### Added
 
-- **A pattern behind the settings and the panel.** A new setting in Basics, **Pattern behind the settings and the panel**, with Diamonds, Stripes and Dots. It is drawn faintly in your theme's colour behind these settings and the on-screen panel. Each section of the settings, and the log, sits on a solid box over it. It is None by default. See [Settings](docs/settings.md#every-option-and-its-default).
+- **A pattern behind the settings and the panel.** A new setting in Basics, **Pattern behind the settings and the panel**, with Diamonds, Stripes and Dots. It is drawn faintly in your theme's color behind these settings and the on-screen panel. Each section of the settings, and the log, sits on a solid box over it. It is None by default. See [Settings](docs/settings.md#every-option-and-its-default).
 
 ### Changed
 
@@ -318,7 +330,7 @@ _2026-09-26_
 
 ### Fixed
 
-- **The note buttons were not locked on a built-in note set.** With a built-in set picked, the notes are read-only, but the **+** and **−** buttons stayed bright and still worked. So a note could be added to or removed from a set that cannot be saved. Both buttons are now greyed out and switched off while a built-in set is picked. Save the set under your own name to change it.
+- **The note buttons were not locked on a built-in note set.** With a built-in set picked, the notes are read-only, but the **+** and **−** buttons stayed bright and still worked. So a note could be added to or removed from a set that cannot be saved. Both buttons are now grayed out and switched off while a built-in set is picked. Save the set under your own name to change it.
 
 ---
 
@@ -346,8 +358,8 @@ _2026-09-25_
 
 ### Fixed
 
-- **A broken colour tag could make a finished reply look cut off.** Models sometimes write a tag with its closing quotation mark missing, like `<font color="#c0a060>`. That lone quotation mark counted as dialogue opened and never closed, so the reply was retried. Tags like this are now left out of the count. See [Code and trackers](docs/detection.md#code-and-trackers).
-- **A broken colour tag could hide a refusal.** The same lone quotation mark made a refusal after it look like a character speaking. The refusal check now reads the reply without its tags. See [Quotation marks](docs/detection.md#quotation-marks).
+- **A broken color tag could make a finished reply look cut off.** Models sometimes write a tag with its closing quotation mark missing, like `<font color="#c0a060>`. That lone quotation mark counted as dialogue opened and never closed, so the reply was retried. Tags like this are now left out of the count. See [Code and trackers](docs/detection.md#code-and-trackers).
+- **A broken color tag could hide a refusal.** The same lone quotation mark made a refusal after it look like a character speaking. The refusal check now reads the reply without its tags. See [Quotation marks](docs/detection.md#quotation-marks).
 - **HTML tags counted toward the refusal length limit.** A short refusal wrapped in a lot of markup could pass the 2000-character limit and be left alone. The length now counts only the text.
 - **A status bar on one line made a finished reply look cut off.** A tracker such as `📍 The pier | 🕘 9:40 PM | 🌧 Rain` has no full stop at the end, so the reply was retried. A last line with two or more `|` now counts as a finished ending. See [Code and trackers](docs/detection.md#code-and-trackers).
 
@@ -418,7 +430,7 @@ _2026-09-23_
   - The built-in list now starts with the mark Lumiverse puts on its own Regenerate button, so it keeps working if the button's title or language changes.
   - A retry looked for the button only once, sometimes a moment before Lumiverse showed it. It now keeps looking for a couple of seconds.
 
-- **A reply that was only thinking is retried when the thinking tag was opened in the prompt.** Some presets start the reply inside the thinking tag, so the reply has a closing tag but no opening one. That thinking is now recognised, so a reply that never got past it is retried. A reply that did reach its answer is judged on the answer alone.
+- **A reply that was only thinking is retried when the thinking tag was opened in the prompt.** Some presets start the reply inside the thinking tag, so the reply has a closing tag but no opening one. That thinking is now recognized, so a reply that never got past it is retried. A reply that did reach its answer is judged on the answer alone.
   - One case is still out of reach: thinking that started in the prompt and was cut off before its closing tag. The reply then has no tag at all to go by.
 
 - **Impersonate is no longer retried as a cut-off reply.** Impersonate writes your own turn into the input box, and it could look cut off and be retried over the top of what it wrote. The generation after you press **Impersonate** is now left alone.
@@ -443,9 +455,9 @@ _2026-09-23_
 
 - **Panel messages are written out in full**, such as "Could not save" instead of "Couldn't save". The preset name box says "A name for this preset".
 
-- **The README says exactly what Auto Retry does about refusals involving age.** It never judges or changes your story. A retry asks the same model again, up to the retry limit. It recognises a refusal about a character's age because models sometimes misread an adult character as a minor, but it cannot tell a mistaken refusal from a correct one, so any refusal it recognises is retried the same way. The retry notes, off by default, mention no age and no subject.
+- **The README says exactly what Auto Retry does about refusals involving age.** It never judges or changes your story. A retry asks the same model again, up to the retry limit. It recognizes a refusal about a character's age because models sometimes misread an adult character as a minor, but it cannot tell a mistaken refusal from a correct one, so any refusal it recognizes is retried the same way. The retry notes, off by default, mention no age and no subject.
 
-- **The comments and docs on the refusal checks say what the words about age are for:** a model that misreads an adult character as a minor. What is recognised, and what is done about it, has not changed.
+- **The comments and docs on the refusal checks say what the words about age are for:** a model that misreads an adult character as a minor. What is recognized, and what is done about it, has not changed.
 
 - **An inaccurate comment is gone.** It said a retry changes what a model will write no more than clicking twice does. A new attempt can come back different, which is why this extension exists.
 
@@ -512,7 +524,7 @@ _2026-09-14_
 
 ### Added
 
-- **Three more reasoning formats are recognised by the refusal, empty and cut-off checks.** Gemma 4, Cohere Command A Reasoning, and Seed-OSS. Harmony was already covered.
+- **Three more reasoning formats are recognized by the refusal, empty and cut-off checks.** Gemma 4, Cohere Command A Reasoning, and Seed-OSS. Harmony was already covered.
 
   None of these could be reached by adding a name under **Extra thinking tag names**. The three wrappers matched by tag name close on the name that opened them; in these the reasoning word sits in the content and the closer is a different token again.
 
@@ -610,7 +622,7 @@ _2026-09-13_
 
   A door that shuts without warning is worse than one that stays open too long, which is why the date is on the card rather than in a release note somebody has to have read.
 
-- **A token count Lumiverse called a guess was reported as a count.** It counts with a real tokeniser where it has one for the model and says so when it has none and fell back to characters over four. That flag was not read, so the Prompt tab showed a guess as an exact figure instead of saying roughly over it. The flag is read now.
+- **A token count Lumiverse called a guess was reported as a count.** It counts with a real tokenizer where it has one for the model and says so when it has none and fell back to characters over four. That flag was not read, so the Prompt tab showed a guess as an exact figure instead of saying roughly over it. The flag is read now.
 - **A built-in note assumed one character.** **Write them as written** said the sheet was the authority on who this person is, which reads wrong in a group chat or on a card holding a cast. It says the sheet is the authority here, and the rest of the note is unchanged. Notes you saved yourself are not touched.
 - **The note sets page said four sets and listed five.** It says five.
 
@@ -644,7 +656,7 @@ _2026-09-11_
 
 ### Changed
 
-- **The cost figure now says what it is worth.** A line under it on the Prompt tab, whenever there is a figure to caveat. The tokens are counted here rather than taken from your provider, so their tokeniser may disagree and whatever they wrap around the prompt is missing from the number. It also prices every token sent at the full rate, so on a model with prompt caching switched on a retry usually costs less than the panel says, sometimes a lot less.
+- **The cost figure now says what it is worth.** A line under it on the Prompt tab, whenever there is a figure to caveat. The tokens are counted here rather than taken from your provider, so their tokenizer may disagree and whatever they wrap around the prompt is missing from the number. It also prices every token sent at the full rate, so on a model with prompt caching switched on a retry usually costs less than the panel says, sometimes a lot less.
 
 ## 5.3.0
 
@@ -676,7 +688,7 @@ _2026-09-10_
 
 ### Added
 
-- **The panel says what a retry costs, both halves of it.** Put your provider's input and output prices under Basics and the Prompt tab works out what a retry comes to: the prompt from what is on that tab, and the reply reckoned at the size of the last one in that chat, which is the only honest stand-in for one nobody has written yet. Under it, what the retries fired this session come to at that size. The reply is measured with Lumiverse's own tokeniser, and only while the panel is on the Prompt tab with a price set: leave either and nothing is sent anywhere. Both prices start at 0, and with both at 0 the line is not there, and where only one half can be worked out the line says which. Price lists write these as `$5.00/M`, so type the number on its own or paste the line and the number is taken out of it. They ride with **Panel, pop-up and prices** in an export. No currency is shown, because nothing here knows which one you are billed in.
+- **The panel says what a retry costs, both halves of it.** Put your provider's input and output prices under Basics and the Prompt tab works out what a retry comes to: the prompt from what is on that tab, and the reply reckoned at the size of the last one in that chat, which is the only honest stand-in for one nobody has written yet. Under it, what the retries fired this session come to at that size. The reply is measured with Lumiverse's own tokenizer, and only while the panel is on the Prompt tab with a price set: leave either and nothing is sent anywhere. Both prices start at 0, and with both at 0 the line is not there, and where only one half can be worked out the line says which. Price lists write these as `$5.00/M`, so type the number on its own or paste the line and the number is taken out of it. They ride with **Panel, pop-up and prices** in an export. No currency is shown, because nothing here knows which one you are billed in.
 - **At the very end**, a fourth place for a refusal note. **After the last message** stops at the end of the conversation, and some builds append their own instructions behind it; this is the only placement that puts a note after those, which is where a note has to be to answer one of them.
 - **Four note sets come with it**, under **Ships with it** in the note preset picker. Load one to see the shape, edit the boxes, and save it under a name of your own. They cannot be renamed, changed or deleted, so they are still there after you have made a mess of one.
 - **A wait the provider named is the wait it takes.** A free or shared tier that answers "retry after 23 seconds" has said exactly when the next try can work, and every wait shorter than that spent a try being told the same thing. The number is read out of what came back, in the header's own form and in the wordings providers write into an error body, and it wins over the backoff and over **Longest wait between tries**. An hour is the ceiling, because a provider naming longer than that is naming a daily quota.
@@ -719,8 +731,8 @@ _2026-09-05_
 ### Fixed
 
 - **The panel follows a theme change.** Where a theme makes its own text unreadable the panel repaints it, and that repaint is only right for the theme it measured. Moving a phone from dark to light left the panel wearing the wrong ink. The theme is watched three ways, since none of them catches the others, and a change measures again.
-- **A press does not repaint the panel twice.** New rows were drawn in the theme's own colours and repaired a frame later, which shows as a flicker. The repair is now made on the first frame they appear on.
-- **A setting's own words flip its switch, rather than opening its description.** A label with no `for` names the first thing inside it that can be labelled, and a button is one, so the "?" beside each setting had taken the label off the setting. The control is named outright now.
+- **A press does not repaint the panel twice.** New rows were drawn in the theme's own colors and repaired a frame later, which shows as a flicker. The repair is now made on the first frame they appear on.
+- **A setting's own words flip its switch, rather than opening its description.** A label with no `for` names the first thing inside it that can be labeled, and a button is one, so the "?" beside each setting had taken the label off the setting. The control is named outright now.
 - **The press that closes a description does only that**, instead of also flipping whatever tick was under your finger.
 - **A setting's description stays on the screen of a small phone.** Its width cap is room on the screen while the width itself is in the element's own units, and Lumiverse's UI Scale is a zoom, so the two came apart. The width is measured against however much the host is scaling.
 - **A removed note's space closes rather than vanishing**, the same movement [Auto Refine](https://github.com/starlitcode/Lumiverse-Auto-Refine) gives a deleted block.
@@ -825,7 +837,7 @@ _2026-08-26_
 
 ### Changed
 
-- **A retry now adds a reroll instead of redoing the reply in place.** **Retry by adding a new reroll** is on by default, and is switched on once for anyone who already had settings saved. The two differ in what they cost when a retry was wrong: a regenerate redoes the reply where it stands and on some builds clears the other rerolls with it, so a good reply it should not have touched is gone for good, while a swipe puts the new attempt beside the old one and the reply it was wrong about is still there to swipe back to. If your build has no next / swipe button the regenerate button is still used, and either one falls back to the other. Saving writes every setting, at its default or not, so a copy saved before this version would have pinned the old behaviour and nobody already using Auto Retry would have seen the change. It is turned on once, the first time this version runs, and turning it back off after that sticks. The three button boxes are now listed in the order a retry tries them: next / swipe, then regenerate, then stop, with the dialog-wording switch under them.
+- **A retry now adds a reroll instead of redoing the reply in place.** **Retry by adding a new reroll** is on by default, and is switched on once for anyone who already had settings saved. The two differ in what they cost when a retry was wrong: a regenerate redoes the reply where it stands and on some builds clears the other rerolls with it, so a good reply it should not have touched is gone for good, while a swipe puts the new attempt beside the old one and the reply it was wrong about is still there to swipe back to. If your build has no next / swipe button the regenerate button is still used, and either one falls back to the other. Saving writes every setting, at its default or not, so a copy saved before this version would have pinned the old behavior and nobody already using Auto Retry would have seen the change. It is turned on once, the first time this version runs, and turning it back off after that sticks. The three button boxes are now listed in the order a retry tries them: next / swipe, then regenerate, then stop, with the dialog-wording switch under them.
 
 ### Fixed
 
@@ -869,7 +881,7 @@ _2026-08-25_
 
 - **Replies are retried even when Lumiverse does not say which chat they came from.** Auto Retry files everything by chat, so a reply arriving without one used to be dropped before anything looked at it, and nothing was retried. Lumiverse normally names the chat, so this is a guard against a case you are unlikely to meet rather than something you have been running into.
 
-  Three things need a chat by name and are skipped when there is not one, listed on the [troubleshooting page](docs/troubleshooting.md#when-lumiverse-does-not-say-which-chat-you-are-in). **Turn off here** is greyed out, the retry note is not added, and swapping words by hand says no chat is open. Retrying itself, and swaps that run automatically on each reply, carry on.
+  Three things need a chat by name and are skipped when there is not one, listed on the [troubleshooting page](docs/troubleshooting.md#when-lumiverse-does-not-say-which-chat-you-are-in). **Turn off here** is grayed out, the retry note is not added, and swapping words by hand says no chat is open. Retrying itself, and swaps that run automatically on each reply, carry on.
 
 ### Changed
 
@@ -898,7 +910,7 @@ _2026-08-24_
 ### Fixed
 
 - **The on-screen panel looked frozen while it was waiting on the model.** Some busy states carried a figure that moves: a reply arriving counts characters, a retry counts down. The three that cover waiting, the model thinking, waiting for a reply to start, and waiting for a retry to start, each said one fixed sentence for as long as they lasted, which on a model that thinks for a minute is hard to tell from the panel having stopped working. All three now say how long they have been going.
-- **Some models had their thinking counted as the reply.** A streamed token says what it is, and builds do not agree on the word. Three that mean thinking were not recognised, so that text was filed as reply text: the panel called the model's working-out a reply arriving, and the text was counted toward the length checks.
+- **Some models had their thinking counted as the reply.** A streamed token says what it is, and builds do not agree on the word. Three that mean thinking were not recognized, so that text was filed as reply text: the panel called the model's working-out a reply arriving, and the text was counted toward the length checks.
 
 ## 4.19.0
 
@@ -906,14 +918,14 @@ _2026-08-24_
 
 ### Added
 
-- **Word swaps now leave HTML tags in a reply alone, with a setting to include them.** A reply that uses markup for colour or emphasis carries words inside the tags, and those words are the ordinary ones: color, font, small, center. A rule of `color => colour` was rewriting `<font color="#ffff00">` into `<font colour="#ffff00">`, which changes no wording at all, it just stops the text being coloured, with nothing to say why. Tags are skipped now, while words between them swap as they always did. **Also swap inside HTML tags** under Find and replace turns that off, for a rule aimed at the markup on purpose such as recolouring every line at once.
-- **Word swaps now leave the model's thinking alone, with a setting to include it.** A reasoning model writes its working-out before the reply, and when it writes that as tags inside the reply it is part of the stored message, so swap rules were rewriting it. Lumiverse shows reasoning in its own block, so nothing about that was visible: a rule aimed at your prose was also editing what the model worked out, somewhere you would never look. Reasoning that a provider returns separately was never swapped, so the same rule behaved differently depending on who was serving the model. Only the reply you read is swapped now, and **Also swap inside the thinking** under Find and replace turns the old behaviour back on. The common wrappers are recognised, along with any name in Extra thinking tag names.
+- **Word swaps now leave HTML tags in a reply alone, with a setting to include them.** A reply that uses markup for color or emphasis carries words inside the tags, and those words are the ordinary ones: color, font, small, center. A rule of `color => color` was rewriting `<font color="#ffff00">` into `<font color="#ffff00">`, which changes no wording at all, it just stops the text being colored, with nothing to say why. Tags are skipped now, while words between them swap as they always did. **Also swap inside HTML tags** under Find and replace turns that off, for a rule aimed at the markup on purpose such as recoloring every line at once.
+- **Word swaps now leave the model's thinking alone, with a setting to include it.** A reasoning model writes its working-out before the reply, and when it writes that as tags inside the reply it is part of the stored message, so swap rules were rewriting it. Lumiverse shows reasoning in its own block, so nothing about that was visible: a rule aimed at your prose was also editing what the model worked out, somewhere you would never look. Reasoning that a provider returns separately was never swapped, so the same rule behaved differently depending on who was serving the model. Only the reply you read is swapped now, and **Also swap inside the thinking** under Find and replace turns the old behavior back on. The common wrappers are recognized, along with any name in Extra thinking tag names.
 
 ### Fixed
 
 - **A reply carrying a `>` inside a tag could be thrown away as cut off.** Markup is removed before the checks that count quotation marks, and the pattern doing it stopped at the first `>` it found, including one inside a quoted attribute such as `<span title="a > b">`. That left a stray quotation mark in the text, which then read as dialogue opened and never closed, so a finished reply was re-rolled. The same flaw let a word swap reach into the tail of such a tag. Tags are read whole now, quoted values and all.
 - **A very short reply wrapped in markup is no longer measured by its tags.** The too-short check is meant to catch a reply that says almost nothing, but it counted the whole stored text, and a line of dialogue wrapped in something like `<font color="#ffff00">` carries about thirty characters of tags around it. Three short lines could therefore clear a threshold set for prose while saying almost nothing. It counts the words now, the same way it already left reasoning out.
-- **A reply cut off inside a commentary block was not recognised as cut off.** Models using the channel format put their reasoning in one of several named channels, and the cut-off check knew four of the five names while the part that strips thinking knew all five. A reply cut short inside a `commentary` channel therefore fell through to the empty-reply check, so it was retried for the wrong reason, and not retried at all by anyone who has that check switched off. All three places that ask which channels are thinking now read the same list.
+- **A reply cut off inside a commentary block was not recognized as cut off.** Models using the channel format put their reasoning in one of several named channels, and the cut-off check knew four of the five names while the part that strips thinking knew all five. A reply cut short inside a `commentary` channel therefore fell through to the empty-reply check, so it was retried for the wrong reason, and not retried at all by anyone who has that check switched off. All three places that ask which channels are thinking now read the same list.
 
 ## 4.18.4
 
@@ -974,7 +986,7 @@ _2026-08-20_
 - **Auto Retry settings never moves.** It stays in the Extras menu whatever else is on, so there is always one way in that does not depend on anything.
 - **The extension is called Auto Retry everywhere now.** Some messages said "auto-retry" and others said "Auto Retry", and one said both in the same sentence.
 - **The Log tab speaks plainly.** Several lines in it named an internal part of Lumiverse or an API, which tells you nothing you can act on. They say what happened in ordinary words now. The permission names stay, because those are what Lumiverse's own extension settings call them, so they are worth knowing.
-- **The pop-up messages were squeezed into half the screen.** "No reply found to swap in this chat." wrapped onto two lines on a phone and left "chat." alone on the second, on a message that fits on one line with room to spare. The box was being centred in a way that only gave it half the width of the screen, so the width it was meant to have never applied. It gets that width now, so fewer messages wrap at all, and the ones that do wrap use the whole box. Its padding is also inside that width now rather than added on top, which had it almost touching both edges of a phone.
+- **The pop-up messages were squeezed into half the screen.** "No reply found to swap in this chat." wrapped onto two lines on a phone and left "chat." alone on the second, on a message that fits on one line with room to spare. The box was being centered in a way that only gave it half the width of the screen, so the width it was meant to have never applied. It gets that width now, so fewer messages wrap at all, and the ones that do wrap use the whole box. Its padding is also inside that width now rather than added on top, which had it almost touching both edges of a phone.
 - **The "?" beside each setting is bigger on a phone.** It was one size everywhere, comfortable with a mouse and small under a thumb. On a screen you touch it is now large enough to hit without aiming. On a computer it is unchanged, so the panel stays as dense as it was.
 - **Every tick box in the panel is the same size.** The settings rows have always used one size; the reset picker and the import and export lists used the browser's smaller default, which was a harder thing to hit on a phone and looked wrong next to the rest. That mattered most in the reset picker, where a tick can delete saved word swap presets.
 - **Clearer wording in the settings panel.** Several descriptions were long, or used a turn of phrase instead of saying the thing. The warning before you turn on the support-message option had a sentence that did not finish its comparison, which is the last place that should happen.
@@ -1005,7 +1017,7 @@ _2026-08-20_
 
 ### Added
 
-- **Turning the floating button on or off eases between the two states.** The colours fade and the new mark grows in over the old one, so a tap reads as one movement rather than a flicker. Only on a real change: the button repaints when you switch chats and after a drag, and animating those would be movement saying nothing. A device set to reduce motion gets the same change with nothing in between, and the button itself still never moves under a press, since a press can be the start of a hold.
+- **Turning the floating button on or off eases between the two states.** The colors fade and the new mark grows in over the old one, so a tap reads as one movement rather than a flicker. Only on a real change: the button repaints when you switch chats and after a drag, and animating those would be movement saying nothing. A device set to reduce motion gets the same change with nothing in between, and the button itself still never moves under a press, since a press can be the start of a hold.
 
 ### Changed
 
@@ -1022,7 +1034,7 @@ _2026-08-19_
 
 ### Fixed
 
-- **On a phone, a button in the settings panel stayed in its hover colour once you tapped it.** A touch browser raises the hover at the end of a tap and never sends the matching leave, and the reset that would have caught it had already run by then. Hover is now read from the pointer that caused the event, which says outright whether it was a finger or a mouse, rather than from the screen, which a phone showing the desktop site answers wrongly.
+- **On a phone, a button in the settings panel stayed in its hover color once you tapped it.** A touch browser raises the hover at the end of a tap and never sends the matching leave, and the reset that would have caught it had already run by then. Hover is now read from the pointer that caused the event, which says outright whether it was a finger or a mouse, rather than from the screen, which a phone showing the desktop site answers wrongly.
 - **Descriptions in the settings panel could open on a tap with no way to close them, on a phone set to show the desktop site.** The same wrong answer wired up the hover pair and switched the tap off. Touching a long description to scroll it no longer closes it either.
 - **The reset picker's second step opened with a ring around Go back.** It puts focus there so a keyboard can answer it, and whether that focus was drawn was left to the browser, which decides from the last kind of input it saw anywhere on the page. Focus the extension moves itself is now marked as its own, and the mark lifts at the first key pressed, so tabbing still shows where you are.
 
@@ -1068,12 +1080,12 @@ _2026-08-18_
 
 ### Changed
 
-- **The panel marks what has focus properly.** A field used to tint one hairline of border, which is easy to lose on a busy theme and says very little across a wide box. It now carries a soft band just outside the edge and a short halo past that, both in the theme's own accent, so it follows whatever colours you run. It is kept tight on purpose: a wide halo washes over the rows above and below and reads as belonging to the row rather than to the box. All of it is painted outside the box, so nothing sits on the text and no row moves when it lands.
+- **The panel marks what has focus properly.** A field used to tint one hairline of border, which is easy to lose on a busy theme and says very little across a wide box. It now carries a soft band just outside the edge and a short halo past that, both in the theme's own accent, so it follows whatever colors you run. It is kept tight on purpose: a wide halo washes over the rows above and below and reads as belonging to the row rather than to the box. All of it is painted outside the box, so nothing sits on the text and no row moves when it lands.
 - **Buttons reached by keyboard wear the same mark.** They were left with whatever outline the host's stylesheet happened to give them, which on a dark theme was often nothing you could see. A button you pressed with a pointer still wears nothing, since the press already said which one it was.
 - **Fields lift their border under the pointer**, so a box reads as something you can put a cursor in before you have.
 - **The search box stays quiet.** It takes none of the marks the rows below it do, such as the lift under the pointer or the tinted border. It sits alone above the scroll area with nothing beside it to be told apart from, and it answers every keystroke by filtering the list underneath, so it says where you are without being lit. Its clear button is unchanged.
-- **The browser's own arrows are off the number boxes.** They are drawn by the browser rather than the theme, so on a dark panel they arrived as a pair of grey chevrons belonging to no design here. The value is typed, and a box you are in still steps with the arrow keys. The rule is scoped to this extension's own boxes, so nothing else in Lumiverse is touched.
-- **A rule under each section heading.** Sections were text sitting above rows with nothing between them, so on a long panel one ran into the next and a heading read as another row rather than as a break. Drawn in the theme's own border colour, which is faint by design: enough to separate, not enough to become furniture.
+- **The browser's own arrows are off the number boxes.** They are drawn by the browser rather than the theme, so on a dark panel they arrived as a pair of gray chevrons belonging to no design here. The value is typed, and a box you are in still steps with the arrow keys. The rule is scoped to this extension's own boxes, so nothing else in Lumiverse is touched.
+- **A rule under each section heading.** Sections were text sitting above rows with nothing between them, so on a long panel one ran into the next and a heading read as another row rather than as a break. Drawn in the theme's own border color, which is faint by design: enough to separate, not enough to become furniture.
 
 ## 4.14.0
 
@@ -1113,7 +1125,7 @@ _2026-08-16_
 
 ### Changed
 
-- **The Extras menu entry said Auto Retry was on in a chat you had just switched off.** Three things show whether it is running: the row in the settings panel, the floating button, and this entry. The first two are repainted when anything changes. The entry cannot be relabelled once it is registered, so it is torn down and registered again instead, and that only happened when the master switch moved. It reads both switches now, says "on, but off in this chat" when that is where you are, and follows you between chats.
+- **The Extras menu entry said Auto Retry was on in a chat you had just switched off.** Three things show whether it is running: the row in the settings panel, the floating button, and this entry. The first two are repainted when anything changes. The entry cannot be relabeled once it is registered, so it is torn down and registered again instead, and that only happened when the master switch moved. It reads both switches now, says "on, but off in this chat" when that is where you are, and follows you between chats.
 
 ### Fixed
 
@@ -1161,7 +1173,7 @@ _2026-08-15_
 ### Added
 
 - **The refusal that names what it refuses.** Every other pattern needs a meta object, a request or a prompt or a roleplay, because those are words a character never uses. A model that names what it is declining uses none of them: the subject is the object, as in "I won't write content depicting that" or "I can't create scenes involving that". The subject on its own is never a signal and only ever counts as the object of a refusal verb, so a scene about any of it, a backstory that turns on it, a trial, or a character who will not talk about it, is left alone.
-- **The flat no aimed at nothing in particular.** "No. I won't engage with that." The opening was recognised and the object was not, since "that" is not one of the meta words the rest of the list requires.
+- **The flat no aimed at nothing in particular.** "No. I won't engage with that." The opening was recognized and the object was not, since "that" is not one of the meta words the rest of the list requires.
 - **The framing dismissed as a device.** "Framing it as consensual roleplay doesn't change what it is", "regardless of how the request is framed", "I'm here for a genuine conversation".
 
 ### Removed
@@ -1186,7 +1198,7 @@ _2026-08-15_
 
 ### Fixed
 
-- **A named speaker was not recognised as a dialogue tag.** The breaking-off check ignores a match with an attribution behind it, and the list it matched knew pronouns and proper nouns but not the commonest form of all, an article and a noun: "the shopkeeper asked", "her sister said". Anything a character said that way was read as the model breaking off.
+- **A named speaker was not recognized as a dialogue tag.** The breaking-off check ignores a match with an attribution behind it, and the list it matched knew pronouns and proper nouns but not the commonest form of all, an article and a noun: "the shopkeeper asked", "her sister said". Anything a character said that way was read as the model breaking off.
 
 ## 4.8.0
 
@@ -1210,9 +1222,9 @@ _2026-08-15_
 
 ### Fixed
 
-- **Switching off "Ignore refusals inside quotation marks" took the dialogue tag rule with it.** That switch is for a model that wraps its own refusals in quotation marks, and it now reaches the phrase list and the patterns and nothing else. The dialogue tag rule stays on, since it is about an attribution rather than about quotation marks. The support check added above ignores quoted lines whatever the switch says, for the same reason: no model wraps that message in quotation marks, so switching it off could only stop a doctor or a counsellor in the scene from being told apart from the model.
+- **Switching off "Ignore refusals inside quotation marks" took the dialogue tag rule with it.** That switch is for a model that wraps its own refusals in quotation marks, and it now reaches the phrase list and the patterns and nothing else. The dialogue tag rule stays on, since it is about an attribution rather than about quotation marks. The support check added above ignores quoted lines whatever the switch says, for the same reason: no model wraps that message in quotation marks, so switching it off could only stop a doctor or a counselor in the scene from being told apart from the model.
 - **A refusal standing between two pieces of speech on one line was read as dialogue.** The quotation rule looked for the nearest mark behind the match and any mark ahead of it, which is the right answer on a line carrying one piece of speech and the wrong one on a line carrying two: `"Go on," he said. I can't help with that. "Please," she said.` found the closing mark of the first speech behind it and the opening mark of the second ahead of it, and left the refusal alone. It counts the marks between the start of the line and the match now, and an odd number is what puts the match inside a quotation.
-- **A note written rather than spoken read as the model breaking off.** The breaking-off check ignores a match with a dialogue tag behind it, because that is speech with the quotation marks left off, and the list of tags it knew had no writing verbs in it. "Let me know how you'd like to proceed, she wrote at the bottom of the letter" was thrown away as a result. A dozen more attributions are recognised now.
+- **A note written rather than spoken read as the model breaking off.** The breaking-off check ignores a match with a dialogue tag behind it, because that is speech with the quotation marks left off, and the list of tags it knew had no writing verbs in it. "Let me know how you'd like to proceed, she wrote at the bottom of the letter" was thrown away as a result. A dozen more attributions are recognized now.
 
 ## 4.7.0
 
@@ -1220,7 +1232,7 @@ _2026-08-13_
 
 ### Added
 
-- **It can now ask Lumiverse which chat you are in, under a new `chats` permission.** This is what fixes **Turn off here** sitting greyed out in a chat you were already in, which happened after updating the extension because nothing re-renders and so nothing announced where you were. Auto Retry uses a single call from it, the one that answers which chat is open. It never creates, deletes or alters a chat. Refuse it and everything still works, with the switch waiting to be told as before. [Privacy](docs/privacy.md) covers what this permission reaches.
+- **It can now ask Lumiverse which chat you are in, under a new `chats` permission.** This is what fixes **Turn off here** sitting grayed out in a chat you were already in, which happened after updating the extension because nothing re-renders and so nothing announced where you were. Auto Retry uses a single call from it, the one that answers which chat is open. It never creates, deletes or alters a chat. Refuse it and everything still works, with the switch waiting to be told as before. [Privacy](docs/privacy.md) covers what this permission reaches.
 
 ### Changed
 
@@ -1262,7 +1274,7 @@ _2026-08-13_
 
 ### Fixed
 
-- **"Turn off here" stayed greyed out in a chat you were already sitting in.** The row needs to know which chat you are in, and it only ever learned that from a chat change or from a reply being generated. Open Lumiverse straight into a chat, or reload the page there, and neither has happened, so the button sat disabled saying to open a chat while you were in one. Leaving and coming back fixed it, which is not something anyone should have to work out. It now also learns the chat from a message being drawn on screen, which is what actually happens when a chat opens, so the row is ready as soon as you can see the conversation. If the settings panel is already open when it finds out, the row updates in place.
+- **"Turn off here" stayed grayed out in a chat you were already sitting in.** The row needs to know which chat you are in, and it only ever learned that from a chat change or from a reply being generated. Open Lumiverse straight into a chat, or reload the page there, and neither has happened, so the button sat disabled saying to open a chat while you were in one. Leaving and coming back fixed it, which is not something anyone should have to work out. It now also learns the chat from a message being drawn on screen, which is what actually happens when a chat opens, so the row is ready as soon as you can see the conversation. If the settings panel is already open when it finds out, the row updates in place.
 
 ## 4.6.0
 
@@ -1361,7 +1373,7 @@ _2026-08-07_
 
 - **It notices when a tracker was cut off partway through.** The other half of leaving trackers alone. A reply that stopped inside something it had started is cut off whatever it stopped on, the same as one with an opened quote, so markup left open is checked before a block ending is accepted as an ending: a container opened and never closed, a tag with no closing bracket, a tag cut off inside an attribute, an HTML comment with no end. Without this, `<div class="wx"><b>Weather</b>` would read as finished on the strength of the last tag it managed to write.
 - **A status block written as raw JSON is checked too.** `{"temp": 24, "sky":` ends on a colon, and a colon is punctuation, so it read as a finished reply. Braces are counted outside code now, in the one direction that means something.
-- **Dialogue coloured with a `<span style="...">` is checked for its closing tag.** This is how cards colour speech, and it was the one cut nothing else here noticed: the speech closes its own quotation marks, so a reply that stopped with the colour still open came out even on every check and read as finished. A styled span left open now counts as cut off. A bare `<b>` or `<i>` does not, since models fumble those in ordinary prose often enough that counting them would throw away good writing, while a span carrying an attribute is there because a card asked for it and gets its closing tag every time. What counts is the attribute rather than what is in it, so a single colour, a gradient, a `<font color>` or a `<span class>` are all checked the same way.
+- **Dialogue colored with a `<span style="...">` is checked for its closing tag.** This is how cards color speech, and it was the one cut nothing else here noticed: the speech closes its own quotation marks, so a reply that stopped with the color still open came out even on every check and read as finished. A styled span left open now counts as cut off. A bare `<b>` or `<i>` does not, since models fumble those in ordinary prose often enough that counting them would throw away good writing, while a span carrying an attribute is there because a card asked for it and gets its closing tag every time. What counts is the attribute rather than what is in it, so a single color, a gradient, a `<font color>` or a `<span class>` are all checked the same way.
 
 What has not started counting: a `<` someone typed in a scene, `if x<y`, a bare inline tag left open, or list items written without their end tags. Elements whose end tag is optional in HTML are left out of the container count, because models write `<ul><li>one<li>two</ul>` and mean it. An inline tag left hanging is a finished reply written badly, and that is not worth throwing the reply away over.
 
@@ -1391,7 +1403,7 @@ _2026-08-06_
 ### Added
 
 - **It now catches the model breaking off rather than declining.** "I'm going to stop here", "I won't continue this discussion", "let's redirect the conversation". On by default, and narrow: it only counts when that is how the reply ends, never inside quotation marks, and never behind a dialogue tag, so a character who stops walking and carries on with the scene is left alone. Switch it off with **Also catch the model breaking off**.
-- **The built-in refusal list has grown by about twenty wordings.** These are the ones models actually use that were not being caught: "I can't generate that", "I don't create content like that", "I'm not going to comply with that request", "I can't help with illegal activities", "I can't provide advice on that", "I can't process that request" and others. Apologetic openings on their own ("I'm sorry", "Unfortunately", "I apologize") are still not counted: they open as many ordinary replies as refusals, and a character apologising is one of the most common things in roleplay.
+- **The built-in refusal list has grown by about twenty wordings.** These are the ones models actually use that were not being caught: "I can't generate that", "I don't create content like that", "I'm not going to comply with that request", "I can't help with illegal activities", "I can't provide advice on that", "I can't process that request" and others. Apologetic openings on their own ("I'm sorry", "Unfortunately", "I apologize") are still not counted: they open as many ordinary replies as refusals, and a character apologizing is one of the most common things in roleplay.
 - **A switch for whether a refusal in quotation marks counts.** On by default, which leaves dialogue alone. Your own phrases are counted either way.
 - **The on-screen log says when a refusal note went out.** It names the retry that carried it and how many notes went with it. Copy debug info counts them too, so a bug report can say whether notes were going out at all. Before this, a note that worked and no note at all looked exactly the same from outside.
 - **A Stats view in the on-screen panel.** A third tab beside Log and Prompt: replies that came back fine, retries fired, messages it gave up on, how often a reply needed a retry at all, and a breakdown of what it retried for with a bar for each. It also says when it has paused itself after repeated failures, which is the state that otherwise looks like it having stopped working. The counters behind it already existed for the debug report, which is a wall of text you have to ask for and then read. **Clear** on that tab starts the counting again.
@@ -1401,7 +1413,7 @@ _2026-08-06_
 - **The on-screen panel now has tabs, and one of them shows the prompt.** **Log** is what the extension is doing, as before. **Prompt** is the whole prompt that went to the model: every message in order, its role, how large it is, and whether it came from your chat or was added around it. Tap one to read it. Your refusal notes are marked in that list and opened for you, with a line at the top saying how many went and where they landed, so you can see exactly how and where a note was inserted. This is what actually went, after your setup, your world info, your persona and every extension have had their turn, which is a different question from the one Lumiverse's **Prompt Breakdown** answers. Copy and Clear act on whichever tab you are on, tapping switches tabs, and so do the left and right arrow keys.
 - **The prompt is only captured while you are looking at it.** There is no second setting for the Prompt view, because there does not need to be one: switch to Log, close the panel, or close the tab, and nothing is captured at all. A setting left on would go on paying for itself in every chat long after you looked once. What is captured is captured on your device and shown to you. Nothing is sent anywhere, nothing is written to disk, and it goes with the tab.
 - **Each note carries its own first try.** The list used to share one number, so more notes could only ever mean more text at once. Now a gentle note can start on try 2 and a firmer one on try 4, and each retry carries whichever have come due, still in order so one can answer another. A list saved before this keeps behaving exactly as it did: every note takes the number the single setting held. The separate **Start the note on try** row is gone, replaced by a **from try** box on each note.
-- **Three more ways of wrapping reasoning are recognised.** On top of `<think>` and `[thinking]`, the pipe forms `<|think|>` … `<|/think|>` and `<|think>` … `<think|>` are read now, and so is the `<|channel|>analysis<|message|>` … `<|end|>` block that models trained on the Harmony format use. Only the thinking channels are removed; the `final` channel is the visible reply and is kept. Any tag name you add under **Extra thinking tag names** works in all four. Until now a reply wrapped this way was checked with its whole reasoning block counted as part of it, so a refusal the model only weighed up caused a retry, and the length limit was measured against text the reader never sees.
+- **Three more ways of wrapping reasoning are recognized.** On top of `<think>` and `[thinking]`, the pipe forms `<|think|>` … `<|/think|>` and `<|think>` … `<think|>` are read now, and so is the `<|channel|>analysis<|message|>` … `<|end|>` block that models trained on the Harmony format use. Only the thinking channels are removed; the `final` channel is the visible reply and is kept. Any tag name you add under **Extra thinking tag names** works in all four. Until now a reply wrapped this way was checked with its whole reasoning block counted as part of it, so a refusal the model only weighed up caused a retry, and the length limit was measured against text the reader never sees.
 - **The floating button's size can be seen while you set it.** A circle beside the box is drawn at the size you type, and the real button changes with it, so you are not guessing from a number. Closing the panel without saving puts it back.
 
 ### Changed
@@ -1409,24 +1421,24 @@ _2026-08-06_
 - **Reset is no longer all or nothing.** **Reset…** at the bottom of the panel opens a picker: tick the parts you want put back to their defaults, and anything you leave unticked is not touched. The parts are the same ones import and export use, so the names match between the two panels. Each line says how many of its settings you have actually changed, and a part still at its defaults cannot be ticked, since there would be nothing for it to do.
 - **Nothing resets without being asked first.** **Reset ticked** shows what it is about to do, naming the parts you picked, how many settings are in each, and whether presets are going with them. Nothing happens until you press **Yes, reset**. **Go back** returns to the list with your ticks kept, and Escape or a click outside closes it without touching a setting. The question is asked by the extension rather than handed to Lumiverse's own confirm dialog, because not every build has one.
 - **A reset waits for Save, the way an import does.** It fills the settings in behind the box without saving them, so you can look at what it did first. Press Save to keep it, or close the panel to discard it. Pressing Reset by mistake now costs a panel close rather than your settings.
-- **The reset confirmation says how serious it is, and looks it.** Putting settings back is undone by closing the panel, and deleting presets is not, so the two are not painted the same: the first asks in the theme's warning colour, the second turns red, says "Deleting presets cannot be undone", and relabels its button **Yes, reset and delete**. The preset line in the list is bold and red as well. Painting the mild case like the serious one would make the warning worth ignoring on the one that matters.
+- **The reset confirmation says how serious it is, and looks it.** Putting settings back is undone by closing the panel, and deleting presets is not, so the two are not painted the same: the first asks in the theme's warning color, the second turns red, says "Deleting presets cannot be undone", and relabels its button **Yes, reset and delete**. The preset line in the list is bold and red as well. Painting the mild case like the serious one would make the warning worth ignoring on the one that matters.
 - **The picker says what it cannot reach.** Your chats, your replies and your characters are never touched by any of it. Your saved word swap presets are kept too, unless you tick the line for them, which sits under a rule of its own because it is the one thing there that deletes something for real rather than waiting for Save. **Tick every setting** never ticks it.
 - **The defaults now assume a slow model rather than a fast one.** A watchdog that fires early on a model that is slow but healthy throws away a reply that was still arriving, and the replacement comes from the same slow model, so it fires again on that one too. The wait for a reply that has started but produced nothing goes from 90 seconds to 3 minutes, the wait for a stream that has gone quiet mid-reply from 45 to 90 seconds, the longest wait between tries from 30 to 60 seconds, and the wait when the server says it is busy from 8 to 15 seconds, which clears the per-minute limits most shared tiers use. A retry click also gets 15 seconds rather than 6 to produce a generation before the extension decides the click failed.
 - **The new defaults apply to a fresh install.** Settings already saved to your account keep the values they had, so if you want the new ones, open **Reset…**, tick the parts you want, and Save.
 - **Waiting for another extension to finish now waits 85 seconds instead of 15.** A refinement pass is a whole generation, so how long it takes depends on the model, the prompt and how much it has to read. Fifteen seconds covered a fast model and nothing else, so on anything slower the swap landed first and the refinement arrived on top and wiped it, which is the failure that setting exists to prevent. The most you can set has gone from 2 minutes to 5.
 - **Retrying a reply that stops on a word is now on by default.** This was off because it was wrong too often, and the reason it was wrong is fixed below. It is what catches a reply cut off mid-sentence when nothing else was left open.
 - **Nothing the extension draws sits at the top of the stacking order any more.** Two of its surfaces used the highest number a browser accepts, which meant no other extension could ever draw above them. They are still above the page and now leave room above themselves.
-- **Nothing in the extension animates except a hover colour and a focus outline.** The floating button carried transitions on four colour properties and a scale dip on every press; it now changes instantly, which says the same thing sooner. The transition on `filter` is gone from every button: the press feedback that uses it is meant to be instant, and animating `filter` is what forces a button onto its own compositing layer for no benefit.
+- **Nothing in the extension animates except a hover color and a focus outline.** The floating button carried transitions on four color properties and a scale dip on every press; it now changes instantly, which says the same thing sooner. The transition on `filter` is gone from every button: the press feedback that uses it is meant to be instant, and animating `filter` is what forces a button onto its own compositing layer for no benefit.
 
 ### Fixed
 
-- **The refusal note was never sent on most setups.** It was only attached when Lumiverse reported the generation as a regenerate or a swipe. Most builds report every generation as "normal", a regenerate included, so on those the note was armed, the retry ran without it, and the only sign was a line in the log. The note is now attached to the retry it was armed for whatever the host calls it. What keeps it off a message you type has not changed: it is armed the moment before the retry is clicked, it belongs to one chat, it is used once, it expires, and it is taken back the moment the click it was armed for turns out to have started nothing. If there is no retry button on screen to click, nothing is armed at all. The old behaviour is available as **Only send it on a regenerate or a swipe**, off by default.
+- **The refusal note was never sent on most setups.** It was only attached when Lumiverse reported the generation as a regenerate or a swipe. Most builds report every generation as "normal", a regenerate included, so on those the note was armed, the retry ran without it, and the only sign was a line in the log. The note is now attached to the retry it was armed for whatever the host calls it. What keeps it off a message you type has not changed: it is armed the moment before the retry is clicked, it belongs to one chat, it is used once, it expires, and it is taken back the moment the click it was armed for turns out to have started nothing. If there is no retry button on screen to click, nothing is armed at all. The old behavior is available as **Only send it on a regenerate or a swipe**, off by default.
 - **A word swap was undone by pressing Edit.** The swap is saved to the server, but Lumiverse's own copy of the message in the browser did not always pick it up, so the edit box opened showing the wording from before the swap and pressing Save wrote that back over it. Each swap is now remembered as the exact text before and after, and an edit box holding a message that is character for character the pre-swap text is filled with the swapped one instead. It is a whole-string match, so a box holding anything else, including a message you have started editing, is never touched.
 - **A refusal inside quotation marks was treated as the model refusing.** `"I can't help with that," the innkeeper muttered` was counted as a refusal and the reply was thrown away. Dialogue is a character speaking, and it is left alone across every built-in list now rather than just the "I am an AI" patterns.
 - **Line breaks were flattened before a reply was checked.** Every break became a space, which let a refusal pattern match across a paragraph break and made dialogue anywhere in a long reply look like it wrapped everything between it. Both threw away replies that were fine.
 - **"That violates my safety guidelines" and "that goes against my content policies" were never matched.** The pattern only allowed the noun to follow the possessive directly. Neither was "that isn't something I can help with", which was only matched written as "that's not".
 - **A phrase only matched the way it happened to be listed.** "I'm unable to help with that" and "I am unable to help with that" are the same refusal, and only one of them was caught. The written-out form of every contracted phrase is worked out from the contracted one now.
-- **Inline HTML confused the checks that decide a reply was cut off.** Models colour their dialogue with a raw `<span style="...">`, and the two quotes around that style value were counted alongside the two around the speech, so a reply whose dialogue was genuinely cut open came out even and was passed as finished. A trailing `</span>` was also read as end punctuation, which hid the same fault from the other check. Tags are removed before anything is counted.
+- **Inline HTML confused the checks that decide a reply was cut off.** Models color their dialogue with a raw `<span style="...">`, and the two quotes around that style value were counted alongside the two around the speech, so a reply whose dialogue was genuinely cut open came out even and was passed as finished. A trailing `</span>` was also read as end punctuation, which hid the same fault from the other check. Tags are removed before anything is counted.
 - **A reply only counted as finished if it ended in Latin punctuation.** A scene closing on an emoji, or on a Japanese, Chinese, Greek or Arabic full stop, was read as having no ending at all. Punctuation in any script counts now, and so does an emoji.
 - **Stripping a model's reasoning got slower the more of it there was.** The patterns that remove a reasoning block walk forward from every opener looking for its closer, so a reply carrying many openers and no closer made each one scan everything after it. Twice the input meant four times the work: 5,000 openers took 96ms, 20,000 took a second and a half, and 40,000 took six seconds, which on a real reply is a locked-up tab. It now checks whether there is a closer at all before going looking, which makes that case linear and takes it to a couple of milliseconds. An ordinary long reply was never affected and is unchanged.
 - **Word swaps could rewrite the extension's own log panel.** The pass over what is on screen skipped the settings panel and the pop-up but not the log, so a rule could edit the extension's own words underneath it.
@@ -1468,17 +1480,17 @@ _2026-08-04_
 
 ### Changed
 
-- **A filled button gets an outline when your theme's accent has all but vanished.** On a theme whose accent sits close to the panel colour, Save stayed readable but lost its edge, so nothing said it was a button. It now gets a border only when its fill has faded into the surface behind it. A theme with an ordinary accent is left exactly as it was, and the quieter secondary buttons keep the border your theme gives them.
-- **The panel says when Auto Retry itself is off.** It can be switched off from the floating button or the Extras menu without opening the settings, so it was possible to arrive here with it off and nothing saying why nothing was happening. A line at the top says so now. Nothing is hidden or greyed for it: off means paused rather than unconfigured, and setting things up while it is off is a normal thing to want to do.
+- **A filled button gets an outline when your theme's accent has all but vanished.** On a theme whose accent sits close to the panel color, Save stayed readable but lost its edge, so nothing said it was a button. It now gets a border only when its fill has faded into the surface behind it. A theme with an ordinary accent is left exactly as it was, and the quieter secondary buttons keep the border your theme gives them.
+- **The panel says when Auto Retry itself is off.** It can be switched off from the floating button or the Extras menu without opening the settings, so it was possible to arrive here with it off and nothing saying why nothing was happening. A line at the top says so now. Nothing is hidden or grayed for it: off means paused rather than unconfigured, and setting things up while it is off is a normal thing to want to do.
 - **A setting that does nothing yet is no longer shown.** Options that only matter once something else is switched on are kept out of the panel until it is. Turning **Send a note with a refusal retry** on adds the note rows below it and turning it off takes them away, and the same goes for the short-reply threshold, the pause settings, the floating button's size, the phrase rewording and the re-swap option. Whole sections go the same way: with **It looks like an accidental refusal** off, nothing under **Advanced: refusal tuning** does anything, so the heading goes too. The switch doing the hiding never moves itself.
 - **The search box ignores all of that** and finds a setting whichever way its switch is set, so nothing is hidden from you when you go looking by name. A row found that way says which switch it is waiting on, so changing it never looks like it did nothing. Only settings the extension genuinely ignores are hidden either way: the extra thinking tag names, for one, are still used to find the reply when the reasoning option is off, so they stay.
 - **A new permission, `interceptor`.** This is what lets an extension add to a prompt before it reaches the model, and it is the only way the note above can work. Without it granted, everything else in the extension works as before and the note is simply not sent.
 
 ### Fixed
 
-- **Every status line in the panel was invisible on some light themes.** The search count, the "already at the defaults" note, and the line confirming a save were all white on white on a theme that sets the common colours but not the ones behind the panel. The panel checks its own text against the surface it sits on, once, when it is built, and it only looked at text that was there at that moment. Every one of those lines is empty until something happens, so not one of them had ever been checked. They are now.
-- **The hint text and the full-size editor were blank boxes on some light themes.** Making those panels solid in 4.1.0 meant painting a background colour and laying your theme's tint over the top of it. The extension then reads that background to decide whether text on it should be light or dark, and it was reading the colour underneath rather than the one you can see. On a theme that sets the common colour variables but not the one behind those panels, the fallback under the tint is dark, so the panel painted near-white and its text was turned white to match. It now reads what the panel actually paints. A theme that sets every variable was never affected, which is why this only showed up on hand-written ones.
-- **The search box's clear button had no colour on light themes.** That cross is drawn by the browser and takes no colour of its own, so it is cut into a shape and filled from your theme instead. It was filled from a named colour, and naming one means naming what to use when your theme does not set it, which was a colour for dark themes. A light theme that set the common colours but not that one got a near-white cross on a near-white field. It now takes the search box's own text colour instead of naming anything, so there is nothing left to fall back to and nothing to keep in step: whatever your theme makes the text, the cross matches, on any theme.
+- **Every status line in the panel was invisible on some light themes.** The search count, the "already at the defaults" note, and the line confirming a save were all white on white on a theme that sets the common colors but not the ones behind the panel. The panel checks its own text against the surface it sits on, once, when it is built, and it only looked at text that was there at that moment. Every one of those lines is empty until something happens, so not one of them had ever been checked. They are now.
+- **The hint text and the full-size editor were blank boxes on some light themes.** Making those panels solid in 4.1.0 meant painting a background color and laying your theme's tint over the top of it. The extension then reads that background to decide whether text on it should be light or dark, and it was reading the color underneath rather than the one you can see. On a theme that sets the common color variables but not the one behind those panels, the fallback under the tint is dark, so the panel painted near-white and its text was turned white to match. It now reads what the panel actually paints. A theme that sets every variable was never affected, which is why this only showed up on hand-written ones.
+- **The search box's clear button had no color on light themes.** That cross is drawn by the browser and takes no color of its own, so it is cut into a shape and filled from your theme instead. It was filled from a named color, and naming one means naming what to use when your theme does not set it, which was a color for dark themes. A light theme that set the common colors but not that one got a near-white cross on a near-white field. It now takes the search box's own text color instead of naming anything, so there is nothing left to fall back to and nothing to keep in step: whatever your theme makes the text, the cross matches, on any theme.
 - **A description moved depending on how much room there was.** Every **?** description opens just under the setting it belongs to, except when it was too tall to fit below, where it flipped above the row instead. That put a description in a place none of the others go, and the taller the description the likelier it moved, so the ones hardest to find were the ones that moved. Which side a description opens on is now fixed per setting rather than worked out each time, and one too tall for the room there scrolls inside itself instead of moving. Scrolling it to read it no longer closes it. **What the notes say** is set to open above, because that row holds the whole note list and below it would be a long way from the **?** you pressed.
 - **"Where the note goes" would not stay set.** Pick **Before the last message** or **At the very start**, press Save, and it was saved correctly. Come back to the panel and it read **After the last message** again, and that is the one that was actually used. It was the only setting picked from a list rather than typed or ticked, and the check that reads a saved value back was not being told which list to check it against, so nothing ever matched and it fell back to the first option every time. Every setting is now read back through its own field, and there is a check that changes every setting in the panel, saves, starts fresh, and compares them all.
 - **A setting found by searching kept asking for a switch you had just turned on.** Search for a setting whose switch is off and the row says which one it is waiting on. Turning that switch on from the same search results left the line sitting there, still naming a switch that was now on, until the search box was cleared. The line is rebuilt whenever one of those switches moves.
@@ -1494,7 +1506,7 @@ _2026-08-02_
 ### Added
 
 - **Hold the floating button for a menu.** Move it back to the corner, or hide it. Right-click does the same on a computer. Before this the only way to put that button away was to open settings and switch it off, and on a phone there is no right-click at all.
-- **The floating button follows your "reduce motion" setting.** It dips when pressed, which is the only thing in the extension that actually moves. If your device asks for less movement it stays still, and still changes colour so a tap is acknowledged.
+- **The floating button follows your "reduce motion" setting.** It dips when pressed, which is the only thing in the extension that actually moves. If your device asks for less movement it stays still, and still changes color so a tap is acknowledged.
 
 ### Changed
 
@@ -1503,11 +1515,11 @@ _2026-08-02_
 ### Fixed
 
 - **Word swaps work in every language now.** A rule for a single word only worked if that word started and ended with a plain English letter. Everything else was read, accepted, and then did nothing: no error, nothing in the log. `café => bar`, `über => over`, `résumé`, `fiancé`, and every word in Greek, Cyrillic, Japanese, Turkish, Polish or Czech. A word with the accent in the middle, like `naïve` or `señor`, was fine, which is why this went unnoticed for so long. Phrases were never affected. If you have a rule like that sitting in your list doing nothing, it will start working after this update.
-- **Unchecked boxes were white blocks.** A checkbox is drawn by the browser, which picks its colours from the page rather than from your theme, so an unchecked one came out as a bright white square on a dark panel. The off state was the loudest thing on screen and the on state receded. The panel now measures what it is sitting on and tells the browser which way round it is, so a light theme still gets light controls.
-- **The full-size editor, the live log and the retry pop-up were see-through.** Open the editor over the settings and you could read the rows behind it, Save included. All three were painted with a colour that is 90% opaque, meant to tint a surface rather than be one. Every panel that floats over something else is solid now.
+- **Unchecked boxes were white blocks.** A checkbox is drawn by the browser, which picks its colors from the page rather than from your theme, so an unchecked one came out as a bright white square on a dark panel. The off state was the loudest thing on screen and the on state receded. The panel now measures what it is sitting on and tells the browser which way round it is, so a light theme still gets light controls.
+- **The full-size editor, the live log and the retry pop-up were see-through.** Open the editor over the settings and you could read the rows behind it, Save included. All three were painted with a color that is 90% opaque, meant to tint a surface rather than be one. Every panel that floats over something else is solid now.
 - **Five settings showed a number with no unit.** "Wait before the first retry" read 1200 with nothing saying whether that meant milliseconds, seconds or minutes, while "How long to pause (minutes)" right above it named its unit. All five say (ms) now.
 - **The retry pop-up covered the floating button's menu.** It sat above everything, so it could cover a menu you had just opened and turn a tap on "Hide this button" into a tap on Cancel. Things you open on purpose now sit above things that appear on their own.
-- **The menu's focus ring was a hard white rectangle**, taken from the browser rather than your theme. It uses your accent colour now.
+- **The menu's focus ring was a hard white rectangle**, taken from the browser rather than your theme. It uses your accent color now.
 - **Preset buttons that had nothing to act on.** With no presets saved, Load, Update selected, Delete and Rename selected were all lit, Load styled as the main action, and each one answered a press with a message telling you to pick a preset first. They wait until there is a preset to act on.
 
 ## 4.0.0
@@ -1522,7 +1534,7 @@ _2026-07-31_
 
 ### Fixed
 
-- **The clear button in the search box follows your theme.** The cross that empties the search field was white. It now uses the same muted colour as the **?** circles next to each setting. Chrome, Edge and Safari only; Firefox does not add a clear button to search fields at all, so there is nothing there to restyle.
+- **The clear button in the search box follows your theme.** The cross that empties the search field was white. It now uses the same muted color as the **?** circles next to each setting. Chrome, Edge and Safari only; Firefox does not add a clear button to search fields at all, so there is nothing there to restyle.
 
 Nothing else changed from 3.3.0. The major version is for the forced reinstall, not for the size of the change.
 
@@ -1545,13 +1557,13 @@ _2026-07-31_
 - **Find and replace says what a preset carries.** That section is split under two headings. **Saved in a preset** holds your rules and the two options that decide how they match. **Yours, whatever preset you load** holds everything a preset leaves alone: whether swapping is on at all, which buttons appear in your Extras menu, whether a reply can be swapped twice, and whether it confirms before editing. Loading a preset cannot change any of those.
 - **Word swap presets follow your account.** They used to live only in the browser you made them in, so your settings would move to a new device and your presets would not. They now sync the same way your settings do, with a copy kept in the browser so the list is on screen instantly.
 - **More of the list on screen.** The settings panel was capped short enough that a tall phone had most of its screen sitting empty underneath it. It now uses the height it is given, so roughly 40% more options are visible before scrolling.
-- **The panel looks more like the rest of Lumiverse.** Buttons like Reset to defaults were see-through with just an outline, so they read as text rather than as buttons. They use the theme's own button colour now, and hovering one switches to the theme's hover colour instead of just brightening it. The retry pop-up, the on-screen log and the full-size text editor were also rendering with the wrong corner rounding, asking for the small radius when they meant the larger one.
+- **The panel looks more like the rest of Lumiverse.** Buttons like Reset to defaults were see-through with just an outline, so they read as text rather than as buttons. They use the theme's own button color now, and hovering one switches to the theme's hover color instead of just brightening it. The retry pop-up, the on-screen log and the full-size text editor were also rendering with the wrong corner rounding, asking for the small radius when they meant the larger one.
 - **Word swaps update the chat faster.** Applying swaps to what is already on screen walked the whole page once per rule, so a long rule list meant dozens of passes over every message. It walks once now.
 
 ### Fixed
 
-- **Button labels stay readable on any theme.** On a theme whose accent colour sits close to white, the label on a filled button like Save washed out and was hard to make out. The panel now checks as it draws whether each label stands out from what is behind it, and repaints only the ones that do not. Everything else is left exactly as the theme set it.
-- **The retry pop-up was nearly see-through.** It was painted with a colour meant to tint a surface rather than be one, so it came out as a faint smudge over the chat instead of a solid pill.
+- **Button labels stay readable on any theme.** On a theme whose accent color sits close to white, the label on a filled button like Save washed out and was hard to make out. The panel now checks as it draws whether each label stands out from what is behind it, and repaints only the ones that do not. Everything else is left exactly as the theme set it.
+- **The retry pop-up was nearly see-through.** It was painted with a color meant to tint a surface rather than be one, so it came out as a faint smudge over the chat instead of a solid pill.
 - **Backups were leaving out four settings.** Pause when everything is failing, Failed runs before pausing, How long to pause, and Extra dialog buttons it may press were all missing from import and export, so a backup came back without them. They are included now, and any setting added in future is carried automatically.
 - **The debug report was missing the same four.** It now reads the list straight from the options themselves, so every setting is always in it and there is no second list to fall out of date.
 - **Duplicate swap-whole-chat button.** That Extras entry was not being cleaned up when the extension reloaded, so it stacked up another copy each time.
@@ -1749,7 +1761,7 @@ _2026-07-18_
 ### Added
 
 - **Keep your rerolls on retry.** Suggested by a Discord user. New toggle, "Retry by adding a new reroll", under a "How it redoes a reply" section. Off (the default), a retry redoes the reply in place with your regenerate button, which on some builds clears the other rerolls on that message. On, a retry clicks your next / swipe button instead, adding a fresh reroll and leaving existing ones in place. It falls back to regenerate if the swipe button is not found, so set that selector in the buttons section if retries stop after turning it on.
-- **Heads up on repeated failures.** In the new mode each retry adds a reroll rather than replacing one, so a reply that fails a few times before it lands can leave a couple of empty or partial rerolls stacked next to the good one. Regenerate mode still replaces in place with no pile-up, so both behaviours are there to pick from.
+- **Heads up on repeated failures.** In the new mode each retry adds a reroll rather than replacing one, so a reply that fails a few times before it lands can leave a couple of empty or partial rerolls stacked next to the good one. Regenerate mode still replaces in place with no pile-up, so both behaviors are there to pick from.
 
 ### Changed
 
@@ -1810,7 +1822,7 @@ _2026-07-15_
 
 ### Added
 
-- **HTTP 402 (Payment Required) counts as a hard failure.** If a provider cuts you off for running out of credits or an unpaid balance, the extension recognises it immediately and stops retrying.
+- **HTTP 402 (Payment Required) counts as a hard failure.** If a provider cuts you off for running out of credits or an unpaid balance, the extension recognizes it immediately and stops retrying.
 
 ## 2.1.0
 
@@ -1872,7 +1884,7 @@ _2026-07-13_
 
 ### Added
 
-- **Import and export your settings.** Open Advanced: import / export, tick which parts to include (retry behaviour, refusal detection, word swaps, button selectors, notifications), then Export to file to save them or Import from file to load one. An import puts the values into the settings without saving, so you can review them first, then press Save to keep them or close to discard.
+- **Import and export your settings.** Open Advanced: import / export, tick which parts to include (retry behavior, refusal detection, word swaps, button selectors, notifications), then Export to file to save them or Import from file to load one. An import puts the values into the settings without saving, so you can review them first, then press Save to keep them or close to discard.
 - **Choosable debug info**, in a new Advanced: debug info section. Pick which parts to include (your settings, button match status, browser and screen, recent activity), build a preview, edit out anything you would rather not share, then copy. The old Copy debug info button in the footer is gone, replaced by this section.
 - **A live log you can watch on screen**, under Advanced: feedback. A small panel shows recent activity as it happens: generations, retries and why, finishes. Handy on mobile especially, where the browser console is out of reach.
 
@@ -1892,7 +1904,7 @@ _2026-07-12_
 
 - **A word can have more than one swap.** List it more than once and it collects all the options. By default it uses the first one.
 - **New random-pick toggle.** Turn it on and each time that word appears it picks one of its options at random, so "the sky... the sky" can become "the blue... the aqua".
-- **New match-case-exactly toggle.** Off by default, swapping any case and keeping the original capitalisation. On, it only swaps when the case matches your rule, which also lets `sky` and `Sky` have different swaps.
+- **New match-case-exactly toggle.** Off by default, swapping any case and keeping the original capitalization. On, it only swaps when the case matches your rule, which also lets `sky` and `Sky` have different swaps.
 
 ## 1.2.0
 
@@ -1902,13 +1914,13 @@ _2026-07-12_
 
 - **Accidental-refusal retry (beta).** When the model breaks character to refuse something harmless, it re-sends the exact same request and tries again, capped by your retry limit. It never changes your prompt or swaps any words, it just gives the reply another roll. A refusal the model really means will repeat and stop on its own.
 - **Refusal detection you can tune**, under a new Advanced section: add your own refusal phrases, whitelist lines that should never count, reword the built-in ones, or switch the built-in list off entirely. The whole feature is one toggle to turn off.
-- **Find and replace in replies (beta).** Swap words you do not like for ones you prefer, saved right into the reply. Whole words only by default, so "cat" will not touch "category". It keeps capitalisation, and an empty right side deletes a word. Off by default.
+- **Find and replace in replies (beta).** Swap words you do not like for ones you prefer, saved right into the reply. Whole words only by default, so "cat" will not touch "category". It keeps capitalization, and an empty right side deletes a word. Off by default.
 - **A new chat-editing permission.** (`chat_mutation`) alongside the existing generation one. Only used by find and replace, so it can save its edits to a reply. Depending on your setup it may need admin approval when you update, and if you never use find and replace nothing is touched.
 
 ### Changed
 
-- **Advanced settings now collapse**, tucked behind a tap-to-open header so the basic switches stay front and centre.
-- **README cleaned up and updated**, reorganised, and now covering the new settings and permissions.
+- **Advanced settings now collapse**, tucked behind a tap-to-open header so the basic switches stay front and center.
+- **README cleaned up and updated**, reorganized, and now covering the new settings and permissions.
 
 ## 1.1.6
 
@@ -1985,7 +1997,7 @@ _2026-06-17_
 
 ### Fixed
 
-- **A couple of menu colours** were not matching the theme.
+- **A couple of menu colors** were not matching the theme.
 
 ## 1.0.0
 

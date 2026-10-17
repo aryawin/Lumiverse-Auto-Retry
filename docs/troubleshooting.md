@@ -64,13 +64,13 @@ How it knows which chat you are in:
 - So Auto Retry also checks the address in your browser. While you are in a chat, the address contains its id. When it does not, you are somewhere else.
 - If your Lumiverse's addresses do not contain the chat id, it falls back to the last chat it saw you in.
 
-**Turn off here** follows the same answer. Outside a chat it is greyed out and says **No chat is open**.
+**Turn off here** follows the same answer. Outside a chat it is grayed out and says **No chat is open**.
 
 ## When Lumiverse does not say which chat you are in
 
 Sometimes Lumiverse reports a reply without saying which chat it is in. Retrying still works, but three things that need the chat do not:
 
-- **Turn off here** is greyed out, with a note that it is waiting to find out which chat this is. Sending a message, or switching chats and back, usually fixes it. Use the main **Auto Retry** switch meanwhile.
+- **Turn off here** is grayed out, with a note that it is waiting to find out which chat this is. Sending a message, or switching chats and back, usually fixes it. Use the main **Auto Retry** switch meanwhile.
 - **The retry note is not added.** A note belongs to one chat, and without a chat it could be added to a reply in another chat. The retry still happens, and the log says why the note was left out.
 - **Anything that names the chat you are in** says **No chat is open**.
 

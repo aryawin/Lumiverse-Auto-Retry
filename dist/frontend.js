@@ -36,7 +36,7 @@ const PICK_KEY = "lv-auto-retry:preset-pick:v1";
 // Written the first time this version runs, so the one-time switch to
 // swiping happens once. Up here with the other keys because the settings are
 // read before most of setup() exists, and a const declared further down is
-// not initialised yet when that happens.
+// not initialized yet when that happens.
 const SWIPE_FIRST_KEY = "lv-auto-retry:swipe-first:v1";
 // The note sets that come with it, as they were when this browser last took one. Its own
 // key rather than a setting, because it is not something anybody sets and a
@@ -141,7 +141,7 @@ const NOTE_FROM_TRY_MAX = 20;
 const STREAM_BUF_MAX = 200000;
 // Bumped on each release. Shown in the startup log and in the Copy debug info
 // report, so a bug report always says which version it came from.
-const VERSION = "5.17.6";
+const VERSION = "5.17.7";
 // Whether two saved settings hold the same values, whatever order their keys
 // were written in. A key left undefined counts as not there, the way it is
 // when saved. Used to tell an update or a put-back that would change nothing.
@@ -162,7 +162,7 @@ function sameSettings(a, b) {
 // The addresses the extension points at. Pinned to the released branch rather
 // than to a tag, so an old install still opens the page as it stands today.
 const SAFETY_URL = "https://github.com/starlitcode/Lumiverse-Auto-Retry/blob/stable/docs/safety.md";
-// A link in the panel's own colours. Names are linked rather than printed as
+// A link in the panel's own colors. Names are linked rather than printed as
 // bare addresses, which read as noise and cannot be followed on a phone.
 function linkTo(url, text) {
     const a = document.createElement("a");
@@ -377,7 +377,7 @@ const MOVED_DEFAULTS = [
 // rather than a hash: the list is short, and a stamp somebody can read in their
 // own storage is better than one only this file can explain.
 const MOVED_MARK = MOVED_DEFAULTS.map((m) => m.key + ":" + String(m.was)).join("|");
-// The labelled runs a field can name. A heading over two rows answers the
+// The labeled runs a field can name. A heading over two rows answers the
 // question the rows themselves kept raising: the note list gives every note a
 // role and a starting try of its own, so the two settings underneath it looked
 // like more of the same. They are not. They are for whichever notes are due,
@@ -481,7 +481,7 @@ const SCHEMA = [
                     { value: "hearts", label: "Hearts" },
                     { value: "stars", label: "Stars" },
                 ],
-                hint: "None by default. A faint pattern in your theme's colour, behind these settings and the on-screen panel. Text sits on solid boxes over it.",
+                hint: "None by default. A faint pattern in your theme's color, behind these settings and the on-screen panel. Text sits on solid boxes over it.",
             },
             {
                 key: "toast",
@@ -531,7 +531,7 @@ const SCHEMA = [
                 type: "num",
                 min: 0,
                 max: 10000,
-                hint: "Your provider's price for the text the model writes, per million tokens. Type the number, or paste the whole line.",
+                hint: "Your provider's output price per million tokens, for the text the model writes. Type the number, or paste the whole line.",
             },
         ],
     },
@@ -602,7 +602,7 @@ const SCHEMA = [
             {
                 key: "retryDelayMs",
                 run: "waits",
-                label: "Wait before the first retry (ms)",
+                label: "Wait before the first retry (milliseconds)",
                 type: "num",
                 int: true,
                 min: 0,
@@ -621,7 +621,7 @@ const SCHEMA = [
             {
                 key: "maxDelayMs",
                 run: "waits",
-                label: "Longest it will ever wait (ms)",
+                label: "Longest it will ever wait (milliseconds)",
                 type: "num",
                 int: true,
                 min: 0,
@@ -631,7 +631,7 @@ const SCHEMA = [
             {
                 key: "rateLimitDelayMs",
                 run: "waits",
-                label: "Wait when the server is busy (ms)",
+                label: "Wait when the server is busy (milliseconds)",
                 type: "num",
                 int: true,
                 min: 0,
@@ -756,7 +756,7 @@ const SCHEMA = [
             {
                 key: "stuckTimeoutMs",
                 run: "frozen",
-                label: "Give up waiting for it to start (ms)",
+                label: "Give up waiting for it to start (milliseconds)",
                 type: "num",
                 int: true,
                 min: 0,
@@ -766,7 +766,7 @@ const SCHEMA = [
             {
                 key: "idleTimeoutMs",
                 run: "frozen",
-                label: "Give up on a reply that froze (ms)",
+                label: "Give up on a reply that froze (milliseconds)",
                 type: "num",
                 int: true,
                 min: 0,
@@ -822,7 +822,7 @@ const SCHEMA = [
                 run: "yourWords",
                 label: "Your own refusal phrases",
                 type: "text",
-                hint: "Extra wording that counts as a refusal, one per line. Used even with the built-in list off, and also checked against error text. Lines under three characters are ignored.",
+                hint: "Extra wording that counts as a refusal, one per line. Used even with the built-in list off, and checked against error text too.",
             },
             {
                 key: "refusalPhraseSubs",
@@ -937,7 +937,7 @@ const SCHEMA = [
                 needs: ["confirmButtonsCustom"],
                 label: "Extra dialog buttons it may press",
                 type: "text",
-                hint: "Type the button's text exactly as it appears, one per line. Capitals are ignored. Anything you add here is tried before the built-in list, which is still used as well. Nothing here is read while the switch above is off.",
+                hint: "The button's text, one per line, capitals ignored. Tried before the built-in list. Only used while the switch above is on.",
             },
         ],
     },
@@ -1064,7 +1064,7 @@ function withoutClosedContainers(shown) {
     const open = [];
     let i = 0;
     // Far past any real reply. Stopping early only means less is removed, which
-    // is the behaviour this had before it existed.
+    // is the behavior this had before it existed.
     let seen = 0;
     while (i < shown.length && seen++ < 20000) {
         const lt = shown.indexOf("<", i);
@@ -1114,9 +1114,9 @@ function withoutClosedContainers(shown) {
 // left open is a finished reply written badly, and models fumble those in
 // ordinary prose often enough that counting them would re-roll good writing.
 // A <span style="..."> is not that. It is there because a card asked for it,
-// and a card that asks for coloured speech gets the closing tag every time, so
+// and a card that asks for colored speech gets the closing tag every time, so
 // a missing one means the reply stopped rather than that the model was sloppy.
-// This is how dialogue gets coloured, and it was the one cut that nothing else
+// This is how dialogue gets colored, and it was the one cut that nothing else
 // here noticed: the speech closes its own quotes, so the reply came out even
 // and read as finished with the gradient still open.
 const HTML_STYLED_INLINE = "span|font|mark|a";
@@ -1228,10 +1228,10 @@ function endsOnABlock(shown, visible) {
     // Two in a row are needed rather than one, because an ordinary sentence can
     // carry a colon and a tracker never has only the one field. That keeps a
     // reply genuinely cut after "he said:" where it belongs.
-    const labelled = (l) => /^[*_`]{0,2}[^:\n]{1,30}[*_`]{0,2}\s*:\s*\S[^\n]{0,60}$/.test(l);
+    const labeled = (l) => /^[*_`]{0,2}[^:\n]{1,30}[*_`]{0,2}\s*:\s*\S[^\n]{0,60}$/.test(l);
     return (lines.length >= 2 &&
-        labelled(lines[lines.length - 1]) &&
-        labelled(lines[lines.length - 2]));
+        labeled(lines[lines.length - 1]) &&
+        labeled(lines[lines.length - 2]));
 }
 // A wait, said the way a person would. Whole seconds, because tenths flicker
 // and nobody is timing anything to a tenth. Larger units appear only once
@@ -1341,7 +1341,7 @@ function looksTruncated(text, retryOnNoPunct, cfg) {
     // those counts off, so it is removed first regardless of the refusal-side
     // thinking option, which governs refusal matching only.
     //
-    // Inline markup goes with it, and for the same reason. Models colour their
+    // Inline markup goes with it, and for the same reason. Models color their
     // dialogue with a raw <span style="...">, and the two quotes around that
     // style value are counted along with the two around the speech, so a reply
     // whose dialogue was genuinely cut open still came out even and was passed as
@@ -1768,7 +1768,7 @@ const REFUSAL_STRONG = [
     // The object matters: a refusal is aimed at "that" or "this request", never at
     // a concrete thing in the scene. Without this, a servant or aide saying "I
     // can't assist you with the horses today" reads as the model refusing.
-    /\bI(?: (?:can(?:no|')?t|cannot|will not|won'?t|am (?:not able|unable) to)|'m (?:not able|unable) to) (?:be able to )?(?:assist|comply|fulfil|fulfill)\b(?:[^.?!\n]{0,30}?\b(?:that|this|it|your request|this request|the request|your prompt)\b|(?:\s+you)?\s*[.!?,"'\u201d\u2019]|(?:\s+you)?\s*$)/i,
+    /\bI(?: (?:can(?:no|')?t|cannot|will not|won'?t|am (?:not able|unable) to)|'m (?:not able|unable) to) (?:be able to )?(?:assist|comply|fulfill?)\b(?:[^.?!\n]{0,30}?\b(?:that|this|it|your request|this request|the request|your prompt)\b|(?:\s+you)?\s*[.!?,"'\u201d\u2019]|(?:\s+you)?\s*$)/i,
     // A reply that opens by declining to write, and names the content or the
     // request in the next few sentences: "I won't produce the next part. It is
     // explicit...". Both halves are needed. The opening alone is a line a
@@ -1780,7 +1780,7 @@ const REFUSAL_STRONG = [
     // Common modern refusal openers and bodies: "I'm sorry, but I can't create/generate...",
     // "that's not something I can help with", "I'm not going to generate that". Anchored on
     // assistant-action verbs so an in-character line like "I can't marry you" stays safe.
-    /\bI(?:'m| am) sorry,? but I(?: can'?t| cannot| won'?t|'m (?:not able|unable) to| am (?:not able|unable) to) (?:create|generate|write|produce|provide|assist|comply|fulfil|fulfill|help you with|engage with)\b/i,
+    /\bI(?:'m| am) sorry,? but I(?: can'?t| cannot| won'?t|'m (?:not able|unable) to| am (?:not able|unable) to) (?:create|generate|write|produce|provide|assist|comply|fulfill?|help you with|engage with)\b/i,
     // "that's not something I can help with" and "that isn't something I can
     // help with" are the same sentence, and only the first was matched. Written
     // as three explicit alternatives rather than an optional "not", so it can
@@ -1848,11 +1848,11 @@ const REFUSAL_STRONG = [
     // conjunction hid the most emphatic refusal there is. A meta object is still
     // required, because "I cannot and will not marry him" is a line from a scene.
     /\bI (?:can(?:no|')?t|cannot|will not|won'?t) and (?:will not|won'?t|cannot|can(?:no|')?t) (?:engage|participate|assist|comply|help|create|generate|produce|write|continue)\b[^.?!\n]{0,40}?\b(?:content|request|prompt|scenario|roleplay|role-?play|this|that)\b/i,
-    // "I'm not going to fulfil that request", "I'm not going to comply with that
+    // "I'm not going to fulfill that request", "I'm not going to comply with that
     // request", "I'm not going to assist with that". The refusal opener list
     // above starts at "I can't" and never covered this shape.
     /\bI(?:'m| am) not going to (?:assist|comply|help|engage)\b[^.?!\n]{0,24}?\b(?:that|this|it|your request|the request)\b/i,
-    /\bI(?:'m| am) not going to (?:fulfil|fulfill|process|answer)\b[^.?!\n]{0,24}?\b(?:that|this|your|the) (?:request|prompt|message|one)\b/i,
+    /\bI(?:'m| am) not going to (?:fulfill?|process|answer)\b[^.?!\n]{0,24}?\b(?:that|this|your|the) (?:request|prompt|message|one)\b/i,
     // "I can't generate that", "I cannot generate that content", "I'm not able to
     // generate that". The object has to follow the verb directly. Allowing
     // anything in between caught "I can't generate enough heat with this flint",
@@ -1915,7 +1915,7 @@ const REFUSAL_STRONG = [
 // The subjects a model names when it refuses one.
 //
 // Read this for what it is: a list of words that appear in refusal messages, so
-// that a refusal can be recognised as one. It is not a list of things the
+// that a refusal can be recognized as one. It is not a list of things the
 // extension produces, asks for, or helps anybody get. Nothing here reaches a
 // prompt. All a match does is decide that a reply was a refusal rather than
 // writing, which makes the extension press regenerate, the same key you would
@@ -2006,7 +2006,7 @@ const REFUSAL_PHRASES = [
     "i can't provide instructions",
     "i can't provide guidance on that",
     "i can't fulfill that request",
-    "i can't fulfil that request",
+    "i can't fulfill that request",
     "i can't support that request",
     "i won't be able to help with that",
     "i can't generate a response to that",
@@ -2294,7 +2294,7 @@ const CRISIS_RESOURCE = [
     // count cannot stand in for a hotline.
     /\b(?:988|1-800-273-8255|741741|116 123)\b/,
     /\btext (?:home|hello|talk) to\b/i,
-    /\b(?:suicide|crisis|emotional support) (?:and crisis )?(?:lifeline|hotline|helpline|line|text line|centre|center)\b/i,
+    /\b(?:suicide|crisis|emotional support) (?:and crisis )?(?:lifeline|hotline|helpline|line|text line|cent(?:er|re))\b/i,
     /\bcrisis (?:counsel|support|resources|services|team)\w*\b/i,
     // Services by name. "Lifeline" on its own is left out: a rope thrown to
     // somebody in a river is a lifeline too, and the qualified forms above and
@@ -2355,7 +2355,7 @@ const THINK_TAGS = ["think", "thinking", "thought", "thoughts", "reasoning", "re
 // channel is the reply itself and must never be treated as thinking. One
 // constant because three places ask this question, and the cut-off check used
 // to ask it with a shorter list: a reply cut off inside a commentary channel
-// was not recognised as cut off, while the stripper had already decided that
+// was not recognized as cut off, while the stripper had already decided that
 // channel was thinking.
 const THINK_CHANNELS = "analysis|thinking|thought|reasoning|commentary";
 // The control tokens that can end a Harmony channel. A tool call ends on its
@@ -2619,7 +2619,7 @@ function refusalVerdict(text, cfg) {
     const isQuotedAlways = (start) => start >= 0 && spanIsQuoted(norm, start);
     // Whitelist wins: anything the user parked here is never a refusal. Asked
     // before anything else, including the crisis tier, so a phrase parked here
-    // is honoured whatever the reply's length or which tier would have matched.
+    // is honored whatever the reply's length or which tier would have matched.
     for (const p of splitPhrases(cfg && cfg.refusalIgnorePhrases))
         if (ownMatch(p))
             return {
@@ -3048,7 +3048,7 @@ function deriveSelector(start) {
         return tag + "." + cls.slice(0, 2).join(".");
     return null;
 }
-// getComputedStyle hands colours back as rgb()/rgba(), so that is all this needs
+// getComputedStyle hands colors back as rgb()/rgba(), so that is all this needs
 // to read. Anything else is reported as unknown and the caller leaves it alone.
 function parseColor(value) {
     const m = String(value == null ? "" : value)
@@ -3068,7 +3068,7 @@ function parseColor(value) {
     const c = [Number(m[1]), Number(m[2]), Number(m[3]), Math.max(0, Math.min(1, a))];
     return c.slice(0, 3).some((n) => !Number.isFinite(n)) ? null : c;
 }
-// Lay a partly transparent colour over an opaque one.
+// Lay a partly transparent color over an opaque one.
 function blendColor(top, under) {
     const a = top[3];
     return [
@@ -3096,9 +3096,9 @@ function contrastRatio(a, b) {
 const PAGE_FALLBACK = [20, 16, 30, 1]; // Lumiverse is dark; last resort only
 // What a surface actually paints, rather than only what its background-color
 // says. Every floating panel here builds an opaque surface by painting a solid
-// colour and laying the theme's translucent tint over it as a gradient, because
+// color and laying the theme's translucent tint over it as a gradient, because
 // the tint alone is 90% opaque and lets the text behind read through.
-// getComputedStyle reports the colour underneath and says nothing about the
+// getComputedStyle reports the color underneath and says nothing about the
 // gradient, so on a theme that leaves --lumiverse-card-bg-solid unset the
 // popover measured as the dark fallback while painting near-white, and its text
 // was helpfully repainted white to suit. It vanished.
@@ -3115,7 +3115,7 @@ function paintedBg(el) {
     }
     if (img.indexOf("gradient") < 0)
         return base;
-    // Only the first stop is read. These gradients are one colour repeated, used
+    // Only the first stop is read. These gradients are one color repeated, used
     // to lay a flat tint rather than to shade anything.
     const stop = img.match(/rgba?\([^)]*\)|#[0-9a-fA-F]{3,8}/);
     const over = stop ? parseColor(stop[0]) : null;
@@ -3157,7 +3157,7 @@ const MIN_CONTRAST = 3.2;
 const NEAR_WHITE = "#ffffff";
 const NEAR_BLACK = "#14121a";
 // Repaint an element's text only if it fails the contrast floor against what is
-// behind it, so a theme that already reads well keeps its own colours exactly.
+// behind it, so a theme that already reads well keeps its own colors exactly.
 function fixContrast(el, min) {
     try {
         if (!el || typeof getComputedStyle !== "function")
@@ -3184,7 +3184,7 @@ function fixContrast(el, min) {
     }
     catch (_) { }
 }
-// Colours only resolve once the element is in the page and laid out, so the
+// Colors only resolve once the element is in the page and laid out, so the
 // check waits a frame rather than running against a half-built tree.
 function afterPaint(fn) {
     if (typeof requestAnimationFrame === "function")
@@ -3193,9 +3193,9 @@ function afterPaint(fn) {
         fn();
 }
 // The same check, run now when the element is already in the page. Asking for a
-// computed colour lays it out there and then, so waiting for the next frame buys
-// nothing and costs a frame drawn in the theme's own colours before the repaired
-// one replaces it: a row added by the + button appeared, then changed colour
+// computed color lays it out there and then, so waiting for the next frame buys
+// nothing and costs a frame drawn in the theme's own colors before the repaired
+// one replaces it: a row added by the + button appeared, then changed color
 // under the reader. Only a tree still being assembled has to wait.
 function repairNow(el, fn) {
     let live = false;
@@ -3213,7 +3213,7 @@ function repairNow(el, fn) {
     afterPaint(fn);
 }
 // Checkboxes and number spinners are drawn by the browser, not by us. The
-// browser picks their colours from the page's colour scheme rather than from
+// browser picks their colors from the page's color scheme rather than from
 // the theme, and with no scheme set it assumes light, which draws an unchecked
 // box as a white block on a dark panel. The search field's clear button goes
 // the same way. Rather than assume dark, measure what the panel is actually
@@ -3235,12 +3235,12 @@ function matchColorScheme(el) {
 }
 // A filled button whose fill is close to the surface behind it reads as plain
 // text, however readable its label is. Repainting the label fixed half of that
-// and left the other half: on a theme whose accent is near the panel colour,
+// and left the other half: on a theme whose accent is near the panel color,
 // Save was legible and had no edge, so nothing said it was a button.
 //
 // The threshold is low. Plenty of themes use a quiet accent and still read
 // fine; this only catches a fill that has all but vanished. The border is
-// already there at one pixel and transparent, so colouring it costs no layout.
+// already there at one pixel and transparent, so coloring it costs no layout.
 const MIN_EDGE = 1.45;
 function fixEdge(el, min) {
     try {
@@ -3285,9 +3285,9 @@ function paintsText(el) {
         if (n && n.nodeType === 3 && String(n.nodeValue || "").trim())
             return true;
     }
-    // An element with a colour of its own but no text yet is a status line
+    // An element with a color of its own but no text yet is a status line
     // waiting for something to say. The sweep runs once, while they are all still
-    // empty, so skipping them means they are never checked at all. Their colour
+    // empty, so skipping them means they are never checked at all. Their color
     // does not change when the text arrives, so checking now gives the same
     // answer, earlier.
     try {
@@ -3385,7 +3385,7 @@ function reInk() {
 }
 // What the theme resolves to, as a string to compare against the last one. The
 // variables the panel is drawn from, plus the two surfaces behind it: a theme
-// that swaps only the page colour and leaves the variables alone still changes
+// that swaps only the page color and leaves the variables alone still changes
 // every answer these repairs give.
 const THEME_VARS = [
     "--lumiverse-bg",
@@ -3497,7 +3497,7 @@ const HOLD_SLOP = 10;
 // arrow rather than as a mistake.
 //
 // Strokes are currentColor so the mark follows the theme, and so fixContrast
-// can repaint it by setting colour on the element around it.
+// can repaint it by setting color on the element around it.
 const MARK_BODY = '<path stroke-width="1.6" d="M 2.74 7.48 A 10.3 10.3 0 0 1 21.8 8.82"/>' +
     '<polyline stroke-width="1.6" points="19.69 7.19 21.8 8.82 22.54 6.26"/>' +
     '<rect stroke-width="2" x="6" y="8.3" width="12" height="8.6" rx="2.8"/>' +
@@ -3675,7 +3675,7 @@ export function setup(ctx, opts) {
     }
     let lastChatId = null;
     // Told outright that no chat is open, as opposed to not having been told
-    // anything yet. Both leave lastChatId null and the per-chat switch greyed
+    // anything yet. Both leave lastChatId null and the per-chat switch grayed
     // out, and they are not the same thing to read: one is the home screen, the
     // other is the extension waiting to be told where it is. Only something that
     // could actually look sets this.
@@ -3888,7 +3888,7 @@ export function setup(ctx, opts) {
     // state change registers it again rather than editing it in place.
     const TOGGLE_ICON_ON = markSvg(false);
     const TOGGLE_ICON_OFF = markSvg(true);
-    // The state the registered entry was last labelled for, so it is only rebuilt
+    // The state the registered entry was last labeled for, so it is only rebuilt
     // when the label would actually change. Both switches, because the entry says
     // whether Auto Retry is on and the answer in a chat you switched off is no.
     // Keyed on the pair rather than the master alone, or flipping the per-chat one
@@ -4018,7 +4018,7 @@ export function setup(ctx, opts) {
     }
     // A short in-memory ring buffer of what the extension did, captured whether or
     // not console logging is on, so the Copy debug info report carries a timeline
-    // and the user never has to open dev tools to report a behavioural bug.
+    // and the user never has to open dev tools to report a behavioral bug.
     const EVENTLOG_MAX = 20;
     const eventLog = [];
     let liveLogEl = null;
@@ -4468,7 +4468,7 @@ export function setup(ctx, opts) {
         else {
             body.appendChild(barBlock("What it retried for", stats.reasons, names));
         }
-        // One labelled block of bars. Written once because there are two of them
+        // One labeled block of bars. Written once because there are two of them
         // now and they must not drift apart.
         function barBlock(title, counts, order) {
             const wrap = document.createElement("div");
@@ -4516,9 +4516,9 @@ export function setup(ctx, opts) {
         // does not show up in a total across every chat.
         const chatIds = Object.keys(stats.byChat).sort((a, b) => stats.byChat[b] - stats.byChat[a]);
         if (chatIds.length > 1) {
-            // Labelled now rather than when counted, so a name that arrived late
+            // Labeled now rather than when counted, so a name that arrived late
             // still covers every retry in that chat.
-            const labelled = {};
+            const labeled = {};
             const order = [];
             for (const id of chatIds) {
                 const name = chatNames.get(id);
@@ -4528,12 +4528,12 @@ export function setup(ctx, opts) {
                     ? "Chats without an id"
                     : name ? "With " + name : "Chat " + id.slice(0, 8);
                 // Two chats with the same card would otherwise land on one row.
-                if (labelled[label] != null)
+                if (labeled[label] != null)
                     label += " (" + id.slice(0, 4) + ")";
-                labelled[label] = stats.byChat[id];
+                labeled[label] = stats.byChat[id];
                 order.push(label);
             }
-            body.appendChild(barBlock("Which chats it retried in", labelled, order));
+            body.appendChild(barBlock("Which chats it retried in", labeled, order));
         }
         try {
             ensureReadableTree(body);
@@ -4579,7 +4579,7 @@ export function setup(ctx, opts) {
         return String(lastPrompt.chatId) === String(lastChatId);
     }
     // The prompt as the model was handed it, with everything this panel adds
-    // taken off: no roles coloured, no chat-or-added marks, no note highlighting,
+    // taken off: no roles colored, no chat-or-added marks, no note highlighting,
     // none of the rows. Role and content are what actually crossed to the model,
     // so this is also the form that pastes into anything else.
     function promptAsData() {
@@ -4741,7 +4741,7 @@ export function setup(ctx, opts) {
                 "margin-bottom:6px;font-size:12px;line-height:1.4;" +
                     "color:var(--lumiverse-text-muted,rgba(255,255,255,.65))";
             rough.textContent =
-                "Read that as a ceiling rather than your bill. Anything your provider wraps around the prompt is missing from it, and it prices every token at the full rate, which is the most you could be charged rather than what you will be. Lumiverse counts the tokens with its own tokeniser for the model, which is not the counter your provider bills you against.";
+                "This is an estimate, not your bill. It prices every token at the full rate, so a provider discount, such as for cached tokens, makes the real cost lower. It leaves out anything your provider adds around the prompt. Lumiverse counts the tokens with its own tokenizer for the model, and your provider may count them differently.";
             body.appendChild(rough);
         }
         const viewRow = document.createElement("div");
@@ -5136,7 +5136,7 @@ export function setup(ctx, opts) {
             const st = liveStatus();
             if (words.textContent !== st.text)
                 words.textContent = st.text;
-            // Off is dim and flat. On is the theme's own colour. A ring grows out of
+            // Off is dim and flat. On is the theme's own color. A ring grows out of
             // the dot only while something is running, so movement on this panel
             // always means something is happening.
             //
@@ -5557,7 +5557,7 @@ export function setup(ctx, opts) {
         return Number.isFinite(v) && v >= 28 ? Math.min(v, 96) : 44;
     }
     // Whether the pointer can hover at all. A phone cannot, and a browser on one
-    // synthesises a hover when a finger rests somewhere, so anything drawn from
+    // synthesizes a hover when a finger rests somewhere, so anything drawn from
     // hover alone arrives on a tap and has nothing to take it off again.
     //
     // Only worth asking about a device as a whole, never about one event. A phone
@@ -5698,7 +5698,7 @@ export function setup(ctx, opts) {
         const glyph = Math.max(14, Math.round(d * 0.56));
         // The base is opaque, and the accent goes on as a layer over it rather than
         // replacing it. A floating control sits over whatever the chat is showing,
-        // and a fill with alpha in it takes the colour of the message underneath, so
+        // and a fill with alpha in it takes the color of the message underneath, so
         // the same button was muddy over one reply and clear over the next.
         //
         // Auto Refine's button says its own states with the same four values moving
@@ -5717,7 +5717,7 @@ export function setup(ctx, opts) {
         // The mark's job is to stay legible; the fill, the edge and the ring say
         // which state it is in. Tinting the mark itself with the accent measured
         // 2.49 against a floor of 3 on a light theme in Auto Refine, which is the
-        // same pair of colours this used.
+        // same pair of colors this used.
         floatEl.style.color = "var(--lumiverse-text,rgba(255,255,255,.9))";
         // Off is said by the fill, the edge, the ink and the slash across the mark.
         // Dropping the whole button to three quarters as well dimmed the mark that
@@ -5847,7 +5847,7 @@ export function setup(ctx, opts) {
                 // The same lift Auto Refine's button has. A control floating over the
                 // chat needs enough shadow to sit above it rather than on it.
                 "box-shadow:var(--lumiverse-shadow-md,0 8px 24px rgba(0,0,0,.4));";
-        // The colours ease between the two states and the mark fades in over the one
+        // The colors ease between the two states and the mark fades in over the one
         // it replaces, so turning it off reads as one movement rather than a
         // flicker. Only on a real change of state: repainting for a chat switch or
         // after a drag says nothing new, and a device asking for less movement gets
@@ -6891,7 +6891,7 @@ export function setup(ctx, opts) {
     // Settings are just values. These group them so a user can share or back up
     // only the parts they want. Import runs every value back through the same
     // coerce/clamp as saved settings, so an imported file can only set known keys to
-    // safe values; anything unrecognised is ignored.
+    // safe values; anything unrecognized is ignored.
     // The parts import, export and reset are all divided into. A label has to
     // name everything in its own list, not the heading the list grew out of: a
     // part that sounds narrower than it is gets ticked by somebody who then loses
@@ -8292,17 +8292,17 @@ export function setup(ctx, opts) {
                     .join(",") + "{animation:none!important;transition:none!important}";
                 // The pattern behind the panel, on the same sheet since it is read
                 // off the page's root the same way. Thin lines or dots in the theme's
-                // colour, drawn with gradients. Marked important, since the panel's
+                // color, drawn with gradients. Marked important, since the panel's
                 // own background is set on the element itself. The log and the line
                 // under the tabs sit on a solid box, so no text is read across it.
                 const ink = "var(--lumiverse-primary-010,rgba(147,112,219,.12))";
-                // The floating panel's own colour is a layer of the theme's raised
-                // colour, so the pattern goes over that layer rather than in its
-                // place. The drawer has no colour of its own to keep.
-                // Its base colour becomes the raised colour too. The readability sweep
-                // reads a plain colour layer but not a pattern, so with a pattern on it
+                // The floating panel's own color is a layer of the theme's raised
+                // color, so the pattern goes over that layer rather than in its
+                // place. The drawer has no color of its own to keep.
+                // Its base color becomes the raised color too. The readability sweep
+                // reads a plain color layer but not a pattern, so with a pattern on it
                 // falls back to the base, which is otherwise Lumiverse's fixed dark
-                // grey, and paints the buttons' text white on a light theme.
+                // gray, and paints the buttons' text white on a light theme.
                 const lift = "linear-gradient(var(--lumiverse-bg-elevated,rgba(35,30,48,.9)),var(--lumiverse-bg-elevated,rgba(35,30,48,.9)))";
                 const drawn = {
                     diamonds: "repeating-linear-gradient(45deg," + ink + " 0 1px,transparent 1px 16px)," +
@@ -8331,15 +8331,15 @@ export function setup(ctx, opts) {
                     "html[data-ar-pattern] [data-ar-settings]{position:relative;isolation:isolate}" +
                         'html[data-ar-pattern] [data-ar-settings]::before{content:"";display:block;position:sticky;top:0;' +
                         "height:var(--ar-view,60vh);margin-bottom:calc(-1 * var(--ar-view,60vh));z-index:-1;pointer-events:none}";
-                // Solid, and in the theme's own colour: the theme's raised colour,
+                // Solid, and in the theme's own color: the theme's raised color,
                 // laid twice. It is light on a light theme and dark on a dark one,
                 // and near solid once laid twice even when a theme makes it
-                // see-through. Lumiverse's "solid card" colour is a fixed grey that
+                // see-through. Lumiverse's "solid card" color is a fixed gray that
                 // no theme changes, and a custom theme does not always set the
                 // deepest background, so neither is used.
                 // Hearts and stars are shapes, which a gradient cannot draw. Each is a
                 // small picture used as a mask over a layer filled with the theme's
-                // colour, so the shapes take the colour and follow a theme change. The
+                // color, so the shapes take the color and follow a theme change. The
                 // layer sits behind everything in the box it is on. Auto Refine draws
                 // the same two.
                 for (const kind of SHAPE_PATTERNS) {
@@ -8370,7 +8370,7 @@ export function setup(ctx, opts) {
                         // Lumiverse styles every scroll bar on the page, with no least size
                         // for the thumb, so a box holding a very long text gets a thumb a
                         // few pixels tall. Inside our boxes it is never shorter than this,
-                        // and keeps the theme's colour and shape.
+                        // and keeps the theme's color and shape.
                         "[data-ar-ui] ::-webkit-scrollbar-thumb,[data-ar-panel] ::-webkit-scrollbar-thumb," +
                         "[data-ar-settings] ::-webkit-scrollbar-thumb,#__lvRetryLog ::-webkit-scrollbar-thumb{min-height:28px;min-width:28px}" +
                         "html[data-ar-pattern] [data-ar-sec]{" + solid + "padding:12px;" +
@@ -8791,19 +8791,19 @@ export function setup(ctx, opts) {
         return null;
     }
     // The browser draws its own clear button inside a search field, and picks its
-    // colour from the page's colour scheme rather than from any CSS. On a dark
+    // color from the page's color scheme rather than from any CSS. On a dark
     // page that is a white cross, which is the one thing in this panel that does
     // not follow the theme, because it is the browser's element and not ours.
-    // Replacing the glyph with a masked shape lets it take a theme colour like
+    // Replacing the glyph with a masked shape lets it take a theme color like
     // everything else. A pseudo-element cannot be styled inline, so this needs a
     // real stylesheet.
     //
-    // The fill is currentColor, which is the field's own text colour, rather than
+    // The fill is currentColor, which is the field's own text color, rather than
     // a theme variable. Naming a variable means naming a fallback for the themes
     // that do not set it, and every fallback in this file is a dark one, so a
-    // light theme that set the common colours and not that one painted a
+    // light theme that set the common colors and not that one painted a
     // near-white cross on a near-white field. There is nothing to fall back to
-    // here: the field's text colour is whatever the theme asked for, and
+    // here: the field's text color is whatever the theme asked for, and
     // styleField has already had ensureReadable correct it if it did not read
     // against the field. Whatever the cross inherits is therefore legible by the
     // time it is used, on any theme, with nothing to measure and nothing to keep
@@ -8942,7 +8942,7 @@ export function setup(ctx, opts) {
                     "#" + SEARCH_ID + "::-webkit-search-cancel-button:hover{opacity:1}" +
                     // The browser's own up and down arrows on a number box. They are drawn
                     // by the browser rather than the theme, so on a dark panel they arrive
-                    // as a pair of small grey chevrons that belong to no design here. The
+                    // as a pair of small gray chevrons that belong to no design here. The
                     // value is typed, and a focused box still steps with the arrow keys, so
                     // nothing is lost with them gone.
                     "[data-ar-num]::-webkit-outer-spin-button,[data-ar-num]::-webkit-inner-spin-button" +
@@ -9397,7 +9397,7 @@ export function setup(ctx, opts) {
             return;
         }
         if (Date.now() < s.suppressUntil) {
-            log("ignored, you had just stopped or cancelled it", chatId);
+            log("ignored, you had just stopped or canceled it", chatId);
             return;
         }
         if (s.attempts >= cfg.maxRetries) {
@@ -10012,9 +10012,9 @@ export function setup(ctx, opts) {
     }
     // Ask the backend which chat is open. Everything else that sets the chat id
     // waits for something to happen in the chat, and sitting still in one is not
-    // something happening, so the per-chat switch would sit greyed out until the
+    // something happening, so the per-chat switch would sit grayed out until the
     // next reply. This asks outright. Without the chats permission it answers
-    // null and the waiting behaviour stands.
+    // null and the waiting behavior stands.
     //
     // Handlers waiting on an answer that may never come. Held so teardown can
     // drop them, and so one is never left listening for a reply to a question
@@ -10637,7 +10637,7 @@ export function setup(ctx, opts) {
                 // This has to be fully opaque. It sits directly on top of the options
                 // list, and --lumiverse-bg-elevated is only 90% opaque, so the row
                 // underneath would read through the description covering it. The theme's
-                // own solid surface is painted first and the elevated colour laid over
+                // own solid surface is painted first and the elevated color laid over
                 // it, so the tint still follows the theme but nothing shows through.
                 "background-color:var(--lumiverse-card-bg-solid,rgb(24,20,34));" +
                 "background-image:linear-gradient(var(--lumiverse-bg-elevated,rgba(35,30,48,.98))," +
@@ -10701,7 +10701,7 @@ export function setup(ctx, opts) {
         const w = box.width || el.offsetWidth || 0;
         const GAP = 6;
         const EDGE = 12;
-        // Lined up with the row's left edge rather than centred on the "?", which
+        // Lined up with the row's left edge rather than centered on the "?", which
         // reads as belonging to the row, and nudged back inside a narrow screen.
         const left = Math.max(EDGE, Math.min(r.left, vw - w - EDGE));
         // Room on each side, never below zero. A row pushed to the very top of the
@@ -10971,7 +10971,7 @@ export function setup(ctx, opts) {
             // on its own; those are opened by the user, and a notification landing on
             // top of a menu turns a tap on "Hide this button" into a tap on Cancel.
             t.style.cssText =
-                // Centred by pinning both edges and letting the margins share what is
+                // Centered by pinning both edges and letting the margins share what is
                 // left, not by left:50% and a transform. With only a left edge set, the
                 // box's containing block starts halfway across the screen and ends at
                 // the right edge, so it could never be wider than half the viewport:
@@ -11591,7 +11591,7 @@ export function setup(ctx, opts) {
         // showing what was true at startup is a panel that goes on reporting a
         // permission somebody has already turned on.
         askForPermissions();
-        // Flush a field the user is still editing into cfg, then normalise every
+        // Flush a field the user is still editing into cfg, then normalize every
         // number so a blank or out-of-range box cannot be saved or captured into a
         // preset.
         const commit = () => {
@@ -11788,7 +11788,7 @@ export function setup(ctx, opts) {
             const syncPresetButtons = () => {
                 const picked = !!select.value;
                 writePick(kind, select.value);
-                // Hidden rather than greyed: an always-present button offering to put
+                // Hidden rather than grayed: an always-present button offering to put
                 // back nothing is a question the reader has to answer every time they
                 // look at the row.
                 undoBtn.hidden = !undoTo;
@@ -12260,7 +12260,7 @@ export function setup(ctx, opts) {
             "display:flex;flex-direction:column;gap:18px;flex:1 1 auto;min-height:0;overflow-y:auto;padding-right:4px";
         const panelSections = [];
         const searchRows = [];
-        // Labelled runs of rows inside a group, hidden by a search once none of
+        // Labeled runs of rows inside a group, hidden by a search once none of
         // their rows match so a heading is never left standing over nothing.
         const subRuns = [];
         // Rows that only mean something while some switch is on. Kept out of the
@@ -12411,7 +12411,7 @@ export function setup(ctx, opts) {
             // A rule under the heading. Sections were text sitting above rows with
             // nothing between them, so on a long panel one section ran into the next
             // and the headings read as another row rather than as a break. Drawn in
-            // the theme's own border colour, which is faint by design: enough to
+            // the theme's own border color, which is faint by design: enough to
             // separate, not enough to become furniture.
             header.style.cssText =
                 "font-size:11px;letter-spacing:.07em;text-transform:uppercase;font-family:var(--lumiverse-font-family,system-ui);" +
@@ -12557,7 +12557,7 @@ export function setup(ctx, opts) {
                 }
                 return row;
             };
-            // A labelled run of rows inside a group, so a long list can say what its
+            // A labeled run of rows inside a group, so a long list can say what its
             // parts have in common. Registered so a search can hide the whole run,
             // heading included, once none of its rows match.
             const subGroup = (into, title, note) => {
@@ -12601,7 +12601,7 @@ export function setup(ctx, opts) {
                 //
                 // A tester comes last. It is not a setting and saves nothing, it is
                 // somewhere to try the settings out, so it goes after all of them.
-                // A preset bar and everything labelling it, as one block, so a switch
+                // A preset bar and everything labeling it, as one block, so a switch
                 // it hangs off takes the heading and the description with it rather
                 // than leaving a heading standing over nothing.
                 const presetBlock = (kind, heading, desc) => {
@@ -12970,7 +12970,7 @@ export function setup(ctx, opts) {
         searchWrap.appendChild(searchNote);
         // Auto Retry can be switched off from the floating button or the Extras
         // menu without opening this panel, so someone can arrive here with it off
-        // and no sign of why nothing is happening. Nothing is hidden or greyed for
+        // and no sign of why nothing is happening. Nothing is hidden or grayed for
         // it: off means paused, not unconfigured, and setting it up while it is off
         // is a normal thing to want to do.
         // Filled in by syncMasterNote, which has two states to describe rather than
@@ -13351,8 +13351,8 @@ export function setup(ctx, opts) {
                     // a field's focus ring does. It paints outside the box, so nothing is
                     // laid out again and the row cannot move.
                     //
-                    // The border only. The text colour is the readability sweep's to write,
-                    // and a theme that makes its own muted colour unreadable has that
+                    // The border only. The text color is the readability sweep's to write,
+                    // and a theme that makes its own muted color unreadable has that
                     // rewritten a frame after the panel is built: animating it means the
                     // repair can be watched happening, which is the label reading correct,
                     // then wrong, then correct. Measured on a light page with dark theme
@@ -13719,7 +13719,7 @@ export function setup(ctx, opts) {
             sel.style.maxWidth = "60%";
             sel.addEventListener("change", () => {
                 cfg[f.key] = coerce("pick", sel.value, CONFIG[f.key], f);
-                // Honoured here as well as on a number box. Wired up for numbers alone,
+                // Honored here as well as on a number box. Wired up for numbers alone,
                 // a dropdown asking to apply as it is picked is accepted by the schema
                 // and then does nothing.
                 if (f.live)
@@ -13883,7 +13883,7 @@ export function setup(ctx, opts) {
     // A tinted border on its own is a single hairline, which on a busy theme is
     // easy to lose and on a wide field says very little. This is the same tint
     // with room around it: a soft band just outside the edge, and a wider halo
-    // past that, both in the theme's own accent so it follows whatever colour
+    // past that, both in the theme's own accent so it follows whatever color
     // the user runs. Nothing is painted inside the field, so the text is never
     // sat on and contrast is untouched.
     //
@@ -13907,7 +13907,7 @@ export function setup(ctx, opts) {
         input.style.cssText +=
             "padding:9px 10px;border-radius:var(--lumiverse-radius,8px);" +
                 "border:1px solid var(--lumiverse-border,rgba(255,255,255,.16));" +
-                // Lumiverse's own input colour, so a theme that changes its boxes
+                // Lumiverse's own input color, so a theme that changes its boxes
                 // changes these too. Older builds without it fall back to the fill.
                 "background:var(--lumiverse-input-bg,var(--lumiverse-fill,rgba(0,0,0,.15)));" +
                 "color:var(--lumiverse-text,#eee);font:13px var(--lumiverse-font-family,system-ui);outline:none;" +
@@ -13964,15 +13964,15 @@ export function setup(ctx, opts) {
         b.style.cssText =
             "min-height:36px;padding:8px 14px;border-radius:var(--lumiverse-radius,8px);cursor:pointer;" +
                 "font:13px var(--lumiverse-font-family,system-ui);" +
-                // Only the hover colour. Nothing here sets filter, and animating it is
+                // Only the hover color. Nothing here sets filter, and animating it is
                 // what forces a button onto its own compositing layer for no benefit.
                 "transition:background-color var(--lumiverse-transition-fast,150ms ease)," +
                 "box-shadow var(--lumiverse-transition-fast,150ms ease);" +
                 (primary
                     ? // A filled button's label has to contrast with the fill, not with the
-                        // panel. Lumiverse has no on-accent colour to ask for, and the body
-                        // text colour is the wrong answer: on a theme with a light accent it
-                        // is the same colour as the fill, which is what made this button read
+                        // panel. Lumiverse has no on-accent color to ask for, and the body
+                        // text color is the wrong answer: on a theme with a light accent it
+                        // is the same color as the fill, which is what made this button read
                         // as a blank rectangle. White is the right default for the stock
                         // accent, and ensureReadable below measures what was actually painted
                         // and flips it to near-black on an accent too light for white.
@@ -13998,7 +13998,7 @@ export function setup(ctx, opts) {
         // that apart from tabbing to it, so the button opened with a focus ring
         // around it that nobody had asked for.
         b.setAttribute("data-ar-btn", "1");
-        // Hovering swaps to the theme's own hover colour rather than brightening the
+        // Hovering swaps to the theme's own hover color rather than brightening the
         // resting one, so a button lights up the same way the rest of Lumiverse does.
         let restBg = primary
             ? "var(--lumiverse-primary,rgba(147,112,219,.9))"
@@ -14008,11 +14008,11 @@ export function setup(ctx, opts) {
             : "var(--lumiverse-secondary-hover,rgba(128,128,128,.25))";
         const setBg = (v) => {
             b.style.background = v;
-            // A theme is free to make its hover colour lighter or darker than the
+            // A theme is free to make its hover color lighter or darker than the
             // resting one, so the label is checked against whichever is showing.
             ensureReadable(b);
         };
-        // Changing a button's colour means changing what it rests and hovers at,
+        // Changing a button's color means changing what it rests and hovers at,
         // not just what it is painted right now. Setting the background alone was
         // undone by the next mouseleave, so the reset picker's danger red came off
         // the moment a pointer crossed it and did not come back.
@@ -14024,13 +14024,13 @@ export function setup(ctx, opts) {
         };
         // From a mouse only. A touch browser sends this one at the end of a tap and
         // never sends the matching leave, so every button in the panel stayed in
-        // its hover colour after being tapped. pointerleave below cannot undo it
+        // its hover color after being tapped. pointerleave below cannot undo it
         // either: it has already run by the time this arrives.
         b.addEventListener("mouseenter", (e) => {
             if (fromMouse(e))
                 setBg(hoverBg);
         });
-        // Not asked. Going back to the resting colour is right whatever left.
+        // Not asked. Going back to the resting color is right whatever left.
         b.addEventListener("mouseleave", () => setBg(restBg));
         // Press feedback that also works on touch, where hover never fires.
         const pressClear = () => {
@@ -14187,7 +14187,7 @@ export function setup(ctx, opts) {
             // press should count.
             const row = document.createElement("div");
             row.setAttribute("data-ar-reset", part.id);
-            // No opacity for the disabled state. The contrast sweep reads colour
+            // No opacity for the disabled state. The contrast sweep reads color
             // against background and cannot see through an opacity, so a faded row on
             // a hostile theme is one it has no way to repair. The disabled box and
             // the "already default" note beside it say it well enough.
@@ -14272,7 +14272,7 @@ export function setup(ctx, opts) {
         const chosen = () => checks.filter((x) => x.input.checked).map((x) => x.id);
         // Capture, and the event stops here. Without that, the same Escape that
         // shuts this box carries on to the host's own modal and shuts the settings
-        // panel behind it, so cancelling a reset closed everything.
+        // panel behind it, so canceling a reset closed everything.
         const onKey = (e) => {
             if (!e || e.key !== "Escape")
                 return;
@@ -14319,7 +14319,7 @@ export function setup(ctx, opts) {
         // the button does cannot come apart.
         const confirmWrap = document.createElement("div");
         // The question reads as a question, not as another row of the form. A left
-        // edge in the theme's danger colour and a tint behind it, which is what the
+        // edge in the theme's danger color and a tint behind it, which is what the
         // rest of Lumiverse uses to mean "this one is different".
         confirmWrap.style.cssText =
             "display:none;flex-direction:column;gap:8px;flex:none;padding:10px 12px;" +
@@ -14372,7 +14372,7 @@ export function setup(ctx, opts) {
             // Through the button's own tone, so hovering it does not put the accent
             // back. ensureReadable runs inside that, measuring the label against
             // whatever is actually painted rather than against the accent it was
-            // coloured for.
+            // colored for.
             const hover = permanent
                 ? "var(--lumiverse-danger-hover,#dc2626)"
                 : "var(--lumiverse-warning,#f59e0b)";
@@ -14384,7 +14384,7 @@ export function setup(ctx, opts) {
         const freeze = (frozen) => {
             // disabled rather than pointer-events, so a keyboard cannot change a tick
             // the summary has already been written from. The rows keep their normal
-            // colour, so the list stays readable while it is being read.
+            // color, so the list stays readable while it is being read.
             for (const input of tickable)
                 input.disabled = frozen;
             all.disabled = frozen;
@@ -14773,7 +14773,7 @@ export function setup(ctx, opts) {
             // A notification, so Lumiverse decides where it shows. The bar that asked
             // for the press has gone with the picker.
             if (message)
-                showToast(message, { force: true, kind: sel ? "success" : message === "Picking cancelled." ? "info" : "warning" });
+                showToast(message, { force: true, kind: sel ? "success" : message === "Picking canceled." ? "info" : "warning" });
         };
         // The press that picked is still down, so a click is coming for whatever is
         // under it. Eaten by a listener of its own, since the picker stands down the
@@ -14844,7 +14844,7 @@ export function setup(ctx, opts) {
         };
         const onUp = () => letGo();
         // The browser raising its own menu on a long press is that same press,
-        // recognised by something else first. Taken as the pick rather than
+        // recognized by something else first. Taken as the pick rather than
         // competed with, which also covers a right click on a desktop.
         const onMenu = (e) => {
             const node = held ? held.node : e && e.target;
@@ -14859,9 +14859,9 @@ export function setup(ctx, opts) {
         };
         const onKey = (e) => {
             if (e && e.key === "Escape")
-                finish(null, "Picking cancelled.");
+                finish(null, "Picking canceled.");
         };
-        // Cancelled, not answered: teardown wants the listeners gone, not the panel
+        // Canceled, not answered: teardown wants the listeners gone, not the panel
         // reopened over a page the extension is leaving.
         stopPicking = () => {
             if (done)
@@ -14914,7 +14914,7 @@ export function setup(ctx, opts) {
             sticky: true,
             force: true,
             top: true,
-            cancel: () => finish(null, "Picking cancelled."),
+            cancel: () => finish(null, "Picking canceled."),
         });
     }
     function openSettings() {
@@ -15201,7 +15201,7 @@ export function setup(ctx, opts) {
                     }
                     // The real count for the reply the panel is pricing. Late answers for a
                     // reply that has since been replaced are dropped, the same way the
-                    // prompt's count is, so a slow tokeniser cannot put an old number
+                    // prompt's count is, so a slow tokenizer cannot put an old number
                     // against a new reply.
                     if (msg.type === "reply_tokens") {
                         if (!msg.at || msg.at !== replyCountAt)
@@ -15405,7 +15405,7 @@ export function setup(ctx, opts) {
 // Exported for the test suite in test/ only. setup() above is the whole API the
 // host uses; nothing here is part of it. These are the decisions worth pinning
 // down in a test: whether a reply counts as a refusal or as cut off, and
-// whether a colour pairing is readable. All of them are pure functions of their
+// whether a color pairing is readable. All of them are pure functions of their
 // input, so they can be checked without a browser.
 export const __testing = {
     setBoundThinkPairs,

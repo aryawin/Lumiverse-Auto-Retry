@@ -93,7 +93,7 @@ What it reads, and for how long:
 - **The reply on screen when a reply starts.** It keeps only a fingerprint: a length and a number worked out from the characters. That is enough to tell if it changed, and useless for anything else. It is dropped when the reply ends.
 - **The address in your browser**, to check one thing: does it still contain the id of the chat you are in. The answer is yes or no. The address is not stored or sent anywhere.
 
-**One case sends a reply to the extension's own backend.** With the panel open on the **Prompt** tab and a price set under **What a retry costs**, the finished reply is counted by Lumiverse's own tokeniser, so the panel can show what the reply part of a retry costs.
+**One case sends a reply to the extension's own backend.** With the panel open on the **Prompt** tab and a price set under **What a retry costs**, the finished reply is counted by Lumiverse's own tokenizer, so the panel can show what the reply part of a retry costs.
 
 - Only the number comes back. The text is not stored or used for anything else.
 - It stays inside your Lumiverse.

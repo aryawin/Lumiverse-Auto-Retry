@@ -28,7 +28,7 @@ declare const spindle: any;
 // with while this side comes back on the new build. A debug report naming only
 // the panel's version would be speaking for a file it cannot see, so the panel
 // asks for this one and prints both.
-const VERSION = '5.17.6';
+const VERSION = '5.17.7';
 
 const SETTINGS_FILE = 'settings.json';
 // Presets, kept in account storage next to the settings so they
@@ -291,7 +291,7 @@ function promptWatcherFor(userId?: string): string | null {
 // it shows, which is the one thing a reader cannot work around. The cost is
 // kept down by only sending a prompt while the Prompt tab is open.
 
-// The tokeniser the host actually uses, when it will tell us. The panel's own
+// The tokenizer the host actually uses, when it will tell us. The panel's own
 // figure is characters divided by four, which is a serviceable guess and wrong
 // by enough to matter on a long chat. Needs no permission. Answers null on any
 // build or model where it does not resolve, and the panel says "roughly" again.
@@ -300,7 +300,7 @@ async function countTokens(text: string, context: any, userId?: string): Promise
     if (!text || !spindle.tokens || typeof spindle.tokens.countText !== 'function') return null;
     const model = context && (context.model || context.modelId);
     const res = await spindle.tokens.countText(text, { model: model, userId: userId });
-    // Lumiverse says when it had no tokeniser for the model and fell back to
+    // Lumiverse says when it had no tokenizer for the model and fell back to
     // characters over four. Answered as no count at all, because that is the
     // same guess the panel makes for itself and saying roughly over it is the
     // difference between a figure and a figure that looks exact.
@@ -379,7 +379,7 @@ function snapshotPrompt(messages: any[], context: any, userId?: string, noteAt?:
       total: messages.length,
       notes: noteAt ? noteAt.count : 0,
     });
-    // Sent as a second message so a slow tokeniser never delays the view. The
+    // Sent as a second message so a slow tokenizer never delays the view. The
     // panel shows its own estimate until this lands, and replaces it if it does.
     countTokens(messages.map((m: any) => String((m && m.content) || '')).join('\n'), context, to)
       .then((tokens) => {
@@ -693,7 +693,7 @@ function placeNotes(messages: any[], notes: any[], placement: string): { list: a
 
 // One of Lumiverse's own notifications. Lumiverse takes them only from an
 // extension's server side, so the panel sends its words here to be shown. The
-// kind sets the colour. It is sent to the account that asked: on a shared
+// kind sets the color. It is sent to the account that asked: on a shared
 // server, a notification with no account named goes to everybody. Lumiverse
 // shows the extension's name as the title, so none is added. It also shows at
 // most five in ten seconds from one extension and drops the rest.

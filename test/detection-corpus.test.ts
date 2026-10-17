@@ -35,13 +35,13 @@ const finished: Array<[string, string]> = [
   ["a doubled divider", "She left.\n\n**\n\nMorning came without her, as mornings do."],
   ["a rule divider", "She left.\n\n---\n\nMorning came without her, as mornings do."],
   ["multiplication", "The cost was 2*3 = 6 coins, which he counted out slowly onto the bar."],
-  ["multiplication with spaces", "The wall was 2 * 3 metres, more than she could climb alone."],
+  ["multiplication with spaces", "The wall was 2 * 3 meters, more than she could climb alone."],
   ["a bullet list", "She packed:\n* rope\n* a knife\n* the letter\n\nThen she went out."],
   ["a footnote marker", "She left at dawn.*\n\n*Or so the letter said, which was a lie."],
   ["a closed code fence", "He read it aloud:\n\n```\nkeep me exactly\n```\n\nThen he stopped."],
   ["inline code", "The sign said `no entry` and she went in anyway, because of course she did."],
   ["a quote inside code", 'The value was `"unset"` and nobody had ever changed it since.'],
-  ["a coloured span", '<span style="color:#ff0">"Run,"</span> he said, and she ran without asking.'],
+  ["a colored span", '<span style="color:#ff0">"Run,"</span> he said, and she ran without asking.'],
   ["closed html emphasis", "She was <i>certain</i> of it, right up until the door opened by itself."],
   ["closed reasoning", "<think>She would go.</think>She went, and did not look back at the gate."],
   ["a closed detail block", "<details><summary>Note</summary>She lied.</details>\n\nHe believed her."],
@@ -104,7 +104,7 @@ describe("and these only when you ask for replies with no ending punctuation", (
 // the whole job. Getting it wrong throws away a reply somebody was reading.
 const inScene: Array<[string, string]> = [
   ["a character refusing", "\"I can't help you,\" she said, and meant it. \"Not after last time.\""],
-  ["a character apologising", "\"I'm sorry,\" he said. \"I am. But I am not going in there with you.\""],
+  ["a character apologizing", "\"I'm sorry,\" he said. \"I am. But I am not going in there with you.\""],
   ["unable, in scene", "She was unable to lift it alone, so she waited for him to come back."],
   ["cannot, in scene", "He cannot swim. That was the whole reason they took the long way round."],
   ["a narrator declining", "She refused to answer him. Whatever it was, she was keeping it."],
@@ -117,6 +117,8 @@ const inScene: Array<[string, string]> = [
   ["a narrator who will not write", "I won't write to him again. The last letter came back unopened, and that was answer enough."],
   ["content words, no opening", "The duke's men were explicit about the toll. Nobody crossed the bridge without paying it."],
   ["a content filter, in scene", "The station's content filter flagged the message twice. Pell typed the override code anyway and waited."],
+  // A model can write British spelling, and the patterns take both.
+  ["fulfil, said by a character", "\"I can't fulfil that order by Friday,\" the smith said, wiping his hands on his apron."],
 ];
 
 const real: Array<[string, string]> = [
@@ -129,6 +131,8 @@ const real: Array<[string, string]> = [
   ["sorry first, then stepping back", "Sorry, but I'm not able to write the next part. It turns on someone not agreeing, so I am stepping back."],
   ["a filter code as the reply", "content_filtered"],
   ["a filter code after a partial reply", "The rain had not let up by the time the barge reached the lock.\n\n[content_filter]"],
+  // A model can write British spelling, and the patterns take both.
+  ["fulfil, in British spelling", "I am not going to fulfil that request. Let me know if you would like something else."],
 ];
 
 describe("a character declining is not a refusal", () => {

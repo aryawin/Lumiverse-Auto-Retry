@@ -41,7 +41,7 @@ const FINISHED: Array<[string, string]> = [
   ["inline code", "The sign read `NO ENTRY`, so she went in anyway."],
   ["math with asterisk", "Two rooms, three windows each, so 2*3 = 6 ways out."],
   ["stat widget", '<div class="card"><b>HP</b>: 12/20<br><b>Height</b>: 6\'2"</div>\n\nShe checked her wounds and stood.'],
-  ["closed span colour", '<span style="color:#f0f">"Run,"</span> he hissed, and she ran.'],
+  ["closed span color", '<span style="color:#f0f">"Run,"</span> he hissed, and she ran.'],
   ["closed think block", "<think>She is lying.</think>\n\n\"I believe you,\" he said."],
   ["closed Kimi thinking", "\u25c1think\u25b7The note is forged.\u25c1/think\u25b7He folded the letter and kept it."],
   ["closed begin and end of thought", "<|begin_of_thought|>The note is forged.<|end_of_thought|>\nHe folded the letter and kept it."],

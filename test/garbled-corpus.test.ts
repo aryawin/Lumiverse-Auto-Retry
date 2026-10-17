@@ -68,7 +68,7 @@ const finished: Array<[string, string]> = [
       "\"Я ждал тебя два часа.\" Lena laughed and hoisted her bag onto her shoulder as she came down the " +
       "gangplank. \"The sea was rough,\" she said. \"Blame the captain, not me.\" He took the bag from her " +
       "without asking, and they walked together toward the line of taxis waiting along the quay in the " +
-      "grey afternoon light.",
+      "gray afternoon light.",
   ],
   [
     "product names",
@@ -103,8 +103,8 @@ const finished: Array<[string, string]> = [
   ],
   [
     "physics in the scene",
-    "Ines wrote the numbers on the board. If Δx is two metres and Δt is half a second, the speed is four " +
-      "metres a second, she explained, and the class copied it down. Then she drew the α particle leaving " +
+    "Ines wrote the numbers on the board. If Δx is two meters and Δt is half a second, the speed is four " +
+      "meters a second, she explained, and the class copied it down. Then she drew the α particle leaving " +
       "the nucleus and the β particle beside it, and marked the gap in μm. The students frowned at the " +
       "diagram. \"It is simpler than it looks,\" she said, and started again from the top with smaller " +
       "numbers so that everyone could follow along.",

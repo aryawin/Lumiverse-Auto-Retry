@@ -46,7 +46,15 @@ None of these automatically means that you are doing something wrong. They are s
 
 My honest recommendation is to uninstall it completely, instead of switching it off for now. This extension is designed to make asking again easier, and there are situations where making that easier is not helpful.
 
-To remove it properly: open **Reset** at the bottom of the settings panel, tick every part, tick **Delete saved presets** underneath, press **Save**, then uninstall. Clearing this site's storage in your browser also removes the remaining local settings, including where the panel was left on screen and the list of chats you switched it off in. Your chats and characters belong to Lumiverse, and the extension does not send them anywhere.
+To remove it and everything it saved:
+
+1. Press **Reset…** at the bottom of the settings panel.
+2. Press **Tick every setting**, then tick **Delete saved presets** underneath.
+3. Press **Reset ticked**, then **Yes, reset**.
+4. Press **Save**.
+5. Uninstall the extension.
+
+Clearing this site's storage in your browser also removes the remaining local settings, including where the panel was left on screen and the list of chats you switched it off in. Your chats and characters belong to Lumiverse, and the extension does not send them anywhere.
 
 I do not get anything from you keeping this installed. Removing it is a perfectly reasonable choice, and the extension is designed so that you can remove it.
 

@@ -1,9 +1,9 @@
 // Keeping panel text readable on any theme.
 //
-// Every colour in the settings panel comes from the user's Lumiverse theme, and
+// Every color in the settings panel comes from the user's Lumiverse theme, and
 // a theme can set its accent to anything. The bug these guard against: a theme
-// whose accent sits close to its text colour rendered filled buttons as blank
-// rectangles, the label present but the same colour as the button under it.
+// whose accent sits close to its text color rendered filled buttons as blank
+// rectangles, the label present but the same color as the button under it.
 //
 // Run with: bun test
 
@@ -39,15 +39,15 @@ describe("parsing what the browser reports", () => {
 });
 
 describe("compositing", () => {
-  test("half-transparent white over black is grey", () => {
+  test("half-transparent white over black is gray", () => {
     expect(blendColor([255, 255, 255, 0.5], [0, 0, 0, 1])).toEqual([
       127.5, 127.5, 127.5, 1,
     ]);
   });
-  test("an opaque colour covers whatever is under it", () => {
+  test("an opaque color covers whatever is under it", () => {
     expect(blendColor([12, 34, 56, 1], [255, 255, 255, 1])).toEqual([12, 34, 56, 1]);
   });
-  test("a fully transparent colour leaves the backdrop", () => {
+  test("a fully transparent color leaves the backdrop", () => {
     expect(blendColor([12, 34, 56, 0], [1, 2, 3, 1])).toEqual([1, 2, 3, 1]);
   });
 });
@@ -56,10 +56,10 @@ describe("contrast maths matches the WCAG definition", () => {
   test("black on white is 21:1", () => {
     expect(contrastRatio([0, 0, 0, 1], [255, 255, 255, 1])).toBeCloseTo(21, 4);
   });
-  test("a colour against itself is 1:1", () => {
+  test("a color against itself is 1:1", () => {
     expect(contrastRatio([147, 112, 219, 1], [147, 112, 219, 1])).toBeCloseTo(1, 6);
   });
-  test("the order of the two colours does not matter", () => {
+  test("the order of the two colors does not matter", () => {
     const a: any = [12, 200, 90, 1];
     const b: any = [40, 40, 40, 1];
     expect(contrastRatio(a, b)).toBeCloseTo(contrastRatio(b, a), 10);
@@ -84,7 +84,7 @@ describe("the themes that matter", () => {
     expect(contrastRatio(stockText, panel)).toBeGreaterThan(MIN);
   });
 
-  // A custom theme with a light lavender accent, and a body text colour almost
+  // A custom theme with a light lavender accent, and a body text color almost
   // the same shade.
   const lightAccent = parseColor("rgb(224, 192, 255)")!;
   const lavenderText = parseColor("rgb(226, 200, 250)")!;
@@ -118,7 +118,7 @@ describe("the themes that matter", () => {
 
   test("one of near-white or near-black always clears the floor", () => {
     // Whatever accent a theme picks, there is always a readable answer. Walking
-    // the greyscale is enough: luminance is what the choice turns on.
+    // the grayscale is enough: luminance is what the choice turns on.
     for (let v = 0; v <= 255; v += 5) {
       const bg: any = [v, v, v, 1];
       const best = Math.max(

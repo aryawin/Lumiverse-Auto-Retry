@@ -1,7 +1,7 @@
 // Panel checks that need a real browser.
 //
 // The settings panel is the part of this extension most easily broken by a
-// well-meaning change: colours come from the user's theme, the list is a scroll
+// well-meaning change: colors come from the user's theme, the list is a scroll
 // container, and a hint that expands in the wrong place pushes half the options
 // off a phone screen. All three have gone wrong at least once. These drive the
 // built dist/frontend.js in headless Chromium against a stub of the host.
@@ -204,7 +204,7 @@ async function inPanel(browser, { css = "", viewport, touch = false, settings = 
 // pseudo-element's own styles back through getComputedStyle.
 function decodePixels(buf) {
   const zlib = require("node:zlib");
-  let pos = 8, width = 0, height = 0, depth = 0, colour = 0;
+  let pos = 8, width = 0, height = 0, depth = 0, color = 0;
   const idat = [];
   while (pos < buf.length) {
     const len = buf.readUInt32BE(pos);
@@ -212,13 +212,13 @@ function decodePixels(buf) {
     const data = buf.subarray(pos + 8, pos + 8 + len);
     if (type === "IHDR") {
       width = data.readUInt32BE(0); height = data.readUInt32BE(4);
-      depth = data[8]; colour = data[9];
+      depth = data[8]; color = data[9];
     } else if (type === "IDAT") idat.push(data);
     else if (type === "IEND") break;
     pos += 12 + len;
   }
-  if (depth !== 8 || (colour !== 6 && colour !== 2)) return null;
-  const ch = colour === 6 ? 4 : 3;
+  if (depth !== 8 || (color !== 6 && color !== 2)) return null;
+  const ch = color === 6 ? 4 : 3;
   const raw = zlib.inflateSync(Buffer.concat(idat));
   const stride = width * ch;
   const out = Buffer.alloc(height * stride);
@@ -248,7 +248,7 @@ function decodePixels(buf) {
   return px;
 }
 
-// The field is whatever colour covers most of the sample; the cross is whatever
+// The field is whatever color covers most of the sample; the cross is whatever
 // stands out furthest from it. That works whichever way round the theme is,
 // which "the brightest thing there" did not: on a light theme the brightest
 // thing in the sample is the field itself.
@@ -321,7 +321,7 @@ body{background:rgb(244,242,249)}#modal{background:rgb(252,251,254)}`;
 
 // A light theme pack that overrides the common variables and not all 92, which
 // is what a hand-written theme actually looks like. Every fallback in the
-// source is a dark colour, so anything reaching for a variable this leaves
+// source is a dark color, so anything reaching for a variable this leaves
 // unset is measured against, or painted in, the wrong one.
 const PARTIAL_LIGHT = `:root{
 --lumiverse-primary:rgba(124,92,196,.95);--lumiverse-primary-hover:rgba(108,76,180,.95);
@@ -410,7 +410,7 @@ const CONTRAST_PROBE = () => {
   // the first background over 90% opaque walked straight past a button
   // whose fill is exactly 90%, and measured its label against the panel
   // behind it instead of against the button. Gradients count too: a tinted
-  // surface paints a colour its background-color never mentions.
+  // surface paints a color its background-color never mentions.
   const solid = (el) => {
     const layers = [];
     let p = el;
@@ -451,7 +451,7 @@ const CONTRAST_PROBE = () => {
     count: rows.length,
     worst: rows.reduce((a, x) => (x.r < a.r ? x : a), rows[0]),
     under3: rows.filter((x) => x.r < 3).map((x) => x.text),
-    saveColour: getComputedStyle(save).color,
+    saveColor: getComputedStyle(save).color,
     labelPx: parseFloat(getComputedStyle(save).fontSize),
   };
 };
@@ -459,7 +459,7 @@ const CONTRAST_PROBE = () => {
 console.log("\ncontrast");
 for (const [label, css] of [
   ["stock theme", ""],
-  // An accent close enough to the text colour that a filled button would render
+  // An accent close enough to the text color that a filled button would render
   // as a blank rectangle.
   ["light accent", ":root{--lumiverse-primary:#e0c0ff;--lumiverse-primary-hover:#ecd8ff;--lumiverse-text:#e2c8fa}"],
   ["raised text scale", ":root{--lumiverse-font-scale:1.5;--lumiverse-ui-scale:1.5}"],
@@ -467,7 +467,7 @@ for (const [label, css] of [
   ["light theme", LIGHT],
   // A light theme pack that overrides the common variables and not all 92,
   // which is what a hand-written theme actually looks like. Every fallback in
-  // the source is a dark colour, so anything reaching for a variable this
+  // the source is a dark color, so anything reaching for a variable this
   // leaves unset is measured against the wrong surface: a hint popover painted
   // near-white over an unset card-bg-solid measures as the dark fallback
   // underneath, and its text would be repainted white to match.
@@ -476,7 +476,7 @@ for (const [label, css] of [
   // value. Nothing here can be got right by reading a variable, so anything
   // that still reads on this reads anywhere.
   ["dark variables on a light page", LIGHT_PAGE],
-  // And a light theme whose accent sits close to its own text colour, which is
+  // And a light theme whose accent sits close to its own text color, which is
   // the light-side version of the same problem.
   ["light theme, pale accent", LIGHT + ":root{--lumiverse-primary:rgba(196,180,232,.9);--lumiverse-primary-hover:rgba(206,192,240,.95)}"],
 ]) {
@@ -505,7 +505,7 @@ console.log("\na theme's own custom CSS");
 // class selectors aim at Lumiverse's hashed class names, which carry an
 // underscore on each side, and none of them may reach the panel. Its element
 // rules reach every box on the page, Lumiverse's and the panel's alike, so a
-// box painted light with no text colour of its own still has to read.
+// box painted light with no text color of its own still has to read.
 const THEME_CLASSES =
   '[class*="_card_"],[class*="_btn_"],[class*="_button_"],[class*="_toggle_"],[class*="_switch_"],' +
   '[class*="_container_"],[class*="_label_"],[class*="_row_"],[class*="_header_"],[class*="_input_"],' +
@@ -552,7 +552,7 @@ for (const [label, viewport, touch] of [["phone", { width: 390, height: 844 }, t
   check(`${label}: a box the theme paints light still reads (${out.worst}:1)`, out.worst >= 4.5, out);
   check(`${label}: no console errors`, errors.length === 0, errors);
 }
-// A theme that changes Lumiverse's input colour changes every box here too.
+// A theme that changes Lumiverse's input color changes every box here too.
 {
   const { out } = await inPanel(browser, { css: ":root{--lumiverse-input-bg:rgb(12,34,56)}" }, (page) =>
     page.evaluate(([rootSel]) => {
@@ -563,7 +563,7 @@ for (const [label, viewport, touch] of [["phone", { width: 390, height: 844 }, t
     return { n: boxes.length, other: boxes.map((e) => getComputedStyle(e).backgroundColor).filter((c) => c !== "rgb(12, 34, 56)") };
   }, ["#modal"]),
   );
-  check("every box takes Lumiverse's input colour", out.n > 0 && out.other.length === 0, out);
+  check("every box takes Lumiverse's input color", out.n > 0 && out.other.length === 0, out);
 }
 
 console.log("\ntheme swapped under an open panel");
@@ -598,8 +598,8 @@ for (const [label, before, after] of [
 
 // ---- a repair has to land on the frame the reader sees ----
 // Anything the panel adds is measured against the page once it is in it. Left to
-// the next frame, it is drawn once in the theme's own colours and once in the
-// repaired ones, so a row appears and then changes colour under the reader.
+// the next frame, it is drawn once in the theme's own colors and once in the
+// repaired ones, so a row appears and then changes color under the reader.
 console.log("\nrepainting on a press");
 {
   // A theme that has all but erased its own text, so there is a real repair to
@@ -641,9 +641,9 @@ console.log("\nrepainting on a press");
     out.inkAtOnce + " of " + out.inkLater + " were there in time",
   );
   check(
-    "so nothing changes colour after the frame it appeared on",
+    "so nothing changes color after the frame it appeared on",
     out.moved === 0,
-    out.moved + " changed colour after the frame",
+    out.moved + " changed color after the frame",
   );
   check("no console errors", errors.length === 0, errors);
 }
@@ -832,7 +832,7 @@ console.log("\nhints");
   check("the popover lands on screen", out.onScreen);
   // It covers the row it is explaining. At anything under full opacity that
   // row's text reads through the description sitting on top of it, which no
-  // contrast measurement catches because both are "correct" colours.
+  // contrast measurement catches because both are "correct" colors.
   check("the popover is opaque", out.opaque, out.background);
   check("only one is ever open", out.afterSecond === 1, out.afterSecond);
   check("a second tap closes it", out.afterRetap === 0);
@@ -1452,7 +1452,7 @@ console.log("\nwhat is on screen straight away");
         frozenRun: shown("Replies that freeze"),
         brokenRun: shown("Broken replies"),
         garbledRow: shown("It was garbled"),
-        frozenRow: shown("Give up on a reply that froze (ms)"),
+        frozenRow: shown("Give up on a reply that froze (milliseconds)"),
         openHeadings: open.map((d) => (d.textContent || "").trim()).sort(),
         shutHeadings: heads.map((h) => (h.textContent || "").trim()).sort(),
       };
@@ -1548,7 +1548,7 @@ console.log("\nthe panel in the drawer");
 // was indistinguishable from one that had frozen.
 //
 // The second half matters more than the first. A token says what it is, builds
-// do not agree on the word, and a label this does not recognise is filed as
+// do not agree on the word, and a label this does not recognize is filed as
 // reply text: it lands in the buffer that stands in for the reply when the end
 // event carries none, and the panel calls the model's working-out a reply.
 console.log("\nthe live status moves while the model is thinking");
@@ -2260,15 +2260,15 @@ console.log("\nthe crisis check asks first");
 }
 
 // ---- the search field's clear button follows the theme ----
-// The browser draws that one itself and colours it from the page's colour
+// The browser draws that one itself and colors it from the page's color
 // scheme, so on a dark page it came out white while everything around it was
 // themed. It is styled through a pseudo-element, which getComputedStyle will
 // not report back, so this reads the pixels instead: it screenshots the right
 // hand end of the field and checks the brightest thing there is the muted theme
-// colour rather than white.
+// color rather than white.
 console.log("\nsearch clear button");
 {
-  // The fallback in that rule is a dark-theme colour, like every fallback in
+  // The fallback in that rule is a dark-theme color, like every fallback in
   // the source. A light theme that sets the common variables but not
   // --lumiverse-text-muted let it through, and the cross came out near-white on
   // a near-white field. So this runs on light themes too, and asks whether the
@@ -2277,9 +2277,9 @@ console.log("\nsearch clear button");
   for (const [themeName, themeCss] of [
     ["dark", ""],
     ["light", LIGHT],
-    ["light, no muted colour set", NO_MUTED],
+    ["light, no muted color set", NO_MUTED],
     // The worst of it: a light page with every theme variable still dark, so
-    // the field's own text colour starts out near-white and has to be put
+    // the field's own text color starts out near-white and has to be put
     // right before the cross can inherit anything worth having. Nothing
     // reading a variable could survive this one.
     ["dark variables on a light page", LIGHT_PAGE],
@@ -2321,9 +2321,9 @@ console.log("\nsearch clear button");
   check(themeName + ": the panel stylesheet is injected", box.styled);
   check(themeName + ": the search field carries the id the rule targets",
     box.id === "__lvRetrySearch", box.id);
-  // The field is the colour covering most of the sample and the cross is
+  // The field is the color covering most of the sample and the cross is
   // whatever stands out furthest from it, so this reads the same way round on
-  // either kind of theme. A cross that has taken the field's own colour, which
+  // either kind of theme. A cross that has taken the field's own color, which
   // is what the leaked fallback amounts to, leaves nothing standing out.
   //
   // Note this cannot prove an unstyled button would be white: headless Chromium
@@ -2732,9 +2732,9 @@ console.log("\na pattern behind the panel");
       check(label + ", " + name + ": nothing runs off the side", !r.out.sideways, r.out);
     }
   }
-  // The solid colour comes from the theme, and the floating panel keeps its
-  // own colour under the pattern. Lumiverse's own "solid card" colour is a
-  // fixed grey, and a purple theme turned grey-black under it.
+  // The solid color comes from the theme, and the floating panel keeps its
+  // own color under the pattern. Lumiverse's own "solid card" color is a
+  // fixed gray, and a purple theme turned gray-black under it.
   const r = await inPanel(browser, {
     css: ":root{--lumiverse-bg-elevated:rgb(40,0,60);--lumiverse-card-bg-solid:rgb(24,20,34)}",
     settings: { liveLog: true, panelHome: "float", panelPattern: "dots" },
@@ -2749,13 +2749,13 @@ console.log("\na pattern behind the panel");
       };
     });
   });
-  check("the floating panel keeps its theme colour under the pattern", r.out.layers >= 2, r.out);
+  check("the floating panel keeps its theme color under the pattern", r.out.layers >= 2, r.out);
   // On a light theme with a pattern on, the panel's buttons keep dark text.
   // The readability sweep cannot read a pattern layer and falls back to the
-  // panel's base colour, which has to be the theme's own light colour then.
+  // panel's base color, which has to be the theme's own light color then.
   // The theme is the one Lumiverse's own theme engine writes for a purple
   // accent, kept in lumiverse-themes.json. A hand-written light theme tends to
-  // set every colour light, which the engine does not do, and hides this.
+  // set every color light, which the engine does not do, and hides this.
   const ENGINE = JSON.parse(readFileSync(join(root, "test", "lumiverse-themes.json"), "utf8"));
   for (const panelHome of ["float", "drawer"]) {
     const lit = await inPanel(browser, { css: ENGINE.light + "body{background:var(--lumiverse-bg-deep)}", settings: { liveLog: true, panelHome, panelPattern: "diamonds" } }, async (page) => {
@@ -2769,7 +2769,7 @@ console.log("\na pattern behind the panel");
     });
     check("light theme, pattern, " + panelHome + ": the panel's buttons keep dark text", lit.out.count > 3 && lit.out.light.length === 0, lit.out);
   }
-  check("the log's box takes the theme's colour, not a fixed grey", r.out.body === "rgb(40, 0, 60)", r.out);
+  check("the log's box takes the theme's color, not a fixed gray", r.out.body === "rgb(40, 0, 60)", r.out);
 }
 
 // ---- the tries at once bar on a phone ----
@@ -3102,7 +3102,7 @@ console.log("\nswitching off a temporary chat");
   });
   await page.close();
   // The switch is real. A temporary chat is exactly where somebody watching raw
-  // model behaviour wants nothing re-rolling it, so this must not be disabled.
+  // model behavior wants nothing re-rolling it, so this must not be disabled.
   check("the switch still works in a temporary chat", out.enabled && out.flipped, out);
   check("and says it lasts only while that chat is open", out.noteSaysTemporary, out);
   check("an ordinary chat keeps the ordinary wording", out.realNoteIsOrdinary, out);
@@ -3254,7 +3254,7 @@ console.log("\nregeneration feedback");
     return { feedback, refused, preexisting, byComponent, afterRerender, afterGood };
   });
   await page.close();
-  check("the feedback box is skipped, never cancelled",
+  check("the feedback box is skipped, never canceled",
     out.feedback.pressed.length === 1 && out.feedback.pressed[0] === "Skip", out.feedback.pressed);
   check("the toolbar regenerate is pressed once, not looped",
     out.feedback.regenClicks === 1, out.feedback.regenClicks);
@@ -3276,7 +3276,7 @@ console.log("\nregeneration feedback");
 // ---- the mark is drawn, not typed ----
 // A Unicode character would leave the button's shape to whatever font the
 // device picks. These check it is an actual drawing, that on and off are told
-// apart by more than colour, and that the drawing scales with the button
+// apart by more than color, and that the drawing scales with the button
 // instead of staying one size.
 console.log("\nicons");
 {
@@ -3349,7 +3349,7 @@ console.log("\nicons");
   await page.close();
   check("the float button holds a drawing", out.on.hasSvg && out.on.shapes >= 3, out.on);
   check("and no leftover text character", out.on.text === "", JSON.stringify(out.on.text));
-  check("off is marked by a slash, not just colour", out.off.slashShown === true, {
+  check("off is marked by a slash, not just color", out.off.slashShown === true, {
     on: out.on.slashShown, off: out.off.slashShown });
   check("and on is not", out.on.slashShown === false, {
     on: out.on.slashShown, off: out.off.slashShown });
@@ -3362,7 +3362,7 @@ console.log("\nicons");
 }
 
 // ---- nothing moves, and nothing needs to ----
-// The button flips between two states instantly. Transitions on four colour
+// The button flips between two states instantly. Transitions on four color
 // properties and a scale dip on every press mean a compositing layer and four
 // interpolations for a control that only has to flip. A transition is one line
 // to add, and costs a frame every time it runs, so this keeps them out.
@@ -3406,10 +3406,10 @@ console.log("\nicons");
       // serializes the shorthand as "all", which reads like something is
       // animating when the duration is what says whether anything is.
       const css = getComputedStyle(btn).transitionDuration;
-      // The tap still has to say something, and it says it in colour.
+      // The tap still has to say something, and it says it in color.
       btn.click();
       await new Promise((r) => requestAnimationFrame(r));
-      return { moved, transition: css, recoloured: look() !== was };
+      return { moved, transition: css, recolored: look() !== was };
     });
     await page.close();
     return { ...out, errs };
@@ -3420,11 +3420,11 @@ console.log("\nicons");
     // The button itself never moves. A press can be the start of a hold that
     // opens the menu, and a dip on the way in would read as a tap that took.
     check(name + ", the button does not move under a press", !r.moved, r.moved);
-    check(name + ", a tap still changes its colour", r.recoloured, r);
+    check(name + ", a tap still changes its color", r.recolored, r);
   }
   // Turning it on and off eases between the two states. Asking for less
   // movement gets the same change with nothing in between.
-  check("normally, the colours ease between the two states",
+  check("normally, the colors ease between the two states",
     !/^0s(,\s*0s)*$/.test(String(normal.transition).trim()), normal.transition);
   check("with reduced motion, they change with no animation at all",
     /^0s(,\s*0s)*$/.test(String(reduced.transition).trim()), reduced.transition);
@@ -3493,7 +3493,7 @@ console.log("\nfloat button menu");
     // contrast sweep walks text, and this button has none: its mark is an SVG
     // drawn in currentColor. So the one part of this extension that sits over
     // somebody else's chat, in their theme, was never measured at all, and the
-    // pair of colours it used measured 2.49 against a floor of 3 on a light
+    // pair of colors it used measured 2.49 against a floor of 3 on a light
     // theme in Auto Refine. Held to 3, which is what a graphic is asked for
     // rather than the 4.5 asked of body text.
     const inkRatio = (el) => {
@@ -3733,7 +3733,7 @@ console.log("\nfloat button menu");
   // that closes the menu for good.
   check("and hide is the last of them", out.keys[out.keys.length - 1] === "hide", out.keys);
   check("it is anchored on screen", out.onScreen, out);
-  check("and centred on the button", out.onButton, out);
+  check("and centered on the button", out.onButton, out);
   check("dragging is not a hold", !out.afterDrag);
   check("resizing rebuilds it too", out.resize.rebuilt, out.resize);
   check("at the new size", out.resize.size === 72, out.resize);
@@ -3818,7 +3818,7 @@ console.log("\nlive countdown");
         ? Number(m[1] || 0) * 3600 + Number(m[2] || 0) * 60 + Number(m[3])
         : null;
     };
-    // Cancelling has to stop the clock as well as the retry.
+    // Canceling has to stop the clock as well as the retry.
     cancelLater && cancelLater.click();
     // Read at once, not after a wait. Cancel is the press people watch the line
     // for, and a quarter second of it still counting down to a retry that is no
@@ -3844,7 +3844,7 @@ console.log("\nlive countdown");
   check("the Cancel button survives the ticking", out.sameCancel, out);
   check("the panel carries the same countdown", out.statusFirstN !== null, out);
   check("and it moves too", out.statusLaterN !== null && out.statusLaterN < out.statusFirstN, out);
-  check("cancelling stops it counting", !/Retrying in/.test(out.afterCancel || ""), out);
+  check("canceling stops it counting", !/Retrying in/.test(out.afterCancel || ""), out);
   check("and the panel says it has nothing to do", /nothing to do/i.test(out.afterCancel || ""), out);
   check("no console errors", errors.length === 0, errors);
 }
@@ -4035,7 +4035,7 @@ console.log("\nstatus after a stop");
   check("and it goes back to having nothing to do", /nothing to do/i.test(out.afterStop), out);
   check("a stop with no host event clears it too", !/thinking/i.test(out.afterClick), out);
   check("and that one settles as well", /nothing to do/i.test(out.afterClick), out.afterClick);
-  // The dot: dim when off, the theme's own colour when on, breathing a ring
+  // The dot: dim when off, the theme's own color when on, breathing a ring
   // outward only while working. The same dot as Auto Refine's, which is the
   // point of it: somebody running both reads one panel and then the other.
   check("the dot is lit but still with nothing to do",
@@ -4217,7 +4217,7 @@ console.log("\ndropdown focus");
         await new Promise((r) => setTimeout(r, 260));
       });
       // The border eases over 150ms, so each reading waits it out. Measuring
-      // straight after a click caught it partway and read a colour that was
+      // straight after a click caught it partway and read a color that was
       // neither the one it left nor the one it was going to.
       const border = async (sel) => {
         await page.waitForTimeout(320);
@@ -4256,8 +4256,8 @@ console.log("\ndropdown focus");
       await page.click(TEXT);
       const textClicked = await border(TEXT);
       // Resolved on the page rather than written in here, so the check follows
-      // the theme instead of a colour copied out of the source.
-      const [selectFocusColour, selectHoverColour] = await page.evaluate(() => {
+      // the theme instead of a color copied out of the source.
+      const [selectFocusColor, selectHoverColor] = await page.evaluate(() => {
         const of = (v) => {
           const probe = document.createElement("div");
           probe.style.color = v;
@@ -4272,7 +4272,7 @@ console.log("\ndropdown focus");
         ];
       });
       return { selectRest, selectClicked, focused, afterTab, textRest, textClicked,
-               selectFocusColour, selectHoverColour };
+               selectFocusColor, selectHoverColor };
     },
   );
   check("the dropdown is there to test", out.selectRest !== null, out);
@@ -4281,11 +4281,11 @@ console.log("\ndropdown focus");
   // is the whole of the feedback, and anything drawn behind it is decoration
   // over the top of the thing it would be pointing at. That holds however the
   // dropdown was reached, so neither the pointer nor the keyboard moves it off
-  // its resting border, and it never lifts to the hover colour either: there is
+  // its resting border, and it never lifts to the hover color either: there is
   // no cursor to put in one, so the lift would be saying something untrue of it.
   check("clicking it marks nothing", out.selectClicked === out.selectRest, out);
-  check("and it is not the focus colour either", out.selectClicked !== out.selectFocusColour, out);
-  check("nor does it lift to the hover colour", out.selectClicked !== out.selectHoverColour, out);
+  check("and it is not the focus color either", out.selectClicked !== out.selectFocusColor, out);
+  check("nor does it lift to the hover color", out.selectClicked !== out.selectHoverColor, out);
   check("reaching it without the pointer marks nothing either",
     out.afterTab.onIt === true && out.afterTab.border === out.selectRest, out);
   // Where the mark does belong: a box you can type in, which is the whole of
@@ -4342,7 +4342,7 @@ console.log("\npop-up goes away");
     await wait(400);
     const afterRetryStarted = { up: up(), text: says() };
 
-    // A second round, cancelled by hand from the pop-up itself.
+    // A second round, canceled by hand from the pop-up itself.
     handlers.GENERATION_ENDED({ chatId: "c", content: "" });
     for (let i = 0; i < 40 && !/Retrying in/.test(says()); i++) await wait(50);
     const secondUp = up();
@@ -4912,11 +4912,11 @@ console.log("\nthe clock stops");
 }
 
 // ---- browser-drawn controls follow the theme ----
-// An unchecked checkbox is painted by the browser, which picks its colours from
-// the page's colour scheme rather than from the theme. Left unset it assumes
+// An unchecked checkbox is painted by the browser, which picks its colors from
+// the page's color scheme rather than from the theme. Left unset it assumes
 // light, and a white block landed on the dark panel. Same fault as the search
 // field's clear button.
-console.log("\ncolour scheme");
+console.log("\ncolor scheme");
 {
   const read = async (css, want) => {
     const { out, errors } = await inPanel(browser, { css }, async (page) =>
@@ -4952,7 +4952,7 @@ console.log("\nunits");
         if (!/Ms$|Minutes$/.test(key)) continue;
         durations++;
         const label = (r.textContent || "").replace(/\s+/g, " ").trim();
-        if (!/\(ms\)|\(minutes\)|\(seconds\)/.test(label)) bad.push(key);
+        if (!/\(milliseconds\)|\(minutes\)|\(seconds\)/.test(label)) bad.push(key);
       }
       return { bad, durations };
     }),
@@ -4969,7 +4969,7 @@ console.log("\nunits");
 // every floating surface at once rather than one at a time.
 console.log("\nfloating surfaces");
 {
-  // Run on light as well as dark. Every fallback colour in the source is a dark
+  // Run on light as well as dark. Every fallback color in the source is a dark
   // one, so a surface that reached for a variable the host does not set would
   // show up here as a dark box on a light panel.
   // wantsDark says what the theme itself asked for, which is not the same as
@@ -5362,7 +5362,7 @@ console.log("\nthe note preset bar follows the notes switch");
 // reads or writes them goes through the whole object.
 console.log("\npicking a preset loads it, so a save cannot land on the wrong one");
 {
-  // The bug: picking only greyed the buttons in and out and left the settings
+  // The bug: picking only grayed the buttons in and out and left the settings
   // alone, so the panel held one preset's settings while the picker named
   // another. Update selected then wrote what was set over the preset just
   // picked, and the preset it overwrote was gone with no way back.
@@ -6655,7 +6655,7 @@ console.log("\nretries are tallied per chat, not per label");
 
 // ---- the per-chat switch knows which chat you are in ----
 // The switch needs a chat id. Taking one only from a chat change or a
-// generation leaves the button greyed out when the page loads with a chat
+// generation leaves the button grayed out when the page loads with a chat
 // already open, until the reader leaves and comes back or sends a message. A
 // message rendering is what happens when a chat opens, and it carries the id.
 console.log("\nthe per-chat switch finds the chat");
@@ -6695,7 +6695,7 @@ console.log("\nthe per-chat switch finds the chat");
     const cold = state();
 
     // A message renders, which is what happens when a chat is simply open.
-    // No CHAT_CHANGED, no generation: this is the case that can stay grey.
+    // No CHAT_CHANGED, no generation: this is the case that can stay gray.
     handlers.CHARACTER_MESSAGE_RENDERED &&
       handlers.CHARACTER_MESSAGE_RENDERED({ chatId: "chat-a", messageId: "m1" });
     await frame();
@@ -7293,7 +7293,7 @@ console.log("\nfinding the button to press");
     await page.close();
     return { out, errors };
   };
-  // Lumiverse's own composer button, labelled in another language, so the only
+  // Lumiverse's own composer button, labeled in another language, so the only
   // thing that can find it is the host's mark on the action.
   const REGEN = '<span data-composer-action="regen" style="display:contents"><button type="button" aria-label="Neu generieren">R</button></span>';
 
@@ -7964,7 +7964,7 @@ console.log("\nleaving a chat with nothing said about it");
     shutPanel();
 
     // And the other answer: a backend that could not look must change nothing,
-    // or a refused chats permission would grey the row out for everybody.
+    // or a refused chats permission would gray the row out for everybody.
     window.__cur = "c-open";
     window.__handlers.CHARACTER_MESSAGE_RENDERED({ chatId: "c-open", messageId: "m2" });
     await tick();
@@ -7983,7 +7983,7 @@ console.log("\nleaving a chat with nothing said about it");
     out.homeScreen.disabled === true, out.homeScreen);
   check("and it stops naming the chat you left",
     !/Marisol/.test(out.homeScreen.note), out.homeScreen.note);
-  // Being told there is no chat and never having been told anything both grey
+  // Being told there is no chat and never having been told anything both gray
   // the row out, and they are not the same thing to read. "Waiting to find out
   // which chat this is" in front of somebody on the home screen describes a
   // fault that is not happening.
@@ -8242,7 +8242,7 @@ console.log("\nthe search box stays quiet");
 
 // ---- the browser's spinner is off our number boxes, and only ours ----
 // The arrows a browser draws on a number box are its own, not the theme's, so
-// on a dark panel they arrive as grey chevrons belonging to no design here. The
+// on a dark panel they arrive as gray chevrons belonging to no design here. The
 // value is typed and a focused box still steps with the arrow keys.
 //
 // The rule lives in a stylesheet on the host's page, so the half that matters
@@ -8851,10 +8851,10 @@ console.log("\na finished reply is not re-rolled, a stalled one still is");
 // "No reply found to swap in this chat." wrapped onto two lines on a phone and
 // left "chat." alone on the second, on a message that fits on one line easily.
 //
-// The cause was the centring. A fixed box with only a left edge set has a
+// The cause was the centering. A fixed box with only a left edge set has a
 // containing block running from that edge to the right of the screen, so
 // left:50% left it half a viewport to work with: max-width was 379px on a
-// 412px phone and the box stopped dead at 206px. It is centred by pinning both
+// 412px phone and the box stopped dead at 206px. It is centered by pinning both
 // edges and sharing the remainder between the margins now, so the cap it was
 // given is the cap it gets.
 //
@@ -8868,7 +8868,7 @@ console.log("\none-off messages are Lumiverse notifications, and the box is the 
   // A message that only says something went to Lumiverse, as one of its own
   // notifications. The box on the page is kept for a message with Cancel on
   // it, such as the countdown before a retry, and it is fitted to its words:
-  // not padded out to the cap, nothing spilling out, centred and on screen.
+  // not padded out to the cap, nothing spilling out, centered and on screen.
   const page = await browser.newPage({ viewport: { width: 412, height: 800 } });
   const errors = [];
   page.on("pageerror", (e) => errors.push("pageerror: " + e.message));
@@ -8926,7 +8926,7 @@ console.log("\none-off messages are Lumiverse notifications, and the box is the 
       text: t ? (t.textContent || "").trim() : "",
       width: Math.round(r.width),
       overflows: !!t && t.scrollWidth > Math.ceil(t.clientWidth) + 1,
-      centred: Math.abs(r.left + r.width / 2 - 206) < 2,
+      centered: Math.abs(r.left + r.width / 2 - 206) < 2,
       onScreen: r.left >= 0 && r.right <= 412,
     };
     teardown();
@@ -8945,7 +8945,7 @@ console.log("\none-off messages are Lumiverse notifications, and the box is the 
   check("the countdown is in the box, with Cancel", out.countdown.up && /Retrying in/.test(out.countdown.text) && /Cancel/.test(out.countdown.text), out.countdown);
   check("it is not padded out to the cap", out.countdown.width < CAP - 8, out.countdown);
   check("nothing spills out of it", !out.countdown.overflows, out.countdown);
-  check("it is centred on the screen", out.countdown.centred, out.countdown);
+  check("it is centered on the screen", out.countdown.centered, out.countdown);
   check("and fully on it", out.countdown.onScreen, out.countdown);
   check("no console errors", errors.length === 0, errors);
 }
@@ -9069,7 +9069,7 @@ console.log("\nturning the floating button on and off");
   check("along its own length rather than popping in",
     parseFloat(out.midway) > 0 && parseFloat(out.midway) < 26, out);
   check("over a time somebody can see", !/^0s$/.test(String(out.slashEase).trim()), out);
-  check("and the colours ease", !/^0s(,\s*0s)*$/.test(String(out.eases).trim()), out);
+  check("and the colors ease", !/^0s(,\s*0s)*$/.test(String(out.eases).trim()), out);
   check("no console errors", errors.length === 0, errors);
 }
 
@@ -9254,7 +9254,7 @@ console.log("\na host with no context menu API");
 
 // ---- a phone that claims it can hover is still a phone ----
 // A phone told to show the desktop site says it can hover. Anything guarded on
-// that question alone loses its guard there, and a synthesised hover with no
+// that question alone loses its guard there, and a synthesized hover with no
 // matching leave then sticks. The menu is the host's now; the panel's own
 // buttons are still ours, and this is the case that catches them.
 console.log("\na phone that says it can hover");
@@ -9310,14 +9310,14 @@ console.log("\na phone that says it can hover");
   await page.close();
   check("the screen claims it can hover", lies === true, lies);
   check("the panel opened with its buttons", rest !== "gone", { rest });
-  check("and a tap leaves the button at its resting colour", after === rest, { rest, after });
+  check("and a tap leaves the button at its resting color", after === rest, { rest, after });
   check("no console errors", errors.length === 0, errors);
 }
 
-// ---- a tapped button does not keep its hover colour ----
+// ---- a tapped button does not keep its hover color ----
 // The same half-sent pair, in the panel rather than the menu: a touch browser
 // raises mouseenter at the end of a tap and never sends the matching leave, so
-// every button in the panel stayed lit in its hover colour once tapped. The
+// every button in the panel stayed lit in its hover color once tapped. The
 // pointerleave that resets it has already run by the time that hover arrives.
 console.log("\ntapping a button in the panel");
 {
@@ -9342,7 +9342,7 @@ console.log("\ntapping a button in the panel");
       return { rest, after: await bg() };
     },
   );
-  check("the button has a resting colour", out.rest && out.rest !== "gone", out);
+  check("the button has a resting color", out.rest && out.rest !== "gone", out);
   check("and is back at it after a tap", out.after === out.rest, out);
   check("no console errors", errors.length === 0, errors);
 }
@@ -9853,7 +9853,7 @@ console.log("\nthe Prompt tab has a rendered and a raw view");
       Math.abs(after.top - before.top) < 1 &&
       Math.abs(after.width - before.width) < 1;
 
-    // Raw: the data the model was handed, and none of the panel's own labelling.
+    // Raw: the data the model was handed, and none of the panel's own labeling.
     res.nowRaw = (viewBtn().textContent || "").trim() === "Raw";
     res.rawHasBlock = !!raw();
     res.rawHasNoRows = body().querySelectorAll("details").length === 0;
@@ -9924,7 +9924,7 @@ console.log("\nthe Prompt tab re-arms when the backend restarts");
     await wait(30);
     const askedOnce = arms();
     // Pressing it again is not a change, so it stays at one. This is the
-    // behaviour being kept, not the bug.
+    // behavior being kept, not the bug.
     tab.click();
     await wait(30);
     const afterSameTab = arms();
@@ -10552,7 +10552,7 @@ console.log("\nprompt viewer");
 
 // ---- taking a note back is scoped to the chat it was armed for ----
 // Taking a note back was first written as a single flag, which said a note was
-// waiting but not which chat it was waiting on. Cancelling a retry in one chat
+// waiting but not which chat it was waiting on. Canceling a retry in one chat
 // then took back a note armed for a different one, and that chat's next retry
 // went out bare with nothing to say why. Two chats in flight at once is the
 // only way to see it, so nothing else here would have caught it.
@@ -10618,7 +10618,7 @@ console.log("\ntaking a note back");
 
 // ---- a filled button has to look like one ----
 // Repainting the label fixed half of this. On a theme whose accent sits near
-// the panel colour, Save stayed legible and lost its edge, so nothing said it
+// the panel color, Save stayed legible and lost its edge, so nothing said it
 // was a button. It gets a border only when its fill has all but vanished, and
 // a theme with an ordinary accent must be left completely alone.
 console.log("\nbutton edges");
@@ -10629,7 +10629,7 @@ console.log("\nbutton edges");
         const by = (t) => [...document.querySelectorAll("button")].find((b) => b.textContent.trim() === t);
         const seen = (b) => {
           const cs = getComputedStyle(b);
-          return { border: cs.borderTopColor, bg: cs.backgroundColor, colour: cs.color };
+          return { border: cs.borderTopColor, bg: cs.backgroundColor, color: cs.color };
         };
         return { save: seen(by("Save")), reset: seen(by("Reset\u2026")) };
       }),
@@ -10654,9 +10654,9 @@ console.log("\nbutton edges");
   check("on a theme whose accent has vanished it gets one",
     !clear(pale.out.save.border), pale.out.save);
   check("and the label is still readable against the fill",
-    pale.out.save.colour !== pale.out.save.bg, pale.out.save);
+    pale.out.save.color !== pale.out.save.bg, pale.out.save);
   // The edge fix paints in near-white or near-black. A secondary button must
-  // keep the theme's own border colour, which is quieter on purpose, so seeing
+  // keep the theme's own border color, which is quieter on purpose, so seeing
   // either of those there means the fix reached a button it should not have.
   const FORCED = ["rgb(255, 255, 255)", "rgb(20, 18, 26)"];
   check("the secondary button keeps the theme's own border, not a forced one",
@@ -10664,7 +10664,7 @@ console.log("\nbutton edges");
     { stock: stock.out.reset.border, pale: pale.out.reset.border });
   check("no console errors on that theme", pale.errors.length === 0, pale.errors);
 
-  // A mid-grey pair chosen so the two candidate edge colours disagree: judged
+  // A mid-gray pair chosen so the two candidate edge colors disagree: judged
   // against the panel behind the button, near-black wins (4.70 to 3.95); judged
   // against the button's own fill, white wins (5.25 to 3.54). The edge has to
   // separate the button from what is behind it, so the panel is the right
@@ -10701,12 +10701,11 @@ console.log("\nhint placement");
     // Rows behind a switch are skipped, since they are not on screen by
     // default.
     //
-    // The row is moved to 100px from the top, which leaves less room over it
-    // than the description needs, and less again under it, so it opens above
-    // and the cap has something to fire on. Shorten the descriptions a lot and
-    // the cap stops being exercised.
+    // The row is moved to 100px from the top of a 200px screen. That leaves
+    // about 80px over it and less under it, which is less than any description
+    // of three lines or more needs, so it opens above and the cap fires.
     const { out, errors } = await inPanel(
-      browser, { css: PANEL, viewport: { width: 393, height: 260 }, settings: { refusalNote: true } },
+      browser, { css: PANEL, viewport: { width: 393, height: 200 }, settings: { refusalNote: true } },
       async (page) => page.evaluate(async (want) => {
         const frame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
         for (const h of document.querySelectorAll('[role="button"][aria-expanded="false"]')) h.click();
@@ -10815,7 +10814,7 @@ console.log("\nhint placement");
   // one runs the popover off the screen at 1.4.
   {
     const { out, errors } = await inPanel(
-      browser, { css: PANEL + "body{zoom:1.4}", viewport: { width: 500, height: 360 },
+      browser, { css: PANEL + "body{zoom:1.4}", viewport: { width: 500, height: 300 },
                  settings: { refusalNote: true } },
       async (page) => page.evaluate(async (want) => {
         const frame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
@@ -10828,7 +10827,14 @@ console.log("\nhint placement");
         // Mid screen on purpose. Jammed against the bottom there is barely any
         // room to cap to, so a cap in the wrong units is too small to notice;
         // with room to spare the same mistake overshoots by half the screen.
+        // Then moved a little lower, so there is more room over it than under
+        // it whatever the description's length, and it opens above.
         row.scrollIntoView({ block: "center" });
+        await frame();
+        let box = row.parentElement;
+        while (box && !(box.scrollHeight > box.clientHeight && /auto|scroll/.test(getComputedStyle(box).overflowY)))
+          box = box.parentElement;
+        box.scrollTop -= 12;
         await frame();
         row.querySelector("[data-ar-hint]").dispatchEvent(new MouseEvent("mouseenter"));
         await frame();
@@ -11469,7 +11475,7 @@ console.log("\nwhat a hidden row is waiting on");
         const a = c[3] === undefined ? 1 : c[3];
         const over = [c[0] * a + bg[0] * (1 - a), c[1] * a + bg[1] * (1 - a), c[2] * a + bg[2] * (1 - a)];
         const x = lum(over), y = lum(bg);
-        return { ratio: (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05), colour: getComputedStyle(line).color };
+        return { ratio: (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05), color: getComputedStyle(line).color };
       }),
     );
     check(themeName + ": the line saying which switch is needed can be read",
@@ -11481,7 +11487,7 @@ console.log("\nwhat a hidden row is waiting on");
 // ---- the master switch says it is off rather than emptying the panel ----
 // Auto Retry can be switched off without opening this panel, so someone can
 // arrive with it off and nothing saying why. Off means paused, not
-// unconfigured, so nothing is hidden or greyed for it.
+// unconfigured, so nothing is hidden or grayed for it.
 console.log("\nmaster switch off");
 {
   const { out, errors } = await inPanel(browser, {}, async (page) =>
@@ -11744,14 +11750,14 @@ console.log("\nadding a note");
 }
 
 // ---- a surface is measured by what it paints ----
-// The floating panels build an opaque surface by painting a solid colour and
+// The floating panels build an opaque surface by painting a solid color and
 // laying the theme's tint over it as a gradient. background-color reports only
-// the colour underneath. On a theme that leaves the solid one unset, the
+// the color underneath. On a theme that leaves the solid one unset, the
 // popover painted near-white, measured as the dark fallback beneath, and had
 // its text repainted white to suit, which made it disappear.
 console.log("\npainted surfaces");
 {
-  // Every surface below declares a dark background-colour and lays the theme's
+  // Every surface below declares a dark background-color and lays the theme's
   // tint over it as a gradient, and every one of them has its text repainted
   // against whatever it measures as sitting on. They share the fault and so
   // they are checked together.
@@ -11764,11 +11770,11 @@ console.log("\npainted surfaces");
           const ch = c.map((v) => { const x = v / 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); });
           return 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2];
         };
-        // What the surface paints: the gradient tint over the declared colour.
+        // What the surface paints: the gradient tint over the declared color.
         // The text is read off whichever element actually carries it, which on
         // the editor is a child of the surface rather than the surface itself.
-        // Only a child gets its colour recomputed, so measuring the surface's
-        // own inherited colour would miss the fault entirely.
+        // Only a child gets its color recomputed, so measuring the surface's
+        // own inherited color would miss the fault entirely.
         const reading = (el, textEl) => {
           if (!el || (textEl !== undefined && !textEl)) return null;
           const cs = getComputedStyle(el);
@@ -11779,13 +11785,13 @@ console.log("\npainted surfaces");
             const [gr, gg, gb, ga = 1] = num(stop[0]);
             painted = [gr * ga + br * (1 - ga), gg * ga + bg * (1 - ga), gb * ga + bb * (1 - ga)];
           }
-          const colour = getComputedStyle(textEl || el).color;
-          const [tr, tg, tb, ta = 1] = num(colour);
+          const color = getComputedStyle(textEl || el).color;
+          const [tr, tg, tb, ta = 1] = num(color);
           const over = [tr * ta + painted[0] * (1 - ta), tg * ta + painted[1] * (1 - ta), tb * ta + painted[2] * (1 - ta)];
           const a = lum(over), b = lum(painted);
           return {
             ratio: (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05),
-            text: colour, declared: cs.backgroundColor,
+            text: color, declared: cs.backgroundColor,
           };
         };
         const found = {};
@@ -12431,7 +12437,7 @@ console.log("\nreset urgency");
           wash: getComputedStyle(wrap).backgroundColor,
           head: head.textContent.trim(),
           headWeight: getComputedStyle(head).fontWeight,
-          headColour: getComputedStyle(head).color,
+          headColor: getComputedStyle(head).color,
           yesLabel: yes.textContent.trim(),
           yesBg: getComputedStyle(yes).backgroundColor,
         };
@@ -12451,7 +12457,7 @@ console.log("\nreset urgency");
       inBox(/^Reset ticked/).click();
       await frame();
       const withPresets = read();
-      // A button's colour is what it rests at, not what it is painted right
+      // A button's color is what it rests at, not what it is painted right
       // now. Setting the background alone was undone by the next mouseleave,
       // so the danger red came off the moment a pointer crossed it.
       const yes = inBox(/^Yes, reset/);
@@ -12469,7 +12475,7 @@ console.log("\nreset urgency");
         onHover,
         afterHover,
         presetBold: !!presetLabel,
-        presetColour: presetLabel ? getComputedStyle(presetLabel).color : "",
+        presetColor: presetLabel ? getComputedStyle(presetLabel).color : "",
         presetWeight: presetLabel ? getComputedStyle(presetLabel).fontWeight : "",
       };
     }),
@@ -12483,7 +12489,7 @@ console.log("\nreset urgency");
     return n.length >= 3 && n[0] > 180 && n[1] < 120 && n[2] < 120;
   };
   check("the permanent line is bold", out.presetBold && Number(out.presetWeight) >= 600, out);
-  check("and carries the danger colour", red(out.presetColour), out.presetColour);
+  check("and carries the danger color", red(out.presetColor), out.presetColor);
   check("the confirmation headline is bold",
     Number(out.settingsOnly.headWeight) >= 600, out.settingsOnly);
   // Settings-only is a question, not a warning: closing the panel undoes it.
@@ -12910,7 +12916,7 @@ console.log("\ntaking more than one file at a time");
 // The tokens are counted here rather than taken from the provider, and every
 // one is priced at the full rate, so a model with prompt caching on bills less
 // than this. Somebody reading the number needs that beside it, not in a hint.
-console.log("\nthe cost line says it is a ballpark");
+console.log("\nthe cost line says it is an estimate");
 {
   const { out, errors } = await inPanel(
     browser,
@@ -12962,11 +12968,11 @@ console.log("\nthe cost line says it is a ballpark");
   // The figure is an upper bound and the line under it has to say so. Matched
   // on what the line is for rather than on its exact wording, so rewording it
   // does not fail a check that was never about the wording.
-  check("and the line under it calls the figure a ceiling", /ceiling/.test(out.after || ""), out.after);
+  check("and the line under it calls the figure an estimate", /an estimate, not your bill/.test(out.after || ""), out.after);
   check("and saying the rate it prices at is the full one",
     /full rate/.test(out.after || ""), out.after);
-  check("and saying whose tokeniser counted it",
-    /tokeniser/.test(out.after || ""), out.after);
+  check("and saying whose tokenizer counted it",
+    /tokenizer/.test(out.after || ""), out.after);
   check("and the prompt itself is still drawn under it", out.messages, out);
   check("no console errors", errors.length === 0, errors);
 }
@@ -13425,10 +13431,10 @@ console.log("\na note set that comes with it cannot be added to or taken from");
       }),
   );
   check("the three-note set was picked", out.picked, JSON.stringify(out));
-  check("its plus is switched off and greyed", !!out.add && out.add.disabled && Number(out.add.opacity) < 1, JSON.stringify(out.add));
+  check("its plus is switched off and grayed", !!out.add && out.add.disabled && Number(out.add.opacity) < 1, JSON.stringify(out.add));
   check("it shows all three notes", (out.drops || []).length === 3, JSON.stringify(out.drops));
   check(
-    "every minus is switched off and greyed",
+    "every minus is switched off and grayed",
     (out.drops || []).length > 0 && out.drops.every((d) => d.disabled && Number(d.opacity) < 1),
     JSON.stringify(out.drops),
   );

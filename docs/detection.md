@@ -123,7 +123,7 @@ It needs at least two label lines, because a normal sentence can have a colon in
 A tracker that stopped early can still end on a closing tag. So before a tag is accepted as an ending, it checks nothing was left open. A reply is cut off if it has:
 
 - a container opened and never closed, like `<div>`, `<table>`, `<ul>`, `<pre>`, `<blockquote>` or `<details>`
-- an inline tag with an attribute that was never closed, like `<span style="...">`, `<font color="...">` or `<span class="...">`. Cards use these to colour speech.
+- an inline tag with an attribute that was never closed, like `<span style="...">`, `<font color="...">` or `<span class="...">`. Cards use these to color speech.
 - a tag with no closing bracket, like `<div class="wx"`, or one cut off inside an attribute, like `<div class="we`
 - an HTML comment with no `-->`
 - a code fence or inline backtick that was never closed
@@ -134,11 +134,11 @@ A tracker that stopped early can still end on a closing tag. So before a tag is 
 What it does not count:
 
 - **Tags HTML lets you leave open.** Models write `<ul><li>one<li>two</ul>`, and that is valid. A table that really was cut short leaves `<table>` open, which is counted.
-- **A bare `<b>` or `<i>` left open.** Models leave these open in finished replies often, so counting them would throw away good replies. A `<span style="...">` is different: a card that asks for coloured speech gets the closing tag every time, so a missing one means the reply stopped.
+- **A bare `<b>` or `<i>` left open.** Models leave these open in finished replies often, so counting them would throw away good replies. A `<span style="...">` is different: a card that asks for colored speech gets the closing tag every time, so a missing one means the reply stopped.
 - **A `<` typed in a scene**, like `if x<y then` or `the value was < 5`.
 - **A word in angle brackets inside a sentence**, like an emote. A made-up tag only counts when it is alone on its line and is not an HTML tag name.
 
-For inline tags, only the attribute matters, not what is in it: any colour, any style, single or double quotes, capitals or not. With several spans, it compares how many opened with how many closed, so one left open among others is caught.
+For inline tags, only the attribute matters, not what is in it: any color, any style, single or double quotes, capitals or not. With several spans, it compares how many opened with how many closed, so one left open among others is caught.
 
 This matters because nothing else would catch it. Speech closes its own quotation marks, so this reply has balanced quotes and ends on punctuation, but the span is still open:
 
@@ -186,7 +186,7 @@ This switch only affects the built-in phrase list and patterns. It does not affe
 
 - **Your own phrases.** They count wherever they appear, quoted or not.
 - **The dialogue tag rule.** `I'm going to stop now, he said` is speech without quotation marks. No model writes "he said" after its own refusal.
-- **[Stopping to offer support](#stopping-to-offer-support).** It always skips quoted lines, so a doctor or counsellor in your scene is not mistaken for the model.
+- **[Stopping to offer support](#stopping-to-offer-support).** It always skips quoted lines, so a doctor or counselor in your scene is not mistaken for the model.
 
 ## Breaking off
 
@@ -260,7 +260,7 @@ All four are treated alike, including the retry limit and the note, if you send 
 
 Only the final reply is checked for a refusal, never the model's thinking. Thinking blocks are removed first.
 
-Nine formats are recognised. The first three use tag names like `think`, `thinking`, `reasoning`, `thought`, `reflection`, `scratchpad` and `analysis`. The other six have their own fixed tokens.
+Nine formats are recognized. The first three use tag names like `think`, `thinking`, `reasoning`, `thought`, `reflection`, `scratchpad` and `analysis`. The other six have their own fixed tokens.
 
 | Form | Example |
 | --- | --- |
@@ -278,7 +278,7 @@ Nine formats are recognised. The first three use tag names like `think`, `thinki
 
 **Gemma 4** has an empty channel pair on every reply when the model is not thinking. Empty pairs are removed too.
 
-**Your own thinking markers** are recognised too. In Lumiverse's **Reasoning** settings, a **Prefix** and **Suffix** saved on a connection are read from that connection.
+**Your own thinking markers** are recognized too. In Lumiverse's **Reasoning** settings, a **Prefix** and **Suffix** saved on a connection are read from that connection.
 
 - Each must be at least 3 characters, so ordinary punctuation is never taken for thinking.
 - They are read again at most once a minute.
@@ -378,7 +378,7 @@ All of them ask, and none of them order. A note that scolds tends to get a more 
 - **A nudge**, for a model that is usually fine and refused once. It is very short.
 - **Stay in the scene**, for a model that steps out of the story to comment on it.
 - **Write them as written**, for a model that makes a character softer than their card.
-- **Finish the turn**, for a model that summarises or fades out instead of writing the scene.
+- **Finish the turn**, for a model that summarizes or fades out instead of writing the scene.
 - **Write it at full strength**, for a reply that is not a refusal but is weaker than you asked for. This one is hard to spot by eye.
 - **Firmer with every try**, for a model that keeps refusing. It starts as light as **A nudge**, and has two more notes that go out from try 4 and try 6. Each is plainer than the last, and still kind.
 
@@ -433,7 +433,7 @@ i cannot provide that information     i can't write that content
 i can't provide instructions          i can't continue with this request
 i can't provide guidance on that      i can't continue with that request
 i can't fulfill that request          i must decline this request
-i can't fulfil that request           i must decline that request
+i can't fulfill that request           i must decline that request
 i can't support that request          i have to decline that request
 i won't be able to help with that     i'll have to decline that request
 i can't generate a response to that   that request goes against
@@ -471,7 +471,7 @@ It also matches some patterns. They match by shape, not exact words, so **Reword
 - **Generating, about its own writing.** "I can't generate that." / "I don't create content like that." / "I'm not going to comply with that request."
 - **The model breaking off.** "I'm going to stop here." / "I won't continue this discussion." / "Let's redirect the conversation." Only at the end of the reply, never in quotation marks, and never with a dialogue tag.
 
-**An apology on its own is never matched.** "I'm sorry", "Unfortunately" and "I apologize" start many normal replies, and characters apologise all the time. They only count as part of a longer refusal, like "I'm sorry, but I can't create that content."
+**An apology on its own is never matched.** "I'm sorry", "Unfortunately" and "I apologize" start many normal replies, and characters apologize all the time. They only count as part of a longer refusal, like "I'm sorry, but I can't create that content."
 
 **Errors:** when a reply comes back as an error, it matches content-block wording like "PROHIBITED_CONTENT", "Blocked by safety settings.", "finish_reason: safety", "content_filter" or "content_filtered". It also matches the words Lumiverse uses when a provider stops a reply: "The provider declined the response", "The provider blocked the prompt" and "it may reproduce protected material". Network errors like "connection refused" are ignored.
 
@@ -489,7 +489,7 @@ The subjects are the things models refuse a roleplay over:
 - content the model calls illegal
 - horror: graphic violence, gore, mutilation, body horror, animal cruelty and similar
 
-**What this list is:** words that appear in refusal messages, so a refusal can be recognised. It is not a list of things the extension writes or helps anyone get. None of it is added to a prompt. A match only means the reply was a refusal, so the extension presses your retry button, and your retry limit stops it.
+**What this list is:** words that appear in refusal messages, so a refusal can be recognized. It is not a list of things the extension writes or helps anyone get. None of it is added to a prompt. A match only means the reply was a refusal, so the extension presses your retry button, and your retry limit stops it.
 
 **About age:** those words are there for one mistake: an adult character, written as an adult, that a model has read as a minor. Auto Retry is not meant for sexual content involving minors, and does not support anyone using it for that.
 

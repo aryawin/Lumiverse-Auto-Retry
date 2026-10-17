@@ -43,13 +43,13 @@ function boot() {
 }
 
 describe("notifications the panel asks for", () => {
-  test("are shown as Lumiverse's own, in the colour asked for, to the account that asked", async () => {
+  test("are shown as Lumiverse's own, in the color asked for, to the account that asked", async () => {
     const h = boot();
     await h.ask({ type: "notify", kind: "warning", text: "Auto Retry gave up after 3 tries." }, "u7");
     expect(h.notes).toEqual([{ kind: "warning", text: "Auto Retry gave up after 3 tries.", opts: { userId: "u7" } }]);
   });
 
-  test("an unknown colour is shown as information", async () => {
+  test("an unknown color is shown as information", async () => {
     const h = boot();
     await h.ask({ type: "notify", kind: "shout", text: "Auto Retry is on." });
     expect(h.notes.map((n) => n.kind)).toEqual(["info"]);

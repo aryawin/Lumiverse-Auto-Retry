@@ -93,7 +93,7 @@ describe("the sections of the settings panel", () => {
 
   test("the sections that start shut are named, not guessed at", () => {
     // A flag rather than a title starting with "Advanced", which would make the
-    // name decide the behaviour and label things that are not advanced. Saving
+    // name decide the behavior and label things that are not advanced. Saving
     // settings to a file and building a bug report are ordinary. They start
     // shut because nothing in them is needed to use the extension, which is a
     // different claim, and the caret is the one making it. Listed here so
@@ -142,7 +142,7 @@ describe("the sections of the settings panel", () => {
     for (const name of asked) expect(SRC).toContain('hasExtra("' + name + '")');
   });
 
-  test("every labelled run inside a section names a run that exists", () => {
+  test("every labeled run inside a section names a run that exists", () => {
     const runs = (() => {
       const i = SRC.indexOf("const RUNS: Record<string, { title: string; note: string }> = {");
       const block = SRC.slice(i, SRC.indexOf("\n};", i));
@@ -188,10 +188,10 @@ describe("the sections of the settings panel", () => {
 
 // A field can ask to apply as it is edited rather than waiting for Save. That
 // was wired up for number boxes only, so a dropdown asking for it was accepted
-// by the schema and then did nothing. Both honour it now, and this
+// by the schema and then did nothing. Both honor it now, and this
 // fails if a third kind of field asks for something no handler acts on.
 describe("applying a setting as it is edited", () => {
-  const HONOURED = ["num", "pick"];
+  const HONORED = ["num", "pick"];
 
   function liveFields(): Array<{ key: string; type: string }> {
     const out: Array<{ key: string; type: string }> = [];
@@ -207,7 +207,7 @@ describe("applying a setting as it is edited", () => {
   test("only the kinds of field that act on it ask for it", () => {
     const live = liveFields();
     expect(live.length).toBeGreaterThan(0);
-    const wrong = live.filter((f) => HONOURED.indexOf(f.type) < 0);
+    const wrong = live.filter((f) => HONORED.indexOf(f.type) < 0);
     expect(wrong).toEqual([]);
   });
 

@@ -115,7 +115,7 @@ Everything that shows whether Auto Retry is running follows the chat you are in:
 
 While you are in a chat you switched off, a line at the top of the settings says so. This is there because a chat switched off weeks ago looks the same as the extension not working.
 
-**Outside a chat**, on the home screen or the character browser, the button is greyed out and the row says **No chat is open**.
+**Outside a chat**, on the home screen or the character browser, the button is grayed out and the row says **No chat is open**.
 
 How it knows which chat you are in:
 
@@ -123,7 +123,7 @@ How it knows which chat you are in:
 - Lumiverse can also be asked, but it answers with your most recent chat. On the home screen, that is the chat you just left. So the address wins.
 - If your Lumiverse's addresses do not contain the chat id, it waits to be told instead.
 
-**If the button is greyed out inside a chat**, it has not been told which chat this is yet. With the `chats` permission it asks and this clears by itself. Without it, sending a message, a reply arriving, or switching chats and back will fix it. You will usually only see this right after updating the extension without leaving the chat.
+**If the button is grayed out inside a chat**, it has not been told which chat this is yet. With the `chats` permission it asks and this clears by itself. Without it, sending a message, a reply arriving, or switching chats and back will fix it. You will usually only see this right after updating the extension without leaving the chat.
 
 **Where it is kept:** the list of chats you switched off is saved in this browser, so it survives a reload. It is only a list of chat ids. It stays in this browser, and exports leave it out.
 
@@ -197,7 +197,7 @@ What it has done since the page loaded:
 The whole prompt that went to the model, after your settings, world info, persona and every extension have added to it. This is different from Lumiverse's **Prompt Breakdown**, which shows what your chat is built from.
 
 - Every message is listed in order, with its role, its size, and whether it came from your chat or was added around it. Tap one to read it. Nothing is cut: every message and every character is there.
-- **Your refusal notes are marked** in your accent colour and opened for you. A line at the top says how many went and where they were added.
+- **Your refusal notes are marked** in your accent color and opened for you. A line at the top says how many went and where they were added.
 - The button under the message count switches between **Rendered** and **Raw**. Rendered is the readable list. Raw is the prompt as the model received it, role and content. **Copy** copies whichever you are looking at. Your choice is remembered.
 
 **When it captures:** nothing is captured until you open this tab. After that it keeps up while the panel is open, even on another tab. Close the panel and it stops. There is no separate switch for this.
@@ -224,9 +224,9 @@ How it works it out:
 - A chat with no reply yet is priced on the prompt only, and says so.
 - Under it is what the retries so far this session come to. With **Several tries at once** on, each reply sent at once counts as one more.
 
-**Read it as the most it could cost, not your bill.** It prices every token at the full rate, and it leaves out anything your provider adds around your prompt.
+**It is an estimate, not your bill.** It prices every token at the full rate, so a provider discount, such as for cached tokens, makes the real cost lower. It leaves out anything your provider adds around your prompt.
 
-- Tokens are counted by Lumiverse's own tokeniser for the model. Where it has none, the line says **roughly**.
+- Tokens are counted by Lumiverse's own tokenizer for the model. Where it has none, the line says **roughly**.
 - Both prices start at 0, and while both are 0 the line is hidden.
 - Prices are in your provider's own currency. Nothing is converted.
 
