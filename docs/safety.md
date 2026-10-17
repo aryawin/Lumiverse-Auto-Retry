@@ -68,7 +68,9 @@ A response can sound personal without actually being based on personal knowledge
 
 If you have kept a reply because it agreed with something very negative you believe about yourself, that reply does not show the belief is true. It was one generated response, and another generation from the same model could say something completely different. One response agreeing with you does not make it more accurate.
 
-Writing something down is not the same as wanting it. Fiction is often used to explore ideas, feelings, situations, and subjects that are not things the writer actually wants in their own life.
+Writing something down is not the same as wanting it. Between adults, fiction is often used to explore ideas, feelings and situations the writer does not want in real life, from gentle ones to harsh ones. Having a kink for something is not the same as wanting it to happen.
+
+There is one line I hold whatever the reason: sexual content involving a minor. I do not support writing it, and that includes fiction. I do not think it helps anyone. I think it can make a person stop feeling that harm to a child is wrong, first in a story and later outside it. This is not a guess about you or about anyone reading this page. It is where I stand, and it is why this extension is built for stories between adults.
 
 This is the one part of the extension where I get to write to a person instead of a settings panel, so I will keep it simple: I hope you are alright. If you are having a genuinely difficult time, talking to a person you trust is a better option than relying on a language model to handle it.
 
