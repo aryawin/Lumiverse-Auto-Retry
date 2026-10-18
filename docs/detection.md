@@ -286,6 +286,8 @@ Nine formats are recognized. The first three use tag names like `think`, `thinki
 
 **Turn markers** are also removed: Gemma's `<\|turn>model` and `<turn\|>`, ChatML's `<\|im_start\|>` and `<\|im_end\|>`, Llama's header block, and Cohere's turn tokens. These are removed whether or not **Ignore the thinking / reasoning** is on, because they are not thinking.
 
+**A thinking format quoted inside the thinking** does not end it. Some models write out the format they were given, tags and all, while they are still thinking. A tag inside a code block or backticks is ignored. So is a whole pair of tags inside the thinking. The thinking ends at the closer that matches its own opener.
+
 **Thinking sent separately.** Some providers send thinking apart from the reply. It never reaches the reply text, so there is nothing to remove.
 
 What this means:

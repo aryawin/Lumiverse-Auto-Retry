@@ -455,6 +455,44 @@ describe("refusal detection ignores the model's thinking", () => {
     test("and a reply with no closer anywhere is untouched", () => {
       expect(stripThinking(answer, {}).trim()).toBe(answer);
     });
+
+    // A quote of the format inside that thinking ends nothing. The closer that
+    // ends the thinking is the one with no opener of its own.
+    test("a quoted pair inside it does not end it early", () => {
+      const quoted = "The format to avoid:\n```\n<think>\nnotes go here\n</think>\n```\n" + thought;
+      expect(stripThinking(quoted + "\n</think>\n\n" + answer, {}).trim()).toBe(answer);
+    });
+  });
+
+  // A model can quote the thinking format it was given, tags and all, while it
+  // is still thinking. The closer in the quote is an example, so the rest of
+  // the thinking after it is not read as the reply.
+  describe("a thinking format quoted inside the thinking", () => {
+    const plan = "\n# Part one\nopen on the bell tower\n# Part two\nend on the gate\n</think>\n\n";
+    const answer = "The kettle had gone cold, and she poured it anyway.";
+    const shapes: Array<[string, string]> = [
+      ["in a code block", "<think>\nThe format to avoid:\n```html\n<think>\nnotes go here\n</think>\n```"],
+      ["with no code block", "<think>\nThe format to avoid is <think> notes go here </think> on its own line."],
+      ["in backticks", "<think>\nI must not write `</think>` early."],
+    ];
+    for (const [label, start] of shapes) {
+      test(label + ", only the reply is left", () => {
+        expect(stripThinking(start + plan + answer, {}).trim()).toBe(answer);
+      });
+      test(label + ", a reply cut off inside the thinking still reads as cut off there", () => {
+        expect(looksTruncated(start + "\n# Part one\nopen on the bell", false, {})).toBe(true);
+      });
+    }
+
+    test("a tag the reply only mentions in backticks stays in the reply", () => {
+      const reply = "The sign read `</think>` and nothing else.";
+      expect(stripThinking("<think>weighing it</think>\n\n" + reply, {}).trim()).toBe(reply);
+    });
+
+    test("and the text that comes back is the text that went in", () => {
+      const reply = "She typed <b>[done]</b> and logged off.";
+      expect(stripThinking(reply, {})).toBe(reply);
+    });
   });
 
   test("stripThinking removes an unclosed opener running to the end", () => {

@@ -152,7 +152,7 @@ const STREAM_BUF_MAX = 200000;
 
 // Bumped on each release. Shown in the startup log and in the Copy debug info
 // report, so a bug report always says which version it came from.
-const VERSION = "5.18.0";
+const VERSION = "5.18.1";
 
 // Whether two saved settings hold the same values, whatever order their keys
 // were written in. A key left undefined counts as not there, the way it is
@@ -1373,6 +1373,7 @@ function sayTime(ms: number): string {
 function thinkOpenedNeverClosed(raw: string, cfg?: any): boolean {
   const alt = thinkTagNames(cfg).join("|");
   if (!alt) return false;
+  raw = hideExampleTags(raw, thinkTagNames(cfg));
   const opener = new RegExp("<\\|?(?:" + alt + ")\\|?\\b[^>]*>", "i");
   if (!opener.test(raw)) return false;
   // The closer pattern matches an opening tag too, since the slash is optional,
@@ -2582,12 +2583,90 @@ function stripControlTokens(text: string): string {
   return t;
 }
 
+// A thinking tag written as an example is not the end of the thinking. A model
+// that quotes the format it was given, in a code block or as a pair of its
+// own, writes a closer that the first-closer rule would take as the real one,
+// and the rest of its thinking would then be read as the reply. Before the
+// thinking is looked for, the "<" and "[" of every such tag are swapped for
+// characters no pattern looks for, and swapped back afterwards, so the text
+// itself never changes. What counts as an example:
+// - a tag inside a closed code block or inside backticks
+// - a whole pair of tags inside another pair that is still open
+// - a whole pair in front of a closer that has no opener, since that closer
+//   ends working whose opener was in the prompt. Not when the text starts on
+//   an opener, which is an ordinary block with a stray closer later on.
+const HIDDEN_LT = "\uE000";
+const HIDDEN_SQ = "\uE001";
+
+function hideExampleTags(text: string, names: string[]): string {
+  const src = String(text);
+  if (!names.length || src.indexOf(HIDDEN_LT) >= 0 || src.indexOf(HIDDEN_SQ) >= 0) return src;
+  const out = src.split("");
+  const hide = (from: number, to: number) => {
+    for (let i = from; i < to; i++) {
+      if (out[i] === "<") out[i] = HIDDEN_LT;
+      else if (out[i] === "[") out[i] = HIDDEN_SQ;
+    }
+  };
+  const code = /(`{3,}|~{3,})[\s\S]*?\1|`[^`\n]+`/g;
+  for (let m = code.exec(src); m; m = code.exec(src)) hide(m.index, m.index + m[0].length);
+  const alt = names.join("|");
+  const tag = new RegExp(
+    "<(\\/?)(" + alt + ")(?:\\s[^>]*)?>|\\[(\\/?)(" + alt + ")(?:\\s[^\\]]*)?\\]",
+    "gi",
+  );
+  const seen = out.join("");
+  const open: Array<{ name: string; at: number; end: number }> = [];
+  const pairs: Array<{ at: number; end: number; closeAt: number; closeEnd: number }> = [];
+  let orphan = -1;
+  let first = -1;
+  let firstOpens = false;
+  for (let m = tag.exec(seen); m; m = tag.exec(seen)) {
+    const end = m.index + m[0].length;
+    const closes = !!(m[1] || m[3]);
+    const name = String(m[2] || m[4]).toLowerCase();
+    if (first < 0) {
+      first = m.index;
+      firstOpens = !closes;
+    }
+    if (!closes) {
+      open.push({ name: name, at: m.index, end: end });
+      continue;
+    }
+    let k = open.length - 1;
+    while (k >= 0 && open[k].name !== name) k--;
+    if (k < 0) {
+      if (orphan < 0) orphan = m.index;
+      continue;
+    }
+    const o = open[k];
+    open.length = k;
+    if (k > 0) {
+      hide(o.at, o.end);
+      hide(m.index, end);
+    } else pairs.push({ at: o.at, end: o.end, closeAt: m.index, closeEnd: end });
+  }
+  const startsOpen = firstOpens && seen.slice(0, first).trim() === "";
+  if (orphan >= 0 && !startsOpen)
+    for (const p of pairs)
+      if (p.closeEnd <= orphan) {
+        hide(p.at, p.end);
+        hide(p.closeAt, p.closeEnd);
+      }
+  return out.join("");
+}
+
+function showExampleTags(text: string): string {
+  return String(text).split(HIDDEN_LT).join("<").split(HIDDEN_SQ).join("[");
+}
+
 function stripThinking(text: string, cfg?: any): string {
   let t = String(text == null ? "" : text);
   if (cfg && cfg.refusalStripThinking === false) return stripControlTokens(t);
   const names = thinkTagNames(cfg);
   if (!names.length) return t;
   const alt = names.join("|");
+  t = hideExampleTags(t, names);
 
   // The channel form first, because a channel block contains the other shapes
   // and removing the inside of it first would leave its wrapper behind.
@@ -2668,7 +2747,7 @@ function stripThinking(text: string, cfg?: any): string {
   t = t.replace(new RegExp("<\\|(?:" + alt + ")\\|?>[\\s\\S]*$", "i"), " ");
   t = t.replace(new RegExp("<(?:" + alt + ")(?:\\s[^>]*)?>[\\s\\S]*$", "i"), " ");
   t = t.replace(new RegExp("\\[(?:" + alt + ")(?:\\s[^\\]]*)?\\][\\s\\S]*$", "i"), " ");
-  return t;
+  return showExampleTags(t);
 }
 
 // Removes reasoning blocks regardless of the refusal-side option. That option
