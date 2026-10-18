@@ -52,7 +52,7 @@ It works with no setup. Everything else is optional.
 
 ## Made for adults
 
-Auto Retry is made for adults, 18 and older. Lumiverse itself can be used by anyone, and it has no adult content of its own. This extension is not meant for anyone under 18.
+Auto Retry is made for adults, 18 and older. Lumiverse itself can be used by anyone, and it has no adult content of its own. This extension is not meant for anyone under 18. If someone under 18 asks me for help with anything that may be sexual, such as their retry notes or their prompts, I will not help with it.
 
 ## Not for sexual content involving minors
 

@@ -8,7 +8,7 @@ Adults.
 
 Lumiverse itself is not an adult app. Anyone can use it, and it has no adult content of its own. My extensions are different. I made them for adults writing their own fiction.
 
-If you are under 18, these extensions are not for you. If someone under 18 asks me for help and their prompts ask for sexual content, I will not help with it.
+If you are under 18, these extensions are not for you. If someone under 18 asks me for help with anything that may be sexual, such as their retry notes or their prompts, I will not help with it.
 
 The extension cannot tell what your scene is about, and it does not try to. Every check it makes asks one question: did this reply fail as writing? It came back empty, stopped mid-sentence, broke character, or refused to go on. It reads only the text of the reply, and it does not keep that text after it decides. It knows nothing about you.
 
