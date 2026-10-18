@@ -69,7 +69,7 @@ A reply that starts in English and then breaks into a jumble that is mostly Chin
 
 The same switch also covers two more kinds of breakdown.
 
-**Broken characters.** Text read with the wrong encoding looks like `cafÃ©` for `café`, or `itâ€™s` for `it's`. Some providers also send the replacement character `�` or invisible control characters. A reply counts when:
+**Broken characters.** Text read with the wrong encoding looks like `cafÃ©` for `café`, or `Orrinâ€™s` for `Orrin's`. Some providers also send the replacement character `�` or invisible control characters. A reply counts when:
 
 - there are at least 8 of these, and
 - they are at least 2% of its characters.
