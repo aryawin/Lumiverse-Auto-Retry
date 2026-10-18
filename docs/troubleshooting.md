@@ -36,7 +36,9 @@ To stop it happening again, look at the reason. Each has its own switch under **
 - **cut off** or **stalled**: turn off **It cut off mid-sentence**. It covers both.
 - **one character over and over**: turn off **It was one character over and over**. It only fires when one character is most of the reply.
 - **thinking was one character over and over**: turn off **Its thinking was one character over and over**. The reply may have looked fine, and it is kept on the **Replaced** tab.
-- **garbled**: turn off **It was garbled**. It only fires when a stretch of the reply has many words mixing alphabets or capitals.
+- **garbled**: turn off **It was garbled**. It only fires on many broken words or characters, or a long switch to another alphabet that runs to the end.
+- **leaked the prompt's format**: turn off **It leaked the prompt's format**. It only fires on markers no story uses, such as `[/INST]`, outside code.
+- **stuck repeating or rambling**: turn off **It got stuck repeating or rambling**. It only fires when the repeats or the run-on reach the end of the reply.
 - **short**: turn off **It was very short**, or lower **What counts as "very short"**.
 - **refusal**, **breaking off** or **crisis**: see [When it retries](detection.md). Adding the wording it caught to **Never treat these as a refusal** is usually the quickest fix.
 - **empty**, **cut off mid-reasoning** or **thinking only, no reply**: turn off **It came back blank**, which covers all three. First check your model is not being cut short by a token limit.

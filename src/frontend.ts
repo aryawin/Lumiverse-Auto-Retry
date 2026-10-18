@@ -152,7 +152,7 @@ const STREAM_BUF_MAX = 200000;
 
 // Bumped on each release. Shown in the startup log and in the Copy debug info
 // report, so a bug report always says which version it came from.
-const VERSION = "5.18.1";
+const VERSION = "5.19.0";
 
 // Whether two saved settings hold the same values, whatever order their keys
 // were written in. A key left undefined counts as not there, the way it is
@@ -268,7 +268,9 @@ const CONFIG = {
   retryOnEmpty: true, // also catches a generation cut off mid-reasoning (reasoning seen, content empty)
   retryOnSpam: true, // the reply is one character over and over, such as "!!!!!!!!" (see spamVerdict)
   retryOnSpamThinking: true, // the thinking is one character over and over, even when the reply after it looks fine
-  retryOnGarbled: true, // words run together across languages and scripts, as a model writes when it breaks down (see garbledVerdict)
+  retryOnGarbled: true, // words run together across languages and scripts, broken characters, or a switch to another alphabet for the rest of the reply (see garbledVerdict)
+  retryOnLeak: true, // the prompt's own format written into the reply, such as [/INST] or a character card's data (see leakVerdict)
+  retryOnLoop: true, // a word or phrase repeated over and over to the end of the reply, a short pattern repeated many times, or words with no punctuation running on to the end (see loopVerdict)
   retryOnTruncated: true, // final content present but cut off mid-sentence (structural heuristic, see looksTruncated)
   // Also treat "the reply stops on a letter" as cut off. The test for an
   // ending reads any script's punctuation, and an emoji, so a scene closing on
@@ -521,7 +523,7 @@ const RUNS: Record<string, { title: string; note: string }> = {
   },
   broken: {
     title: "Broken replies",
-    note: "A reply from a model that broke down: one character over and over, in the reply or in its thinking, or a jumble of words from several languages run together. A reply like this is never worth keeping, so all three are on by default.",
+    note: "A reply from a model that broke down: one character over and over, a jumble, the prompt's own format written into the reply, or a loop. A reply like this is never worth keeping, so all of these are on by default.",
   },
   frozen: {
     title: "Replies that freeze",
@@ -812,7 +814,21 @@ const SCHEMA: Group[] = [
         run: "broken",
         label: "It was garbled",
         type: "bool",
-        hint: "Retry when the reply turns into a jumble of words from several languages run together, as a model writes when it breaks down.",
+        hint: "Retry when the reply turns into a jumble: words from several languages run together, broken characters, or a sudden switch to another alphabet.",
+      },
+      {
+        key: "retryOnLeak",
+        run: "broken",
+        label: "It leaked the prompt's format",
+        type: "bool",
+        hint: "Retry when the reply runs into the prompt's own markers, such as [/INST], or a character card's data.",
+      },
+      {
+        key: "retryOnLoop",
+        run: "broken",
+        label: "It got stuck repeating or rambling",
+        type: "bool",
+        hint: "Retry when a word or phrase repeats over and over to the end, or hundreds of words run on with no punctuation.",
       },
       {
         key: "retryOnEmpty",
@@ -1670,6 +1686,25 @@ function scriptOf(ch: string): string {
   return "";
 }
 
+// Whether a reply opens in the Latin alphabet: GARBLE_START_LATIN of its first
+// GARBLE_START_LETTERS letters. A reply written in Chinese or Russian from the
+// start is not judged by the signs below, which mean nothing there.
+const GARBLE_START_LETTERS = 300;
+const GARBLE_START_LATIN = 0.85;
+
+function startsLatin(text: string): boolean {
+  let seen = 0;
+  let latin = 0;
+  for (const ch of Array.from(text)) {
+    const s = scriptOf(ch);
+    if (!s) continue;
+    seen++;
+    if (s === "latin") latin++;
+    if (seen >= GARBLE_START_LETTERS) break;
+  }
+  return seen >= GARBLE_START_LETTERS && latin / seen >= GARBLE_START_LATIN;
+}
+
 function garbledVerdict(visible: string): boolean {
   const text = String(visible == null ? "" : visible)
     .replace(/```[\s\S]*?```/g, " ")
@@ -1692,7 +1727,11 @@ function garbledVerdict(visible: string): boolean {
   if (words.length < GARBLE_MIN_WORDS) return false;
   let all = 0;
   letters.forEach((n) => (all += n));
-  if (!all || (letters.get("latin") || 0) / all < GARBLE_MIN_LATIN) return false;
+  if (!all) return false;
+  // A reply mostly in the Latin alphabet, or one that started that way. A
+  // breakdown can bury a good English start under a jumble that is mostly
+  // Chinese, and the reply is still an English one that broke.
+  if ((letters.get("latin") || 0) / all < GARBLE_MIN_LATIN && !startsLatin(text)) return false;
 
   // The sign each word carries, if any.
   const signs: string[] = words.map((w) => {
@@ -1719,6 +1758,200 @@ function garbledVerdict(visible: string): boolean {
     }
     if (count >= GARBLE_MIN_SIGNS && kinds.size >= 2) return true;
     if (start + GARBLE_WINDOW >= words.length) break;
+  }
+  return false;
+}
+
+// Text with code taken out, for the checks below. A block of code or inline
+// code is written on purpose, whatever is in it.
+function withoutCode(text: string): string {
+  return String(text == null ? "" : text)
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/`[^`\n]*`/g, " ");
+}
+
+// Broken characters: text decoded with the wrong encoding, such as "Ã©" for
+// "é" or "â€™" for an apostrophe, the replacement character, and control
+// characters. One or two are a provider's slip in a reply that still reads.
+// A reply counts when there are at least SOUP_MIN_HITS of them and they are at
+// least SOUP_MIN_SHARE of its characters.
+//
+// The pairs are a lead letter that starts a two- or three-byte character,
+// read as Latin-1, followed by a character that a following byte turns into.
+// Real words rarely put one of those after one of these.
+const SOUP_MIN_HITS = 8;
+const SOUP_MIN_SHARE = 0.02;
+const SOUP_PAIR =
+  /[ÂÃÄÅÐÑâãäåæçèé][\u0080-¿ŒœŠšŸŽžƒˆ˜–—‘-„†-•…‰‹›€™]/g;
+const SOUP_CHAR = /[�\u0000-\u0008\u000B\u000C\u000E-\u001F]/g;
+
+function soupVerdict(visible: string): boolean {
+  const text = withoutCode(visible);
+  const hits = (text.match(SOUP_PAIR) || []).length + (text.match(SOUP_CHAR) || []).length;
+  if (hits < SOUP_MIN_HITS) return false;
+  const size = text.replace(/\s+/g, "").length;
+  return size > 0 && hits / size >= SOUP_MIN_SHARE;
+}
+
+// A reply in the Latin alphabet that switches to another alphabet and never
+// comes back. A model breaking down can drift into Russian or Chinese for the
+// rest of the reply. Counted in letters, since Chinese and Japanese put no
+// spaces between words.
+//
+// A character who speaks or writes a passage in another language is left
+// alone. The switch has to run to the end and be long, and it is left alone
+// when it is set apart as written on purpose: inside quotation marks or
+// asterisks, in a quoted block starting with ">", or after a colon, as in
+// "The letter read:".
+const SWITCH_MIN_TAIL = 60;
+const SWITCH_MIN_BEFORE = 200;
+const SWITCH_TAIL_SHARE = 0.9;
+const SWITCH_BEFORE_LATIN = 0.85;
+
+function switchVerdict(visible: string): boolean {
+  const text = withoutCode(visible);
+  const letters: Array<{ at: number; latin: boolean }> = [];
+  for (let i = 0; i < text.length; i++) {
+    const c = text.codePointAt(i) as number;
+    const ch = String.fromCodePoint(c);
+    if (c > 0xffff) i++;
+    if (!/\p{L}/u.test(ch)) continue;
+    const s = scriptOf(ch);
+    if (s) letters.push({ at: i - (c > 0xffff ? 1 : 0), latin: s === "latin" });
+  }
+  // The longest run at the end that is almost all another alphabet.
+  let other = 0;
+  let start = -1;
+  for (let k = letters.length - 1; k >= 0; k--) {
+    if (!letters[k].latin) other++;
+    const size = letters.length - k;
+    if (other / size >= SWITCH_TAIL_SHARE && !letters[k].latin) start = k;
+    else if (other / size < 0.6) break;
+  }
+  if (start < 0 || letters.length - start < SWITCH_MIN_TAIL) return false;
+  if (start < SWITCH_MIN_BEFORE) return false;
+  let latin = 0;
+  for (let k = 0; k < start; k++) if (letters[k].latin) latin++;
+  if (latin / start < SWITCH_BEFORE_LATIN) return false;
+  return !spanIsQuoted(text, letters[start].at) && !spanIsSetApart(text, letters[start].at);
+}
+
+// Whether text from `start` on is set apart from the line before it: a quoted
+// block, italics left open on its line, or a colon just before it, on its own
+// line or at the end of the line above.
+function spanIsSetApart(text: string, start: number): boolean {
+  const lineStart = text.lastIndexOf("\n", start - 1) + 1;
+  const before = text.slice(lineStart, start);
+  if (/^[ \t]*>/.test(before)) return true;
+  if (((before.match(/\*/g) || []).length % 2) === 1) return true;
+  if (/^[ \t]*_/.test(before) || /[\s(]_[^_\s]*$/.test(before)) return true;
+  return /:[ \t]*$/.test(text.slice(0, start).replace(/[^\p{L}\p{N}:]*$/u, ""));
+}
+
+// The prompt's own format written into the reply. A model that runs past the
+// end of its turn can write the template's markers, the start of your next
+// turn, or a character card's data, as in `[/INST] [Character("Mara")]`. No
+// character writes these in a scene, so one is enough, outside code.
+//
+// The turn markers of chat formats, such as <|im_start|>user, also open a
+// message, so they count only after some of the reply has been written.
+const LEAK_WHY = "leaked the prompt's format";
+const LEAK_MARKS: RegExp[] = [
+  /\[\/?INST\]/,
+  /<<\/?SYS>>/,
+  /^[ \t]*#{2,4}[ \t]*(?:Instruction|Response|Input)[ \t]*:/im,
+];
+const LEAK_TURNS = /<\|im_start\|>[ \t]*(?:user|system)\b|<\|start_header_id\|>[ \t]*(?:user|system)[ \t]*<\|end_header_id\|>|<start_of_turn>[ \t]*user\b/i;
+// A W++ or Boostyle line from a character card, such as [Character("Mara")]
+// or [Personality("calm" + "dry")]. Two of them, since one could be a coded
+// note a character writes.
+const LEAK_CARD = /\[[ \t]*[A-Za-z][A-Za-z ]{0,24}\([ \t]*"[^"\n]{1,120}"/g;
+
+function leakVerdict(content: string, cfg?: any): boolean {
+  const raw = withoutCode(String(content == null ? "" : content));
+  const visible = stripThinkingAlways(raw, cfg);
+  for (const mark of LEAK_MARKS) if (mark.test(visible)) return true;
+  if ((visible.match(LEAK_CARD) || []).length >= 2) return true;
+  const turn = LEAK_TURNS.exec(raw);
+  if (turn && stripThinkingAlways(raw.slice(0, turn.index), cfg).trim()) return true;
+  return false;
+}
+
+// A word or phrase repeated over and over until the reply ends, as in "the
+// answer is that the answer is that". A model stuck like this does not get out
+// again, so the loop has to reach the end, and the last repeat may be cut
+// short. A chant or a stammer in a scene is short and the scene carries on
+// after it, so it is left alone.
+//
+// Two more shapes of the same breakdown count, wherever they are:
+// - a pattern of two to four characters, with a letter or a digit in it,
+//   repeated LOOP_CHAR_REPEATS times in a row, such as "1.1.1.1." for
+//   hundreds of characters. Written as one long word, so the word count above
+//   cannot see it. A divider such as "=-=-=-" has no letter or digit. A
+//   pattern of letters only, such as a laugh written "hahaha", needs
+//   LOOP_LETTER_REPEATS, since a character laughs on purpose.
+// - LOOP_RUN_ON words in a row on one line with no punctuation at all,
+//   running to the end, such as a chain of words that only grows. Real
+//   writing has a comma or a period long before that. Only words in the
+//   Latin, Greek or Cyrillic alphabets count, since Thai and some other
+//   languages are written without punctuation.
+const LOOP_WHY = "stuck repeating or rambling";
+const LOOP_MIN_REPEATS = 10;
+const LOOP_MIN_WORDS = 60;
+const LOOP_MAX_UNIT = 12;
+const LOOP_CHAR_REPEATS = 60;
+const LOOP_LETTER_REPEATS = 150;
+const LOOP_RUN_ON = 150;
+
+function loopVerdict(visible: string): boolean {
+  const plain = withoutCode(visible);
+  const chars = new RegExp("([^\\s]{2,4}?)\\1{" + (LOOP_CHAR_REPEATS - 1) + ",}", "gu");
+  for (const hit of plain.matchAll(chars)) {
+    const unit = hit[1];
+    // Two different characters at least: one letter held long, as in a
+    // scream, is the one-character check's to judge.
+    if (!/[\p{L}\p{N}]/u.test(unit) || new Set(Array.from(unit)).size < 2) continue;
+    if (/^\p{L}+$/u.test(unit) && hit[0].length / unit.length < LOOP_LETTER_REPEATS) continue;
+    return true;
+  }
+  let run = 0;
+  for (const t of plain.split(/[ \t]+|(\n)/)) {
+    if (!t) continue;
+    run = /^[\p{Script=Latin}\p{Script=Greek}\p{Script=Cyrillic}\p{N}]+(?:['\u2019-][\p{Script=Latin}\p{Script=Greek}\p{Script=Cyrillic}\p{N}]+)*$/u.test(t) ? run + 1 : 0;
+  }
+  if (run >= LOOP_RUN_ON) return true;
+  const words = plain
+    .toLowerCase()
+    .split(/\s+/)
+    .map((w) => w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
+    .filter(Boolean);
+  if (words.length < LOOP_MIN_WORDS) return false;
+  const same = (at: number, unit: string[]) => {
+    for (let k = 0; k < unit.length; k++) if (words[at + k] !== unit[k]) return false;
+    return true;
+  };
+  for (let n = 1; n <= LOOP_MAX_UNIT; n++) {
+    for (let cut = 0; cut < n; cut++) {
+      const end = words.length - cut;
+      if (end - n < 0) break;
+      const unit = words.slice(end - n, end);
+      // The words after the last whole repeat have to be the start of another.
+      // The very last word can stop partway, where the reply was cut off.
+      let tailOk = true;
+      for (let k = 0; k < cut; k++) {
+        const w = words[end + k];
+        const last = end + k === words.length - 1;
+        if (w !== unit[k] && !(last && unit[k].startsWith(w))) tailOk = false;
+      }
+      if (!tailOk) continue;
+      let reps = 1;
+      let at = end - n;
+      while (at - n >= 0 && same(at - n, unit)) {
+        reps++;
+        at -= n;
+      }
+      if (reps >= LOOP_MIN_REPEATS && reps * n >= LOOP_MIN_WORDS) return true;
+    }
   }
   return false;
 }
@@ -3100,7 +3333,12 @@ function replyProblem(content: string, thought: string, cfg: any): string {
     if (where)
       return where === "thinking" ? "thinking was one character over and over" : "one character over and over";
   }
-  if (cfg.retryOnGarbled && garbledVerdict(stripMarkup(stripThinkingAlways(content, cfg)))) return "garbled";
+  if (cfg.retryOnGarbled) {
+    const visible = stripMarkup(stripThinkingAlways(content, cfg));
+    if (garbledVerdict(visible) || soupVerdict(visible) || switchVerdict(visible)) return "garbled";
+  }
+  if (cfg.retryOnLeak && leakVerdict(content, cfg)) return LEAK_WHY;
+  if (cfg.retryOnLoop && loopVerdict(stripMarkup(stripThinkingAlways(content, cfg)))) return LOOP_WHY;
   if (cfg.retryOnTruncated && looksTruncated(content, cfg.retryOnNoPunct, cfg)) return "cut off";
   if (cfg.retryOnRefusal) {
     const verdict = refusalVerdict(content, cfg);
@@ -7033,6 +7271,8 @@ export function setup(ctx: Ctx, opts?: any) {
         "retryOnSpam",
         "retryOnSpamThinking",
         "retryOnGarbled",
+        "retryOnLeak",
+        "retryOnLoop",
         "retryOnTruncated",
         "retryOnNoPunct",
         "retryOnShort",
@@ -9566,6 +9806,8 @@ export function setup(ctx: Ctx, opts?: any) {
     "thinking was one character over and over",
     "one character over and over",
     "garbled",
+    LEAK_WHY,
+    LOOP_WHY,
     "cut off",
     REFUSAL_REASON,
     BREAKOFF_REASON,
@@ -15272,6 +15514,10 @@ export const __testing = {
   setBoundThinkPairs,
   replyProblem,
   garbledVerdict,
+  soupVerdict,
+  switchVerdict,
+  leakVerdict,
+  loopVerdict,
   HARD_FAILURE,
   splitLeadingThinking,
   parseColor,

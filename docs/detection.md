@@ -5,7 +5,9 @@ Most reasons for a retry are simple, like an error or a blank reply. Each of tho
 This page covers the checks that read the text of a finished reply:
 
 - [One character over and over](#one-character-over-and-over): the model sent `!!!!!!!!` or similar.
-- [Garbled replies](#garbled-replies): the reply turned into a jumble of words from several languages.
+- [Garbled replies](#garbled-replies): the reply turned into a jumble of words from several languages, or into broken characters.
+- [Leaked prompt format](#leaked-prompt-format): the reply ran into the prompt's own markers, such as `[/INST]`.
+- [Stuck repeating or rambling](#stuck-repeating-or-rambling): the reply repeats itself to the end, or runs on with no punctuation.
 - [Cut-off detection](#cut-off-detection): the reply stopped part way.
 - [Accidental-refusal detection](#accidental-refusal-detection): the model stepped out of the story and declined.
 
@@ -63,6 +65,23 @@ A reply counts as garbled when any stretch of 80 words holds:
 
 One kind on its own is left alone, because each can turn up in a good reply.
 
+A reply that starts in English and then breaks into a jumble that is mostly Chinese still counts. The first 300 letters decide which alphabet the reply is written in.
+
+The same switch also covers two more kinds of breakdown.
+
+**Broken characters.** Text read with the wrong encoding looks like `cafÃ©` for `café`, or `itâ€™s` for `it's`. Some providers also send the replacement character `�` or invisible control characters. A reply counts when:
+
+- there are at least 8 of these, and
+- they are at least 2% of its characters.
+
+One or two in a reply that still reads are left alone.
+
+**A switch to another alphabet for the rest of the reply.** A model can drift from English into Russian or Chinese and never come back. A reply counts when:
+
+- at least 200 letters come first, almost all in the Latin alphabet,
+- then at least 60 letters almost all in another alphabet, and
+- that other alphabet runs to the end of the reply.
+
 **What it leaves alone:**
 
 - a reply mostly written in another alphabet, such as Chinese or Russian. These signs mean nothing there.
@@ -72,8 +91,63 @@ One kind on its own is left alone, because each can turn up in a good reply.
 - code, inline code and web addresses, which are left out before counting
 - a robot or a glitching character whose speech is written in mixed capitals
 - science letters such as Δx or a lone α
+- accented letters in French, Spanish or another language written correctly
+- a passage in another alphabet that the reply sets apart as written on purpose:
+  - inside quotation marks or asterisks
+  - in a quoted block that starts with `>`
+  - after a colon, as in "The letter read:"
+- a passage in another alphabet with English after it
+- a reply written in another alphabet from the start
 
 The thinking is not checked, only the reply.
+
+## Leaked prompt format
+
+A model that runs past the end of its turn can write the prompt's own format into the reply. It might write a marker such as `[/INST]`, start your next turn for you, or copy out a character card's data.
+
+**It leaked the prompt's format** (`retryOnLeak`) retries a reply like that. It is on by default, under **When to count a reply as bad**, in **Broken replies**.
+
+Any one of these counts:
+
+- an instruction marker: `[INST]` or `[/INST]`
+- a system marker: `<<SYS>>` or `<</SYS>>`
+- a line that starts with a heading such as `### Instruction:`, `### Response:` or `### Input:`
+- a turn marker for your turn or the system's, such as `<|im_start|>user`, after some of the reply has been written
+- two or more lines of card data in brackets, such as `[Name("Pell")]` and `[Mind("patient")]`
+
+**What it leaves alone:**
+
+- any of these inside a code block or inline code
+- a tracker in brackets, such as `[Mood: tired]`
+- one bracketed line that looks like card data, which a character could write
+- a turn marker at the very start of the reply, which some formats send
+- a story heading such as `### Chapter Two`
+- the thinking
+
+## Stuck repeating or rambling
+
+A model can get stuck. It repeats one word, phrase or sentence until it runs out of room. Or it writes words in a chain with no punctuation at all.
+
+**It got stuck repeating or rambling** (`retryOnLoop`) retries a reply like that. It is on by default, under **When to count a reply as bad**, in **Broken replies**.
+
+Any one of these counts:
+
+- **A loop to the end.** A run of 1 to 12 words repeated at least 10 times in a row, at least 60 words in all, reaching the end of the reply. The last repeat can stop partway.
+- **A short pattern repeated hundreds of times.** A pattern of 2 to 4 characters with a letter or a digit in it, repeated at least 60 times in a row, such as `1.1.1.1.` A pattern of letters only, such as `haha`, needs 150 repeats.
+- **A run-on to the end.** At least 150 words in a row on one line with no punctuation, reaching the end of the reply.
+
+**What it leaves alone:**
+
+- a chant, a refrain or a stammer, such as `"Run, run, run!"` or `"I-I-I"`. These are short, and the scene carries on after them.
+- lines written out a few times, such as a character writing the same sentence six times
+- a long laugh, such as `hahaha` repeated a few dozen times
+- a scream held on one letter, which is the [one-character check](#one-character-over-and-over)'s to judge
+- a divider line such as `=-=-=-`, which has no letter or digit
+- a long sentence with commas
+- a poem with no punctuation, written one short line at a time
+- languages written without punctuation, such as Thai
+- code blocks and inline code
+- the thinking
 
 ## Cut-off detection
 
