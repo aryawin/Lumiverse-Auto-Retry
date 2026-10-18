@@ -567,6 +567,36 @@ describe("refusal detection ignores the model's thinking", () => {
           expect(stripThinking(head + REPLY, {}).trim()).toBe(REPLY);
         });
       }
+      // Every other format the stripper knows, with the plan in front.
+      const formats: Array<[string, string]> = [
+        ["pipes", "<|think|>\n- mood: wary\n<|/think|>\n\n"],
+        ["Harmony", "<|channel|>analysis<|message|>mood: wary<|end|><|start|>assistant<|channel|>final<|message|>"],
+        ["Gemma 4", "<|channel>thought\nmood: wary\n<channel|>"],
+        ["Cohere", "<|START_THINKING|>mood: wary<|END_THINKING|><|START_RESPONSE|>"],
+        ["Seed-OSS", "<seed:think>mood: wary</seed:think>\n"],
+        ["begin and end of thought", "<|begin_of_thought|>mood: wary<|end_of_thought|>\n"],
+        ["Kimi", "\u25c1think\u25b7mood: wary\u25c1/think\u25b7\n"],
+      ];
+      for (const [label, block] of formats) {
+        test(label + ": the plan in front is thinking too", () => {
+          const out = stripThinking(plan + block + REPLY, {});
+          expect(out).not.toContain("Planning the turn");
+          expect(out).not.toContain("mood: wary");
+          expect(out).toContain(REPLY);
+        });
+      }
+      test("a connection's own markers: the plan in front is thinking too", () => {
+        const { setBoundThinkPairs } = __testing as any;
+        setBoundThinkPairs([{ open: "@@plan@@", close: "@@done@@" }]);
+        try {
+          const out = stripThinking(plan + "@@plan@@\nmood: wary\n@@done@@\n" + REPLY, {});
+          expect(out).not.toContain("Planning the turn");
+          expect(out.trim()).toBe(REPLY);
+        } finally {
+          setBoundThinkPairs([]);
+        }
+      });
+
       test("a thought tagged inside a sentence stays part of the reply", () => {
         const text = "She opened the door. <thought>Too cold.</thought> She went out anyway.";
         expect(stripThinking(text, {})).toContain("She opened the door.");

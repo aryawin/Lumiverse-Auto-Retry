@@ -2852,22 +2852,47 @@ function hideExampleTags(text, names) {
 function showExampleTags(text) {
     return String(text).split(HIDDEN_LT).join("<").split(HIDDEN_SQ).join("[");
 }
-// Where a thinking block ends when plain text comes before it, or -1. The
-// block has to stand on lines of its own and have more text after it. A
-// character's thought tagged inside a sentence is part of the reply, and a
-// block at the very start is an ordinary one. Example tags are already hidden
-// when this runs, so a pair quoted inside the block is not its end.
+// Every closed thinking block the stripper knows, as patterns. `word` marks
+// the formats a writer also uses inside a sentence, such as <thought> for a
+// character's thought.
+function thinkBlockShapes(alt) {
+    return [
+        { needs: "</", pattern: "<(" + alt + ")(?:\\s[^>]*)?>[\\s\\S]*?<\\/\\1\\s*>", word: true },
+        { needs: "[/", pattern: "\\[(" + alt + ")(?:\\s[^\\]]*)?\\][\\s\\S]*?\\[\\/\\1\\s*\\]", word: true },
+        { needs: "|>", pattern: "<\\|(?:" + alt + ")\\|?>[\\s\\S]*?<\\|?\\/?(?:" + alt + ")\\|?>" },
+        {
+            needs: "<|channel|>",
+            pattern: "<\\|channel\\|>[ \\t]*(?:" + THINK_CHANNELS + ")\\b[\\s\\S]*?" + HARMONY_END,
+        },
+    ].concat(thinkPairs().map((p) => ({ needs: p.needs, pattern: p.open + "[\\s\\S]*?" + p.close })));
+}
+// Where a thinking block ends when plain text comes before it, or -1. A
+// model can write a summary of its plan, then the block, then the reply. The
+// block has to start a line and have more text after it. A block in a word
+// format also has to end its line, so a character's thought tagged inside a
+// sentence is part of the reply. A block at the very start is an ordinary
+// one. Example tags are already hidden when this runs, so a pair quoted inside
+// the block is not its end.
 function planThenBlockEnd(t, alt) {
-    if (t.indexOf("</") < 0 && t.indexOf("[/") < 0)
-        return -1;
-    const block = new RegExp("(^|\\n)[ \\t`>*_]*(?:<(" + alt + ")(?:\\s[^>]*)?>[\\s\\S]*?<\\/\\2\\s*>|\\[(" + alt + ")(?:\\s[^\\]]*)?\\][\\s\\S]*?\\[\\/\\3\\s*\\])[ \\t`*_]*(?=\\r?\\n|$)", "i");
-    const hit = block.exec(t);
-    if (!hit)
-        return -1;
-    if (!t.slice(0, hit.index).trim())
-        return -1;
-    const end = hit.index + hit[0].length;
-    return t.slice(end).trim() ? end : -1;
+    const low = t.toLowerCase();
+    let at = -1;
+    let end = -1;
+    for (const shape of thinkBlockShapes(alt)) {
+        if (low.indexOf(shape.needs.toLowerCase()) < 0)
+            continue;
+        const block = new RegExp("(?:^|\\n)[ \\t`>*_]*(?:" + shape.pattern + ")" + (shape.word ? "[ \\t`*_]*(?=\\r?\\n|$)" : ""), "i");
+        const hit = block.exec(t);
+        if (!hit || (at >= 0 && hit.index >= at))
+            continue;
+        if (!t.slice(0, hit.index).trim())
+            continue;
+        const stop = hit.index + hit[0].length;
+        if (!t.slice(stop).trim())
+            continue;
+        at = hit.index;
+        end = stop;
+    }
+    return end;
 }
 function stripThinking(text, cfg) {
     let t = String(text == null ? "" : text);
@@ -2878,6 +2903,16 @@ function stripThinking(text, cfg) {
         return t;
     const alt = names.join("|");
     t = hideExampleTags(t, names);
+    // A written plan in front of a thinking block. A model can write a summary of
+    // its plan in plain text, then its thinking block, then the reply. A reply
+    // does not open with prose and then think, so everything up to the end of
+    // that block is thinking too. First, since the steps below take the block
+    // out and would leave the plan behind looking like the reply.
+    {
+        const end = planThenBlockEnd(t, alt);
+        if (end >= 0)
+            t = " " + t.slice(end);
+    }
     // The channel form first, because a channel block contains the other shapes
     // and removing the inside of it first would leave its wrapper behind.
     //
@@ -2915,15 +2950,6 @@ function stripThinking(text, cfg) {
             if (!open.test(t.slice(0, close.index)))
                 t = " " + t.slice(close.index + close[0].length);
         }
-    }
-    // A written plan in front of a thinking block. A model can write a summary of
-    // its plan in plain text, then its thinking block, then the reply. A reply
-    // does not open with prose and then think, so everything up to the end of
-    // that block is thinking too.
-    {
-        const end = planThenBlockEnd(t, alt);
-        if (end >= 0)
-            t = " " + t.slice(end);
     }
     // What is left of the channel format once the thinking channels are gone: the
     // header that introduces the visible reply, and the control tokens around it.
