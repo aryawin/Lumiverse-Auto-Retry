@@ -141,6 +141,12 @@ Any one of these counts:
 - a chant, a refrain or a stammer, such as `"Run, run, run!"` or `"I-I-I"`. These are short, and the scene carries on after them.
 - lines written out a few times, such as a character writing the same sentence six times
 - a long laugh, such as `hahaha` repeated a few dozen times
+- repetition set apart as written on purpose, however long it is:
+  - inside quotation marks or asterisks that close again after it, such as a crowd's chant or a held laugh
+  - in a quoted block that starts with `>`
+  - after a colon, such as "She wrote on the board:" and the same line written out twenty times
+
+A model stuck in a loop runs until it is cut off, so it does not close a quotation mark or an asterisk it opened. A loop inside dialogue that never closes still counts. A pattern such as `1.1.1.1.` after a colon still counts too.
 - a scream held on one letter, which is the [one-character check](#one-character-over-and-over)'s to judge
 - a divider line such as `=-=-=-`, which has no letter or digit
 - a long sentence with commas

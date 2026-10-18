@@ -1883,6 +1883,10 @@ function leakVerdict(content: string, cfg?: any): boolean {
 // short. A chant or a stammer in a scene is short and the scene carries on
 // after it, so it is left alone.
 //
+// Repetition set apart as written on purpose is also left alone, wherever it
+// is (see repeatOnPurpose). A model stuck in a loop runs until it is cut off,
+// so it does not close a quotation mark or an asterisk it opened.
+//
 // Two more shapes of the same breakdown count, wherever they are:
 // - a pattern of two to four characters, with a letter or a digit in it,
 //   repeated LOOP_CHAR_REPEATS times in a row, such as "1.1.1.1." for
@@ -1912,6 +1916,8 @@ function loopVerdict(visible: string): boolean {
     // scream, is the one-character check's to judge.
     if (!/[\p{L}\p{N}]/u.test(unit) || new Set(Array.from(unit)).size < 2) continue;
     if (/^\p{L}+$/u.test(unit) && hit[0].length / unit.length < LOOP_LETTER_REPEATS) continue;
+    const at = hit.index || 0;
+    if (repeatOnPurpose(plain, at, at + hit[0].length, false)) continue;
     return true;
   }
   let run = 0;
@@ -1920,11 +1926,18 @@ function loopVerdict(visible: string): boolean {
     run = /^[\p{Script=Latin}\p{Script=Greek}\p{Script=Cyrillic}\p{N}]+(?:['\u2019-][\p{Script=Latin}\p{Script=Greek}\p{Script=Cyrillic}\p{N}]+)*$/u.test(t) ? run + 1 : 0;
   }
   if (run >= LOOP_RUN_ON) return true;
-  const words = plain
-    .toLowerCase()
-    .split(/\s+/)
-    .map((w) => w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
-    .filter(Boolean);
+  // Each word with where it starts and ends, so a loop can be placed in the
+  // text. A mark on its own, such as a lone quotation mark, is not a word.
+  const words: string[] = [];
+  const starts: number[] = [];
+  const ends: number[] = [];
+  for (const m of plain.matchAll(/\S+/g)) {
+    const w = m[0].toLowerCase().replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "");
+    if (!w) continue;
+    words.push(w);
+    starts.push(m.index || 0);
+    ends.push((m.index || 0) + m[0].length);
+  }
   if (words.length < LOOP_MIN_WORDS) return false;
   const same = (at: number, unit: string[]) => {
     for (let k = 0; k < unit.length; k++) if (words[at + k] !== unit[k]) return false;
@@ -1950,9 +1963,43 @@ function loopVerdict(visible: string): boolean {
         reps++;
         at -= n;
       }
-      if (reps >= LOOP_MIN_REPEATS && reps * n >= LOOP_MIN_WORDS) return true;
+      if (reps < LOOP_MIN_REPEATS || reps * n < LOOP_MIN_WORDS) continue;
+      // Back to where the repeating starts, which can be partway into a
+      // repeat when the reply ends partway into one.
+      while (at > 0 && words[at - 1] === words[at - 1 + n]) at--;
+      // From the first letter of the loop to the last, so a quotation mark or
+      // an asterisk around it counts as outside it.
+      const from = starts[at] + (plain.slice(starts[at]).match(/^[^\p{L}\p{N}]*/u) || [""])[0].length;
+      const last = words.length - 1;
+      const to = ends[last] - (plain.slice(starts[last], ends[last]).match(/[^\p{L}\p{N}]*$/u) || [""])[0].length;
+      if (repeatOnPurpose(plain, from, to, true)) continue;
+      return true;
     }
   }
+  return false;
+}
+
+// Whether repetition from `start` to `end` is set apart as written on
+// purpose:
+// - inside quotation marks or asterisks opened on its line before it and
+//   closed again right after it, as in a crowd's chant or a held laugh
+// - in a quoted block that starts with ">"
+// - for words, after a colon, on its own line or on the line above, as in
+//   "She wrote on the board:" and the lines after it. A pattern such as
+//   "1.1.1." after a colon is still a breakdown, so `afterColon` is false for
+//   those.
+function repeatOnPurpose(text: string, start: number, end: number, afterColon: boolean): boolean {
+  const lineStart = text.lastIndexOf("\n", start - 1) + 1;
+  const before = text.slice(lineStart, start);
+  if (/^[ \t]*>/.test(before)) return true;
+  if (afterColon && /:[ \t]*$/.test(before)) return true;
+  if (afterColon && !before.trim() && /:[ \t]*\n\s*$/.test(text.slice(0, lineStart))) return true;
+  // The first mark after the repetition. It skips the rest of a repeat cut
+  // short, such as the last "a" of a laugh, and the punctuation that ends it.
+  const closer = text.slice(end).replace(/^[\p{L}\p{N}]*[\s.,;!?\u2026~-]*/u, "").charAt(0);
+  if (spanIsQuoted(text, start) && /["\u201d\u00bb]/.test(closer)) return true;
+  if ((before.match(/\*/g) || []).length % 2 === 1 && closer === "*") return true;
+  if ((before.match(/_/g) || []).length % 2 === 1 && closer === "_") return true;
   return false;
 }
 

@@ -101,6 +101,9 @@ describe("stuck repeating or rambling", () => {
     ["a sentence repeated to the end", scene + "She looked at the door and waited for him. ".repeat(12)],
     ["a short pattern repeated hundreds of times", scene + "The total was 3." + "1.".repeat(120) + " as a fraction."],
     ["words running on with no punctuation to the end", scene + runOn],
+    ["a loop inside dialogue that never closes", scene + "\"I do not know, " + "I do not know, ".repeat(25)],
+    ["a loop inside asterisks that never close", scene + "*She ran and " + "she ran and ".repeat(25)],
+    ["a pattern of digits after a colon", scene + "The total was: " + "1.".repeat(120)],
   ];
   const fine: Array<[string, string]> = [
     ["a chant with the scene carrying on after it", scene + "\"Run, run, run, run, run, run!\" Tamsin shouted, and they ran for the trees."],
@@ -120,6 +123,13 @@ describe("stuck repeating or rambling", () => {
     ["a laugh held long", scene + "\"Ha" + "ha".repeat(70) + "!\" He could not stop."],
     ["a long reply in Thai, which has no punctuation", Array.from({ length: 200 }, (_, i) => ["ฝนตก", "ทะเล", "ปลา", "แมว"][i % 4] + i).join(" ")],
     ["a poem with no punctuation, one short line each", scene + Array.from({ length: 60 }, (_, i) => ["the reeds bend low", "the water runs on", "the heron waits", "the light goes gray"][i % 4]).join("\n")],
+    ["a crowd's chant in quotation marks that close", scene + "The crowd roared, \"" + "Hail the miller! ".repeat(25).trim() + "\""],
+    ["a chant in curly quotation marks that close", scene + "They sang, \u201c" + "Turn the wheel, turn the wheel, ".repeat(12).trim() + "\u201d"],
+    ["a chant in asterisks that close", scene + "*" + "Down to the weir, down to the weir. ".repeat(12).trim() + "*"],
+    ["a held laugh in quotation marks that close", scene + "\"Ha" + "ha".repeat(200) + "!\" Orrin wiped his eyes."],
+    ["lines written out many times after a colon on the line above", scene + "On the board she wrote:\n\n" + "I will not feed the mule from the table.\n".repeat(20)],
+    ["lines written out many times after a colon", scene + "She wrote it out: " + "I will not feed the mule from the table. ".repeat(20)],
+    ["a chant in a quoted block", scene + "\n> " + "the bells, the bells, ".repeat(40)],
     ["a refrain sung three times", scene + "\"Down by the water, down by the water,\" she sang. \"Down by the water we go.\""],
   ];
   for (const [label, text] of broken) test("caught: " + label, () => expect(loopVerdict(text)).toBe(true));
