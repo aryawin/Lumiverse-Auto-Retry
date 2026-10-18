@@ -8,7 +8,7 @@ Adults.
 
 Lumiverse itself isn't an adult app. Anyone can use it, and it has no adult content of its own. My extensions are made for adults writing their own fiction. If you're under 18, these extensions aren't for you.
 
-I can't know someone's age unless they tell me, and I'm not going to pretend I can. I generally prefer working with adults. If someone tells me they're under 18, I can still help with bugs, errors, or retry notes that have nothing sexual in them. But if they ask me to help with anything sexual, including an NSFW prompt or retry notes for sexual content, I won't. I'm not comfortable with it, and I don't make exceptions.
+I can't know someone's age unless they tell me, and I'm not going to pretend I can. But if someone tells me they're under 18, I won't help them with anything, bugs and errors included. It isn't personal. I'm just not comfortable working with minors, and I don't make exceptions.
 
 Auto Retry only reads the reply's text. It doesn't keep that text after checking it, and it knows nothing about you. It can't tell what your story means to you or why you're writing it. It checks whether the reply failed as writing, such as coming back empty, stopping halfway through, breaking character, or refusing to continue.
 
