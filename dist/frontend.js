@@ -141,7 +141,7 @@ const NOTE_FROM_TRY_MAX = 20;
 const STREAM_BUF_MAX = 200000;
 // Bumped on each release. Shown in the startup log and in the Copy debug info
 // report, so a bug report always says which version it came from.
-const VERSION = "5.19.0";
+const VERSION = "5.19.1";
 // Whether two saved settings hold the same values, whatever order their keys
 // were written in. A key left undefined counts as not there, the way it is
 // when saved. Used to tell an update or a put-back that would change nothing.
@@ -2852,6 +2852,23 @@ function hideExampleTags(text, names) {
 function showExampleTags(text) {
     return String(text).split(HIDDEN_LT).join("<").split(HIDDEN_SQ).join("[");
 }
+// Where a thinking block ends when plain text comes before it, or -1. The
+// block has to stand on lines of its own and have more text after it. A
+// character's thought tagged inside a sentence is part of the reply, and a
+// block at the very start is an ordinary one. Example tags are already hidden
+// when this runs, so a pair quoted inside the block is not its end.
+function planThenBlockEnd(t, alt) {
+    if (t.indexOf("</") < 0 && t.indexOf("[/") < 0)
+        return -1;
+    const block = new RegExp("(^|\\n)[ \\t`>*_]*(?:<(" + alt + ")(?:\\s[^>]*)?>[\\s\\S]*?<\\/\\2\\s*>|\\[(" + alt + ")(?:\\s[^\\]]*)?\\][\\s\\S]*?\\[\\/\\3\\s*\\])[ \\t`*_]*(?=\\r?\\n|$)", "i");
+    const hit = block.exec(t);
+    if (!hit)
+        return -1;
+    if (!t.slice(0, hit.index).trim())
+        return -1;
+    const end = hit.index + hit[0].length;
+    return t.slice(end).trim() ? end : -1;
+}
 function stripThinking(text, cfg) {
     let t = String(text == null ? "" : text);
     if (cfg && cfg.refusalStripThinking === false)
@@ -2898,6 +2915,15 @@ function stripThinking(text, cfg) {
             if (!open.test(t.slice(0, close.index)))
                 t = " " + t.slice(close.index + close[0].length);
         }
+    }
+    // A written plan in front of a thinking block. A model can write a summary of
+    // its plan in plain text, then its thinking block, then the reply. A reply
+    // does not open with prose and then think, so everything up to the end of
+    // that block is thinking too.
+    {
+        const end = planThenBlockEnd(t, alt);
+        if (end >= 0)
+            t = " " + t.slice(end);
     }
     // What is left of the channel format once the thinking channels are gone: the
     // header that introduces the visible reply, and the control tokens around it.

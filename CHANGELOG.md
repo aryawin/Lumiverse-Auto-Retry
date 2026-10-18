@@ -8,6 +8,16 @@ Versions follow [Semantic Versioning](https://semver.org). A new major version m
 
 ---
 
+## 5.19.1
+
+_2026-10-18_
+
+### Fixed again
+
+- **A plan written in front of the thinking was read as the reply.** 5.19.0 fixed a thinking format quoted inside the thinking, but missed a model that writes a summary of its plan in plain text, then its thinking block, then the reply. The plan was checked as if it were the reply. When a thinking block stands on lines of its own with text after it, everything up to the end of that block now counts as thinking. A thought tagged inside a sentence stays part of the reply.
+
+---
+
 ## 5.19.0
 
 _2026-10-18_

@@ -447,8 +447,10 @@ describe("refusal detection ignores the model's thinking", () => {
       expect(stripThinking(thought + "\n[/think]\n\n" + answer, {}).trim()).toBe(answer);
     });
 
+    // Inside a sentence, so the rule for a plan written in front of a block on
+    // lines of its own does not apply.
     test("a block with both ends is left to the usual rule", () => {
-      const text = "Before.\n<think>weighing it</think>\nAfter.";
+      const text = "Before. <think>weighing it</think> After.";
       expect(stripThinking(text, {}).replace(/\s+/g, " ").trim()).toBe("Before. After.");
     });
 
@@ -550,6 +552,29 @@ describe("refusal detection ignores the model's thinking", () => {
         expect(stripThinking(text, {}).trim()).toBe("");
       });
     }
+
+    // A model can write a plan in plain text, then its thinking block on lines
+    // of its own, then the reply. The plan and the block are both thinking.
+    describe("a written plan in front of a thinking block", () => {
+      const plan = "**Planning the turn**\n\nI can't rush this. Keep it short and end on the cold.\n\nHere is the result:\n\n";
+      const shapes: Array<[string, string]> = [
+        ["a plain block", plan + "<reasoning>\n- mood: wary\n</reasoning>\n\n"],
+        ["a block wrapped in backticks", plan + "`<reasoning>\n- mood: wary\n</reasoning>`\n\n"],
+        ["a block in square brackets", plan + "[reasoning]\n- mood: wary\n[/reasoning]\n\n"],
+      ];
+      for (const [label, head] of shapes) {
+        test(label + ": only the reply is left", () => {
+          expect(stripThinking(head + REPLY, {}).trim()).toBe(REPLY);
+        });
+      }
+      test("a thought tagged inside a sentence stays part of the reply", () => {
+        const text = "She opened the door. <thought>Too cold.</thought> She went out anyway.";
+        expect(stripThinking(text, {})).toContain("She opened the door.");
+      });
+      test("a block with nothing after it leaves the text in front of it", () => {
+        expect(stripThinking("She opened the door.\n<reasoning>\nnotes\n</reasoning>", {})).toContain("She opened the door.");
+      });
+    });
 
     // A square-bracket opener counts only at the start. In the middle of a
     // reply, a word in brackets can be a heading in a tracker.
