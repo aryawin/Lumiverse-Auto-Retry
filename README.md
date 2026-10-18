@@ -50,26 +50,6 @@ It works with no setup. Everything else is optional.
 - **Cancel** on the pop-up belongs to the extension, so it always works.
 - To switch it off for one chat, or everywhere, see [Turning it off](docs/settings.md#turning-it-off-in-one-chat).
 
-## Made for adults
-
-Auto Retry is made for adults, 18 and older. Lumiverse itself can be used by anyone, and it has no adult content of its own. This extension is not meant for anyone under 18. If someone under 18 asks me for help with anything that may be sexual, such as their retry notes or their prompts, I will not help with it.
-
-## Not for sexual content involving minors
-
-Auto Retry is not intended for sexual content involving minors, and I do not condone or support anybody using it for that.
-
-So nobody has to guess what that means for their own chats, here is exactly what it does:
-
-- **It never reads your story to judge it, and never changes a word of it.** It watches how a reply ended and, when that looks wrong, presses Lumiverse's own retry button. It has no rules about what a story may contain.
-- **A retry asks your model again for the same reply.** Whether anything is written is still up to your model and your provider. Retries stop at **Most tries per message**, 4 by default.
-- **It recognizes a refusal about a character's age for one reason:** models sometimes misread an adult character, written as an adult, as a minor, and that refusal should not have happened. It cannot tell a mistaken refusal from a correct one, so with **It looks like an accidental refusal** on, which it is by default, any refusal it recognizes is retried the same way, up to that limit. It is not there to get sexual content involving a minor past a model.
-- **A provider that blocks a request before anything is written is treated as a refusal too**, for the same reason, and with the same limit.
-- **The retry notes are off by default.** Switched on, one is sent with a refusal retry. None of them mentions age or any subject, and every word of each is on the panel before you pick it.
-
-The words it recognizes refusals by, including the ones about age, are listed on [When it retries](docs/detection.md). None of them reaches a prompt.
-
-I cannot control what somebody does with an extension once they have it. What I can do is say plainly where I stand.
-
 ## Documentation
 
 - [When it retries](docs/detection.md): cut-off detection and accidental-refusal detection
@@ -92,6 +72,10 @@ I cannot control what somebody does with an extension once they have it. What I 
 - With **Several tries at once** on, the backend also asks Lumiverse to send the prompt to your model several times, and adds the reply that passes as a new reroll.
 - It makes no network calls of its own. [Privacy](docs/privacy.md) covers the six permissions it asks for and what still works without each one.
 - The files Lumiverse loads are `dist/frontend.js` and `dist/backend.js`. They are plain, readable JavaScript. Nothing is minified. [Privacy](docs/privacy.md#checking-any-of-this-yourself) goes through the rest of the repo file by file.
+
+## Made for adults
+
+Auto Retry is for adults, 18 and older. It is not for sexual content involving minors, and I do not support anyone using it for that. If someone under 18 asks me for help with anything that may be sexual, such as their retry notes or their prompts, I will not help with it. [About age](docs/detection.md#about-age) says exactly how the extension handles it.
 
 ## Credits
 

@@ -491,13 +491,23 @@ The subjects are the things models refuse a roleplay over:
 
 **What this list is:** words that appear in refusal messages, so a refusal can be recognized. It is not a list of things the extension writes or helps anyone get. None of it is added to a prompt. A match only means the reply was a refusal, so the extension presses your retry button, and your retry limit stops it.
 
-**About age:** those words are there for one mistake: an adult character, written as an adult, that a model has read as a minor. Auto Retry is not meant for sexual content involving minors, and does not support anyone using it for that.
-
 **How the subjects are matched:**
 
 - In the forms refusals use them, like "a character is raped", not only single words.
 - Only after a refusal verb. A subject on its own never counts. So a kissing scene, rope, a stepbrother who resents his stepsister, a minor character in a story, someone choking on smoke, a knife, or a character telling you what happened to them are all left alone.
 - Some words are left out completely: "violence" on its own, because a character can say "I can't describe the violence", and "choking", because a character can choke on smoke.
+
+### About age
+
+The words about age are there for one mistake: an adult character, written as an adult, that a model has read as a minor. Auto Retry is not meant for sexual content involving minors, and I do not support anyone using it for that.
+
+What the extension does:
+
+- **It never reads your story to judge it, and never changes a word of it.** It watches how a reply ended and, when that looks wrong, presses Lumiverse's own retry button. It has no rules about what a story may contain.
+- **A retry asks your model again for the same reply.** Whether anything is written is up to your model and your provider. Retries stop at **Most tries per message**, 4 by default.
+- **It cannot tell a mistaken refusal from a correct one.** With **It looks like an accidental refusal** on, which it is by default, every refusal it recognizes is retried the same way, up to that limit.
+- **A provider that blocks a request before anything is written counts as a refusal too**, with the same limit.
+- **The retry notes are off by default.** None of them mentions age or any subject, and every word of each is on the panel before you pick it.
 
 ---
 
