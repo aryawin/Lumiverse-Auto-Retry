@@ -25,6 +25,7 @@ _2026-10-18_
 
 ### Fixed
 
+- **A `[THINK]` block that was never closed did not count as cut off.** A thinking block opened in square brackets, as Mistral models write it, and never closed now counts as cut off, the same as `<think>`. Before, with **It came back blank** off, a reply cut off inside it was kept. It counts only at the start of the reply, so a word in brackets partway into a reply, such as a tracker heading, is left alone.
 - **Thinking that quoted its own format was read as the reply.** Some models write out the thinking format they were given, tags and all, while they are still thinking. The closing tag in that quote was taken as the end of the thinking, so the rest of the thinking was checked as if it were the reply. A tag inside a code block or backticks, or a whole pair of tags inside the thinking, no longer ends it.
 
 ---

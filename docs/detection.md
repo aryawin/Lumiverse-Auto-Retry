@@ -345,7 +345,7 @@ Nine formats are recognized. The first three use tag names like `think`, `thinki
 | Form | Example |
 | --- | --- |
 | Angle brackets | `<think>` … `</think>` |
-| Square brackets | `[thinking]` … `[/thinking]` |
+| Square brackets | `[thinking]` … `[/thinking]`, and Mistral's `[THINK]` … `[/THINK]` |
 | Pipes | `<\|think\|>` … `<\|/think\|>`, and `<\|think>` … `<think\|>` |
 | Harmony channels | `<\|channel\|>analysis<\|message\|>` … `<\|end\|>` |
 | Gemma 4 channels | `<\|channel>thought` … `<channel\|>` |

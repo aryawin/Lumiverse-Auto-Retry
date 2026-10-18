@@ -1285,18 +1285,21 @@ function sayTime(ms) {
 // The names come from the same place the stripper's do, so the built-in set and
 // anything in Extra thinking tag names are both covered. A second hand-written
 // list here would drift, and a block the extension knows about would then read
-// as finished when it was cut off inside.
+// as finished when it was cut off inside. A square-bracket opener, as in
+// Mistral's [THINK], counts only at the very start of the reply, where a model
+// puts it. In the middle of a reply, a word such as [Analysis] in brackets can
+// be a heading in a tracker.
 function thinkOpenedNeverClosed(raw, cfg) {
     const alt = thinkTagNames(cfg).join("|");
     if (!alt)
         return false;
     raw = hideExampleTags(raw, thinkTagNames(cfg));
-    const opener = new RegExp("<\\|?(?:" + alt + ")\\|?\\b[^>]*>", "i");
+    const opener = new RegExp("<\\|?(?:" + alt + ")\\|?\\b[^>]*>|^\\s*\\[[ \\t]*(?:" + alt + ")[ \\t]*\\]", "i");
     if (!opener.test(raw))
         return false;
     // The closer pattern matches an opening tag too, since the slash is optional,
     // so the first opener goes before the reply is searched for a close.
-    const closer = new RegExp("<\\|?\\/?(?:" + alt + ")\\s*\\|?>", "i");
+    const closer = new RegExp("<\\|?\\/?(?:" + alt + ")\\s*\\|?>|\\[[ \\t]*\\/?(?:" + alt + ")[ \\t]*\\]", "i");
     return !closer.test(raw.replace(opener, ""));
 }
 // Does the reply end on something that can end a reply?

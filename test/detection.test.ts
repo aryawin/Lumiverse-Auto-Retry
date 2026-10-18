@@ -515,6 +515,7 @@ describe("refusal detection ignores the model's thinking", () => {
       ["Seed-OSS budget reflection", "<seed:cot_budget_reflect>" + WORKING + "</seed:cot_budget_reflect>" + REPLY],
       ["begin and end of thought", "<|begin_of_thought|>" + WORKING + "<|end_of_thought|>\n" + REPLY],
       ["Kimi", "\u25c1think\u25b7" + WORKING + "\u25c1/think\u25b7" + REPLY],
+      ["Mistral", "[THINK]" + WORKING + "[/THINK]" + REPLY],
     ];
 
     for (const [name, text] of CLOSED) {
@@ -537,6 +538,7 @@ describe("refusal detection ignores the model's thinking", () => {
       ["Seed-OSS", "<seed:think>still working on it"],
       ["begin and end of thought", "<|begin_of_thought|>still working on it"],
       ["Kimi", "\u25c1think\u25b7still working on it"],
+      ["Mistral", "[THINK]still working on it"],
     ];
 
     for (const [name, text] of OPEN) {
@@ -548,6 +550,12 @@ describe("refusal detection ignores the model's thinking", () => {
         expect(stripThinking(text, {}).trim()).toBe("");
       });
     }
+
+    // A square-bracket opener counts only at the start. In the middle of a
+    // reply, a word in brackets can be a heading in a tracker.
+    test("a bracketed heading partway into a reply does not read as cut off", () => {
+      expect(looksTruncated("The ferry left the bank.\n[Analysis]\nThe river is high tonight.", false, {})).toBe(false);
+    });
 
     // The thinking start and end saved on a connection, sent by the backend.
     test("a connection's own thinking markers are a format too", () => {
