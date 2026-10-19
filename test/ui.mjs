@@ -4505,9 +4505,8 @@ console.log("\nan unanswered ask is sent again when the backend comes up");
 
 console.log("\npop-ups come up and go down");
 {
-  // The retry message rises into place as it fades in and sinks as it goes.
-  // A dialog grows to its size as it comes up. With less motion asked for,
-  // both only fade.
+  // The retry message fades in as it slides into place, and slides away as
+  // it fades out. With less motion asked for, it does not move.
   const watch = async (reducedMotion) => {
     const page = await browser.newPage({ viewport: { width: 393, height: 852 }, reducedMotion });
     const errors = [];
@@ -4552,13 +4551,129 @@ console.log("\npop-ups come up and go down");
   const moving = await watch("no-preference");
   const still = await watch("reduce");
   const m = moving.out;
-  check("the retry message rises and grows as it comes up", m.entering !== "none", m);
+  check("the retry message slides in as it comes up", m.entering !== "none", m);
   check("and lands in its own place, fully shown", m.landed.transform === "none" && m.landed.opacity === "1", m.landed);
-  check("going, it sinks as it fades", m.leaving.opacity === "0" && /translateY\(10px\)/.test(m.leaving.transform), m.leaving);
+  check("going, it sinks as it fades", m.leaving.opacity === "0" && /translateY\(6px\)/.test(m.leaving.transform), m.leaving);
   const q = still.out;
   check("with less motion asked for, the message does not move", q.entering === "none" && q.landed.transform === "none", q);
   check("and it still fades out", q.leaving.opacity === "0" && q.leaving.transform === "none", q.leaving);
   check("no console errors", moving.errors.length + still.errors.length === 0, moving.errors.concat(still.errors));
+
+  // The picker's message, "Press and hold your stop button", goes up in the
+  // same click that closes the settings window. Lumiverse takes the window
+  // and its blurred backdrop off the page then, which is a slow frame to
+  // draw, so the message waits two frames and only then fades and slides in,
+  // with the same timing and curve as a card of ours. It goes the same way,
+  // and the settings window comes back only once it has faded out, so the
+  // window's slow frame does not take the fade. With less motion asked for,
+  // it comes and goes at once.
+  for (const [label, viewport, touch] of [["phone", { width: 390, height: 860 }, true], ["laptop", { width: 1280, height: 860 }, false]]) {
+    for (const reducedMotion of ["no-preference", "reduce"]) {
+      const page = await browser.newPage({ viewport, hasTouch: touch, isMobile: touch, reducedMotion });
+      const errors = [];
+      page.on("pageerror", (e) => errors.push("pageerror: " + e.message));
+      page.on("console", (m) => { if (m.type() === "error") errors.push("console: " + m.text()); });
+      await stage(page, "<button data-testid=stop>Stop</button>");
+      await page.addStyleTag({ content: THEME });
+      await page.addScriptTag({ content: SOURCE, type: "module" });
+      await page.waitForFunction(() => !!window.__setup);
+      const out = await page.evaluate(async () => {
+        const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+        const frame = () => new Promise((r) => requestAnimationFrame(() => r()));
+        // Built the way Lumiverse builds its window: a dim with a blur behind
+        // it, taken off the page when the window is dismissed.
+        let open = null;
+        let openWindow = null;
+        // How much of the message was still drawn each time the window came
+        // up, and when.
+        const opened = [];
+        const teardown = window.__setup(
+          { events: { on: () => () => {} }, sendToBackend: () => {},
+            ui: { showModal: () => {
+                    const was = document.getElementById("__lvRetryToast");
+                    opened.push({ at: performance.now(), drawn: was ? getComputedStyle(was).opacity : null });
+                    const back = document.createElement("div");
+                    back.style.cssText = "position:fixed;inset:0;z-index:10003;background:rgba(0,0,0,.5);backdrop-filter:blur(4px)";
+                    const root = document.createElement("div");
+                    back.appendChild(root);
+                    document.body.appendChild(back);
+                    open = { root, onDismiss: () => {}, dismiss: () => back.remove() };
+                    return open;
+                  },
+                  registerInputBarAction: () => ({ onClick: (fn) => { openWindow = fn; return () => {}; }, destroy: () => {} }) } },
+          {},
+        );
+        openWindow();
+        await wait(300);
+        const pick = [...open.root.querySelectorAll("button")].find((b) => /Pick it for me/.test(b.textContent || ""));
+        if (!pick) return null;
+        pick.click();
+        const box = document.getElementById("__lvRetryToast");
+        if (!box) return null;
+        const windowGone = !open.root.isConnected;
+        const shown = box.style.opacity === "1";
+        // The frame Lumiverse draws without its window, and the one after.
+        // The message has not started to move yet.
+        await frame();
+        await frame();
+        const heldOpacity = getComputedStyle(box).opacity;
+        const moves = box.getAnimations();
+        // How far into its motion the message is in that frame.
+        const heldAt = moves.length ? moves[0].currentTime : null;
+        const timing = moves.map((a) => {
+          const t = a.effect && a.effect.getTiming ? a.effect.getTiming() : {};
+          return { kind: a.constructor.name, duration: t.duration, easing: t.easing };
+        });
+        await wait(400);
+        const landed = { opacity: getComputedStyle(box).opacity, transform: getComputedStyle(box).transform, moving: box.getAnimations().length };
+        // Cancel stands the picker down, which takes the message away and
+        // brings the settings window back.
+        const opensBefore = opened.length;
+        const cancelAt = performance.now();
+        const cancel = [...box.querySelectorAll("button")].find((x) => (x.textContent || "").trim() === "Cancel");
+        if (!cancel) return { noCancel: true };
+        cancel.click();
+        const windowAtOnce = opened.length > opensBefore;
+        const outMoves = box.getAnimations().map((a) => {
+          const t = a.effect && a.effect.getTiming ? a.effect.getTiming() : {};
+          return { duration: t.duration, easing: t.easing };
+        });
+        const outOpacity = box.style.opacity;
+        await wait(300);
+        const gone = getComputedStyle(box).opacity;
+        const reopen = opened[opensBefore] || null;
+        // The timing every card of ours uses, read from the stylesheet so
+        // this follows it.
+        const cardRule = [...document.styleSheets].map((x) => { try { return [...x.cssRules].map((r) => r.cssText).join(" "); } catch (_) { return ""; } })
+          .join(" ").match(/\[data-ar-card\]\s*\{\s*animation:\s*(\d+)ms\s+(cubic-bezier\([^)]*\))/);
+        teardown();
+        return { windowAtOnce, reopen: reopen && { after: Math.round(reopen.at - cancelAt), drawn: reopen.drawn },
+          windowGone, shown, heldOpacity, heldAt, timing, landed, outMoves, outOpacity, gone,
+          card: cardRule ? { duration: +cardRule[1], easing: cardRule[2].replace(/\s+/g, "") } : null };
+      });
+      await page.close();
+      const say = "the picker's message, " + label + (reducedMotion === "reduce" ? ", reduce motion" : "") + ": ";
+      check(say + "it goes up as the settings window closes", !!out && out.windowGone && out.shown, out);
+      if (reducedMotion === "reduce") {
+        check(say + "it comes up with no animation", !!out && out.timing.length === 0 && out.heldOpacity === "1", out);
+        check(say + "and goes with no animation", !!out && out.outMoves.length === 0 && out.gone === "0", out);
+        check(say + "and the settings window comes back at once", !!out && out.windowAtOnce === true, out);
+      } else {
+        check(say + "it waits out the frame the window closes in", !!out && out.heldOpacity === "0" && out.heldAt === 0, out);
+        check(say + "it fades and slides in with a card's timing and curve",
+          !!out && !!out.card && out.timing.length === 1 && out.timing[0].kind === "Animation" &&
+            out.timing[0].duration === out.card.duration && String(out.timing[0].easing).replace(/\s+/g, "") === out.card.easing, out);
+        check(say + "and lands in place, fully shown, with nothing left running",
+          !!out && out.landed.opacity === "1" && out.landed.transform === "none" && out.landed.moving === 0, out);
+        check(say + "it fades out the way a card does",
+          !!out && out.outOpacity === "0" && out.outMoves.length === 1 && out.outMoves[0].duration === 160 && out.outMoves[0].easing === "ease-in", out);
+        check(say + "and is gone after", !!out && out.gone === "0", out);
+        check(say + "the settings window comes back only once it has faded out",
+          !!out && out.windowAtOnce === false && !!out.reopen && out.reopen.drawn === "0" && out.reopen.after >= 160, out);
+      }
+      check(say + "no console errors", errors.length === 0, errors);
+    }
+  }
 
   // A dialog, the reset picker, coming up and going. The dim fades in and the
   // box fades in and slides up 10px, the same as Auto Refine's pop-ups, and
@@ -4647,7 +4762,7 @@ console.log("\na countdown does not move its Cancel button");
     handlers.GENERATION_STARTED({ chatId: "c", generationId: "g1" });
     handlers.GENERATION_ENDED({ chatId: "c", content: "" });
     for (let i = 0; i < 40 && !/Retrying in/.test(says()); i++) await wait(50);
-    // Past the box's entrance, which rises and grows it into place. What is
+    // Past the box's entrance, which slides it into place. What is
     // judged here is the box holding still while the countdown rewrites it.
     await wait(320);
 

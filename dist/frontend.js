@@ -142,7 +142,7 @@ const NOTE_FROM_TRY_MAX = 20;
 const STREAM_BUF_MAX = 200000;
 // Bumped on each release. Shown in the startup log and in the Copy debug info
 // report, so a bug report always says which version it came from.
-const VERSION = "5.19.2";
+const VERSION = "5.19.3";
 // Whether two saved settings hold the same values, whatever order their keys
 // were written in. A key left undefined counts as not there, the way it is
 // when saved. Used to tell an update or a put-back that would change nothing.
@@ -11527,39 +11527,135 @@ export function setup(ctx, opts) {
         });
     }
     // ---- toast with an optional Cancel button ----
-    // The box rises into place as it fades in and sinks a little as it fades
-    // out. It keeps its size and does not go past its place, since a zoom or a
-    // bounce costs more to draw on a phone. Coming in it slows as it lands;
-    // going out it speeds up, since nobody watches something leave. With less
-    // motion asked for, nothing moves or fades: see noMotion.
-    const TOAST_EASE = "opacity 200ms ease-out,transform 200ms ease-out";
-    const TOAST_EASE_OUT = "opacity 160ms ease-in,transform 160ms ease-in";
-    const TOAST_AWAY = "translateY(10px)";
-    const toastStill = () => noMotion();
-    // Where the box waits while hidden: below its place when it sits at the
-    // bottom of the screen, above it when it sits at the top.
-    const toastAwayFor = (t) => {
-        if (toastStill())
-            return "none";
-        return t && t.style.bottom === "auto" ? "translateY(-10px)" : TOAST_AWAY;
-    };
+    // The same motion as a card of ours: it fades in and slides 10px into
+    // place, slowing as it lands, and fades out sliding 6px away. It keeps its
+    // size. The slide is toward the edge it sits at, so a box at the top comes
+    // down into place and one at the bottom comes up.
+    //
+    // Run as a Web Animation, which the browser draws apart from the page, so
+    // a busy page does not hold it back. The styles on the element are always
+    // where the box ends up, and the animation only covers the way there, so
+    // code that reads the box sees its real state at once.
+    //
+    // The way in starts two frames late. The picker puts this up in the same
+    // moment Lumiverse takes the settings window and its blurred backdrop off
+    // the page, and that frame is slow to draw on a phone. A fade started in it
+    // loses its first frames, and the box jumps in partway. With less motion
+    // asked for, nothing moves or fades: see noMotion.
+    const TOAST_IN_MS = 220;
+    const TOAST_OUT_MS = 160;
+    const TOAST_IN_EASE = "cubic-bezier(.2,.8,.28,1)";
+    // Most a held start waits for its two frames, for a tab in the background
+    // where frames do not come.
+    const TOAST_WAIT_MS = 120;
+    const toastAway = (t, px) => "translateY(" + (t && t.style.bottom === "auto" ? -px : px) + "px)";
+    const canMove = (t) => !noMotion() && !!t && typeof t.animate === "function";
+    // Where a box caught partway is drawn right now, so the next move starts
+    // from there and not from either end.
+    function toastNow(t) {
+        if (!t.__move)
+            return null;
+        try {
+            const cs = getComputedStyle(t);
+            return { opacity: cs.opacity, transform: cs.transform === "none" ? "none" : cs.transform };
+        }
+        catch (_) {
+            return null;
+        }
+    }
+    function stopToastMove(t) {
+        if (!t)
+            return;
+        if (t.__wait) {
+            t.__wait();
+            t.__wait = null;
+        }
+        if (t.__move) {
+            try {
+                t.__move.cancel();
+            }
+            catch (_) { }
+            t.__move = null;
+        }
+    }
+    function toastMove(t, frames, ms, ease, held) {
+        stopToastMove(t);
+        let move;
+        try {
+            move = t.animate(frames, { duration: ms, easing: ease });
+        }
+        catch (_) {
+            return;
+        }
+        t.__move = move;
+        const done = () => {
+            if (t.__move === move)
+                t.__move = null;
+        };
+        move.onfinish = done;
+        move.oncancel = done;
+        if (!held)
+            return;
+        // Paused on its first frame, which is the box still hidden.
+        try {
+            move.pause();
+        }
+        catch (_) { }
+        let frame = 0;
+        let timer = 0;
+        const go = () => {
+            if (t.__wait !== stop)
+                return;
+            t.__wait = null;
+            stop();
+            try {
+                move.play();
+            }
+            catch (_) { }
+        };
+        const stop = () => {
+            clearTimeout(timer);
+            try {
+                if (frame)
+                    cancelAnimationFrame(frame);
+            }
+            catch (_) { }
+        };
+        t.__wait = stop;
+        timer = setTimeout(go, TOAST_WAIT_MS);
+        try {
+            frame = requestAnimationFrame(() => {
+                frame = requestAnimationFrame(go);
+            });
+        }
+        catch (_) { }
+    }
     function toastIn(t) {
         const was = t.style.opacity === "1";
-        if (!was) {
-            // From the waiting place, with no travel, then to its own place.
-            t.style.transition = "none";
-            t.style.transform = toastAwayFor(t);
-            void t.offsetWidth;
-            t.style.transition = TOAST_EASE;
-        }
         t.style.transform = "none";
         t.style.opacity = "1";
+        // Already up, or already on its way up: nothing to start.
+        if (was)
+            return;
+        if (!canMove(t)) {
+            stopToastMove(t);
+            return;
+        }
+        const from = toastNow(t) || { opacity: "0", transform: toastAway(t, 10) };
+        toastMove(t, [from, { opacity: "1", transform: "none" }], TOAST_IN_MS, TOAST_IN_EASE, true);
     }
     function toastOut(t) {
-        t.style.transition = TOAST_EASE_OUT;
-        t.style.transform = toastAwayFor(t);
+        const was = t.style.opacity === "1";
+        const from = toastNow(t);
+        const away = canMove(t) ? toastAway(t, 6) : "none";
+        t.style.transform = away;
         t.style.opacity = "0";
         t.style.pointerEvents = "none";
+        if (!canMove(t) || (!was && !from)) {
+            stopToastMove(t);
+            return;
+        }
+        toastMove(t, [from || { opacity: "1", transform: "none" }, { opacity: "0", transform: away }], TOAST_OUT_MS, "ease-in", false);
     }
     function ensureToast() {
         if (typeof document === "undefined")
@@ -11592,8 +11688,7 @@ export function setup(ctx, opts) {
                     "background-color:var(--lumiverse-card-bg-solid,rgb(24,20,34));background-image:linear-gradient(var(--lumiverse-bg-elevated,rgba(35,30,48,.94)),var(--lumiverse-bg-elevated,rgba(35,30,48,.94)));" +
                     "border:1px solid var(--lumiverse-border,rgba(255,255,255,.18));" +
                     "box-shadow:var(--lumiverse-shadow-md,0 8px 24px rgba(0,0,0,.4));" +
-                    "transition:" + TOAST_EASE + ";" +
-                    "opacity:0;transform:" + TOAST_AWAY + ";max-width:min(92vw,460px);text-align:left";
+                    "opacity:0;max-width:min(92vw,460px);text-align:left";
             (document.body || document.documentElement).appendChild(t);
         }
         return t;
@@ -15428,14 +15523,29 @@ export function setup(ctx, opts) {
                 document.documentElement.classList.remove("ar-picking");
             }
             catch (_) { }
+            const box = document.getElementById("__lvRetryToast");
+            // Cancel starts the fade before it gets here, so a fade already
+            // running counts as one.
+            const fades = !!box && canMove(box) && (box.style.opacity === "1" || !!box.__move);
             hideToast();
             if (sel)
                 cfg[key] = sel;
-            openSettings();
-            // A notification, so Lumiverse decides where it shows. The bar that asked
-            // for the press has gone with the picker.
-            if (message)
-                showToast(message, { force: true, kind: sel ? "success" : message === "Picking canceled." ? "info" : "warning" });
+            const back = () => {
+                if (tornDown)
+                    return;
+                openSettings();
+                // A notification, so Lumiverse decides where it shows. The bar that
+                // asked for the press has gone with the picker.
+                if (message)
+                    showToast(message, { force: true, kind: sel ? "success" : message === "Picking canceled." ? "info" : "warning" });
+            };
+            // The settings window comes back once the message has faded out. Opened
+            // in the same moment, drawing the window and its blurred backdrop takes
+            // the fade's frames, and the message is gone with no fade to see.
+            if (fades)
+                setTimeout(back, TOAST_OUT_MS + 20);
+            else
+                back();
         };
         // The press that picked is still down, so a click is coming for whatever is
         // under it. Eaten by a listener of its own, since the picker stands down the
@@ -16064,6 +16174,7 @@ export function setup(ctx, opts) {
                 const t = document.getElementById("__lvRetryToast");
                 if (t) {
                     clearTimeout(t.__h);
+                    stopToastMove(t);
                     if (t.remove)
                         t.remove();
                 }

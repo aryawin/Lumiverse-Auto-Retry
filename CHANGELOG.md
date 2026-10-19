@@ -8,6 +8,16 @@ Versions follow [Semantic Versioning](https://semver.org). A new major version m
 
 ---
 
+## 5.19.3
+
+_2026-10-19_
+
+### Fixed
+
+- **The message from Pick it for me jumped in and out.** When you press **Pick it for me**, a message at the top asks you to press and hold your button. It came up as the settings window closed, and on a phone it skipped the start of its fade. When you pressed **Cancel**, the settings window came back at once and the message was gone with no fade. It now fades and slides in after the window closes, and fades out before the window comes back, the same way as the other pop-ups. The countdown message with **Cancel** moves the same way. Reduce motion still turns the motion off.
+
+---
+
 ## 5.19.2
 
 _2026-10-19_
