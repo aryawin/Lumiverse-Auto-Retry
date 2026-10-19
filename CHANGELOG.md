@@ -18,7 +18,7 @@ _2026-10-19_
 
 ### Fixed
 
-- **The Save message moved the buttons.** On a phone, a message such as "These settings are already saved. Nothing changed." wrapped onto two or three lines in the row beside **Reset** and **Save**. The row grew taller, and the buttons jumped up. The message now shows in a small box just above the buttons, and nothing in the row moves.
+- **The Save message moved the buttons.** On a phone, a message such as "These settings are already saved. Nothing changed." wrapped onto two or three lines in the row beside **Reset** and **Save**. The row grew taller, and the buttons jumped up. The message now shows in a small box just above the buttons, and nothing in the row moves. The box is drawn like the section cards and stops where they stop, so the list's scroll bar stays in view.
 
 ---
 

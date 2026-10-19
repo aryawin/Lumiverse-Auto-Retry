@@ -12150,6 +12150,65 @@ for (const [label, w, h, touch] of [["small phone", 360, 640, true], ["phone", 3
   check(label + ": no console errors", errors.length === 0, errors);
 }
 
+// The message above the buttons is drawn like the section cards, and stops
+// where they stop, so the list's scroll bar stays in view. The colors are
+// read from what is drawn.
+console.log("\nSave's message looks like the cards and leaves the scroll bar in view");
+for (const [label, w, h, touch] of [["phone", 390, 844, true], ["laptop", 1280, 900, false]]) {
+  const body =
+    '<div style="position:fixed;inset:0;z-index:10003;display:flex;align-items:center;justify-content:center">' +
+    '<div id=hostbox style="width:' + Math.min(460, w - 24) + 'px;max-height:' + Math.min(720, h - 24) + 'px;border:1px solid #555;display:flex;flex-direction:column;overflow:hidden;background:var(--lumiverse-bg)">' +
+    '<div style="padding:12px 16px"><h3 style="margin:0;font-size:15px">Auto Retry settings</h3></div>' +
+    '<div id=hostscroll style="padding:16px;overflow-y:auto;flex:1"><div id=modal></div></div></div></div>';
+  const { out, errors } = await inPanel(browser, { css: "body{margin:0}", viewport: { width: w, height: h }, touch, settings: { panelPattern: "hearts" }, body }, async (page) => {
+    await page.waitForTimeout(400);
+    // The headless browser draws scroll bars that take no room. A border on
+    // the list's right side takes the room a real one takes on a phone
+    // browser or a desktop that shows them, so the message's edge can be
+    // checked against it.
+    await page.evaluate(() => {
+      const list = Array.from(document.querySelectorAll("#modal *")).find(
+        (n) => /auto|scroll/.test(getComputedStyle(n).overflowY) && n.scrollHeight > n.clientHeight + 100,
+      );
+      list.style.borderRight = "8px solid #888";
+    });
+    await page.evaluate(() => Array.from(document.querySelectorAll("#modal button")).find((b) => b.textContent.trim() === "Save").click());
+    await page.waitForTimeout(500);
+    const geo = await page.evaluate(() => {
+      const note = document.querySelector("[data-ar-save-status]").getBoundingClientRect();
+      const cards = Array.from(document.querySelectorAll("#modal [data-ar-sec]"))
+        .map((c) => c.getBoundingClientRect())
+        .filter((r) => r.height > 40 && r.top > 0 && r.top < note.top - 20);
+      const card = cards[0];
+      const list = Array.from(document.querySelectorAll("#modal *")).find(
+        (n) => /auto|scroll/.test(getComputedStyle(n).overflowY) && n.scrollHeight > n.clientHeight + 100,
+      );
+      const lr = list.getBoundingClientRect();
+      return {
+        note: { left: note.left, right: note.right, top: note.top },
+        card: card && { left: card.left, right: card.right, top: card.top },
+        barLeft: lr.left + list.clientLeft + list.clientWidth,
+        hasBar: list.offsetWidth - list.clientWidth > 0,
+      };
+    });
+    const at = async (x, y) => {
+      const buf = await page.screenshot({ clip: { x: Math.round(x), y: Math.round(y), width: 2, height: 2 } });
+      const px = decodePixels(buf);
+      return px && px[0];
+    };
+    const noteInk = await at(geo.note.left + 5, geo.note.top + 3);
+    const cardInk = geo.card ? await at(geo.card.left + 5, geo.card.top + 3) : null;
+    return { geo, noteInk, cardInk };
+  });
+  const { geo, noteInk, cardInk } = out;
+  const diff = noteInk && cardInk ? Math.max(Math.abs(noteInk.r - cardInk.r), Math.abs(noteInk.g - cardInk.g), Math.abs(noteInk.b - cardInk.b)) : 999;
+  check(label + ": the message is drawn in the cards' color", diff <= 8, { noteInk, cardInk });
+  check(label + ": it ends where the cards end", !!geo.card && Math.abs(geo.note.right - geo.card.right) <= 1, geo);
+  check(label + ": and the list's scroll bar stays in view beside it",
+    geo.hasBar && geo.note.right <= geo.barLeft + 0.5, geo);
+  check(label + ": no console errors", errors.length === 0, errors);
+}
+
 // Lumiverse's own window: a box with a fixed most-height, and a body inside it// Lumiverse's own window: a box with a fixed most-height, and a body inside it
 // that is only as tall as what it holds. The settings measure the space that
 // window can give them. A keyboard that opens and closes, or a search that

@@ -13325,10 +13325,15 @@ export function setup(ctx: Ctx, opts?: any) {
     // by tag and text, which is how a check ends up passing over nothing.
     status.setAttribute("data-ar-save-status", "");
     status.setAttribute("role", "status");
+    // Drawn like the section cards above it: the window's own color with the
+    // theme's raised layer over it, the same border and the same corners.
     status.style.cssText =
-      "position:absolute;left:0;right:0;bottom:calc(100% + 6px);z-index:1;box-sizing:border-box;padding:6px 10px;" +
-      "border-radius:var(--lumiverse-radius,8px);border:1px solid var(--lumiverse-border,rgba(255,255,255,.12));" +
-      "background-color:var(--lumiverse-card-bg-solid,rgb(24,20,34));font-size:12px;line-height:1.4;" +
+      "position:absolute;left:0;right:0;bottom:calc(100% + 6px);z-index:1;box-sizing:border-box;padding:8px 12px;" +
+      "border-radius:var(--lumiverse-radius-md,10px);border:1px solid var(--lumiverse-border,rgba(255,255,255,.12));" +
+      "background-color:var(--lumiverse-bg,rgb(24,20,34));" +
+      "background-image:linear-gradient(var(--lumiverse-bg-elevated,rgba(35,30,48,.9)),var(--lumiverse-bg-elevated,rgba(35,30,48,.9)))," +
+      "linear-gradient(var(--lumiverse-bg-elevated,rgba(35,30,48,.9)),var(--lumiverse-bg-elevated,rgba(35,30,48,.9)));" +
+      "font-size:12px;line-height:1.4;" +
       "color:var(--lumiverse-text-muted,rgba(255,255,255,.65));pointer-events:none;" +
       "opacity:0;visibility:hidden;transform:translateY(4px);transition:opacity .18s ease,transform .18s ease,visibility 0s linear .18s";
     let statusGone = 0;
@@ -13336,6 +13341,9 @@ export function setup(ctx: Ctx, opts?: any) {
       clearTimeout(statusGone);
       if (text) {
         status.textContent = text;
+        // Its right edge where the cards' is, short of the list's scroll bar,
+        // so the bar stays in view while the message shows.
+        status.style.right = Math.max(0, scroller.offsetWidth - scroller.clientWidth + 4) + "px";
         status.style.transition = "opacity .18s ease,transform .18s ease,visibility 0s";
         status.style.visibility = "visible";
         status.style.opacity = "1";
