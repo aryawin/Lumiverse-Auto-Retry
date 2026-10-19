@@ -4562,8 +4562,8 @@ console.log("\npop-ups come up and go down");
   // The picker's message, "Press and hold your stop button", goes up in the
   // same click that closes the settings window. Lumiverse takes the window
   // and its blurred backdrop off the page then, which is a slow frame to
-  // draw, so the message waits two frames and only then fades and slides in,
-  // with the same timing and curve as a card of ours. It goes the same way,
+  // draw, so the message waits two frames and only then fades in, with the
+  // same timing and curve as a card of ours. It does not slide. It fades out,
   // and the settings window comes back only once it has faded out, so the
   // window's slow frame does not take the fade. With less motion asked for,
   // it comes and goes at once.
@@ -4624,6 +4624,10 @@ console.log("\npop-ups come up and go down");
           const t = a.effect && a.effect.getTiming ? a.effect.getTiming() : {};
           return { kind: a.constructor.name, duration: t.duration, easing: t.easing };
         });
+        // Every transform the motion passes through. The message only fades.
+        const slides = (list) => list.flatMap((a) => (a.effect && a.effect.getKeyframes ? a.effect.getKeyframes() : []))
+          .map((k) => String(k.transform == null ? "none" : k.transform)).filter((x) => x !== "none" && x !== "");
+        const inSlides = slides(moves);
         await wait(400);
         const landed = { opacity: getComputedStyle(box).opacity, transform: getComputedStyle(box).transform, moving: box.getAnimations().length };
         // Cancel stands the picker down, which takes the message away and
@@ -4634,6 +4638,7 @@ console.log("\npop-ups come up and go down");
         if (!cancel) return { noCancel: true };
         cancel.click();
         const windowAtOnce = opened.length > opensBefore;
+        const outSlides = slides(box.getAnimations());
         const outMoves = box.getAnimations().map((a) => {
           const t = a.effect && a.effect.getTiming ? a.effect.getTiming() : {};
           return { duration: t.duration, easing: t.easing };
@@ -4647,7 +4652,7 @@ console.log("\npop-ups come up and go down");
         const cardRule = [...document.styleSheets].map((x) => { try { return [...x.cssRules].map((r) => r.cssText).join(" "); } catch (_) { return ""; } })
           .join(" ").match(/\[data-ar-card\]\s*\{\s*animation:\s*(\d+)ms\s+(cubic-bezier\([^)]*\))/);
         teardown();
-        return { windowAtOnce, reopen: reopen && { after: Math.round(reopen.at - cancelAt), drawn: reopen.drawn },
+        return { inSlides, outSlides, windowAtOnce, reopen: reopen && { after: Math.round(reopen.at - cancelAt), drawn: reopen.drawn },
           windowGone, shown, heldOpacity, heldAt, timing, landed, outMoves, outOpacity, gone,
           card: cardRule ? { duration: +cardRule[1], easing: cardRule[2].replace(/\s+/g, "") } : null };
       });
@@ -4660,9 +4665,11 @@ console.log("\npop-ups come up and go down");
         check(say + "and the settings window comes back at once", !!out && out.windowAtOnce === true, out);
       } else {
         check(say + "it waits out the frame the window closes in", !!out && out.heldOpacity === "0" && out.heldAt === 0, out);
-        check(say + "it fades and slides in with a card's timing and curve",
+        check(say + "it fades in with a card's timing and curve",
           !!out && !!out.card && out.timing.length === 1 && out.timing[0].kind === "Animation" &&
             out.timing[0].duration === out.card.duration && String(out.timing[0].easing).replace(/\s+/g, "") === out.card.easing, out);
+        check(say + "it only fades, in and out, with no slide",
+          !!out && out.inSlides.length === 0 && out.outSlides.length === 0, out);
         check(say + "and lands in place, fully shown, with nothing left running",
           !!out && out.landed.opacity === "1" && out.landed.transform === "none" && out.landed.moving === 0, out);
         check(say + "it fades out the way a card does",

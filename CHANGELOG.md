@@ -14,7 +14,7 @@ _2026-10-19_
 
 ### Fixed
 
-- **The message from Pick it for me jumped in and out.** When you press **Pick it for me**, a message at the top asks you to press and hold your button. It came up as the settings window closed, and on a phone it skipped the start of its fade. When you pressed **Cancel**, the settings window came back at once and the message was gone with no fade. It now fades and slides in after the window closes, and fades out before the window comes back, the same way as the other pop-ups. The countdown message with **Cancel** moves the same way. Reduce motion still turns the motion off.
+- **The message from Pick it for me jumped in and out.** When you press **Pick it for me**, a message at the top asks you to press and hold your button. It came up as the settings window closed, and on a phone it skipped the start of its fade. When you pressed **Cancel**, the settings window came back at once and the message was gone with no fade. It now fades in once the window has closed, and fades out before the window comes back. It no longer slides. The countdown message with **Cancel** fades and slides the same way as the other pop-ups. Reduce motion still turns the motion off.
 
 ---
 

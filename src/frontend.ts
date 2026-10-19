@@ -11299,7 +11299,8 @@ export function setup(ctx: Ctx, opts?: any) {
   // The same motion as a card of ours: it fades in and slides 10px into
   // place, slowing as it lands, and fades out sliding 6px away. It keeps its
   // size. The slide is toward the edge it sits at, so a box at the top comes
-  // down into place and one at the bottom comes up.
+  // down into place and one at the bottom comes up. The picker's message only
+  // fades, in and out, and stays where it is.
   //
   // Run as a Web Animation, which the browser draws apart from the page, so
   // a busy page does not hold it back. The styles on the element are always
@@ -11318,7 +11319,7 @@ export function setup(ctx: Ctx, opts?: any) {
   // where frames do not come.
   const TOAST_WAIT_MS = 120;
   const toastAway = (t: any, px: number): string =>
-    "translateY(" + (t && t.style.bottom === "auto" ? -px : px) + "px)";
+    t && t.__fadeOnly ? "none" : "translateY(" + (t && t.style.bottom === "auto" ? -px : px) + "px)";
   const canMove = (t: any): boolean => !noMotion() && !!t && typeof t.animate === "function";
   // Where a box caught partway is drawn right now, so the next move starts
   // from there and not from either end.
@@ -11583,7 +11584,7 @@ export function setup(ctx: Ctx, opts?: any) {
   // retry or the pick the bar is about is still going.
   function showToast(
     msg: string,
-    opts?: { cancel?: () => void; sticky?: boolean; force?: boolean; top?: boolean; kind?: NoteKind },
+    opts?: { cancel?: () => void; sticky?: boolean; force?: boolean; top?: boolean; kind?: NoteKind; fadeOnly?: boolean },
   ) {
     if (!cfg.toast && !(opts && opts.force)) return;
     if (!(opts && (opts.cancel || opts.sticky))) {
@@ -11657,6 +11658,7 @@ export function setup(ctx: Ctx, opts?: any) {
       // Sticky and cancellable messages are the ones rewritten in place. Set
       // before the fit, which reads it.
       t.__holds = !!(opts && (opts.cancel || opts.sticky));
+      t.__fadeOnly = !!(opts && opts.fadeOnly);
       hugToast(t);
       toastIn(t);
       ensureReadableTree(t);
@@ -15407,6 +15409,7 @@ export function setup(ctx: Ctx, opts?: any) {
         sticky: true,
         force: true,
         top: true,
+        fadeOnly: true,
         cancel: () => finish(null, "Picking canceled."),
       },
     );

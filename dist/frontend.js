@@ -11530,7 +11530,8 @@ export function setup(ctx, opts) {
     // The same motion as a card of ours: it fades in and slides 10px into
     // place, slowing as it lands, and fades out sliding 6px away. It keeps its
     // size. The slide is toward the edge it sits at, so a box at the top comes
-    // down into place and one at the bottom comes up.
+    // down into place and one at the bottom comes up. The picker's message only
+    // fades, in and out, and stays where it is.
     //
     // Run as a Web Animation, which the browser draws apart from the page, so
     // a busy page does not hold it back. The styles on the element are always
@@ -11548,7 +11549,7 @@ export function setup(ctx, opts) {
     // Most a held start waits for its two frames, for a tab in the background
     // where frames do not come.
     const TOAST_WAIT_MS = 120;
-    const toastAway = (t, px) => "translateY(" + (t && t.style.bottom === "auto" ? -px : px) + "px)";
+    const toastAway = (t, px) => t && t.__fadeOnly ? "none" : "translateY(" + (t && t.style.bottom === "auto" ? -px : px) + "px)";
     const canMove = (t) => !noMotion() && !!t && typeof t.animate === "function";
     // Where a box caught partway is drawn right now, so the next move starts
     // from there and not from either end.
@@ -11916,6 +11917,7 @@ export function setup(ctx, opts) {
             // Sticky and cancellable messages are the ones rewritten in place. Set
             // before the fit, which reads it.
             t.__holds = !!(opts && (opts.cancel || opts.sticky));
+            t.__fadeOnly = !!(opts && opts.fadeOnly);
             hugToast(t);
             toastIn(t);
             ensureReadableTree(t);
@@ -15686,6 +15688,7 @@ export function setup(ctx, opts) {
             sticky: true,
             force: true,
             top: true,
+            fadeOnly: true,
             cancel: () => finish(null, "Picking canceled."),
         });
     }
