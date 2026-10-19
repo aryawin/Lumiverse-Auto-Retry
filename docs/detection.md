@@ -120,6 +120,10 @@ Any one of these counts:
 - any of these inside a code block or inline code
 - a tracker in brackets, such as `[Mood: tired]`
 - one bracketed line that looks like card data, which a character could write
+- card data or a marker that is shown on purpose, as when an assistant writes a character card or explains a prompt format:
+  - at the very start of the reply
+  - after a colon, such as "Here is the card for Pell:" or "The template looks like this:"
+  - the other markers in the same paragraph as one of these, such as the rest of a template written out line by line
 - a turn marker at the very start of the reply, which some formats send
 - a story heading such as `### Chapter Two`
 - the thinking

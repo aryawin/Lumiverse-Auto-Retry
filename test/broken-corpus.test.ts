@@ -81,6 +81,8 @@ describe("the prompt's format leaked into the reply", () => {
     ["an Alpaca heading", scene + "\n\n### Instruction:\nContinue the story as Pell."],
     ["the next turn started by the model", scene + "<|im_start|>user\nI take the strap from him."],
     ["two lines of card data", scene + "[Name(\"Pell\")] [Mind(\"patient\" + \"wry\")] and then the weir."],
+    ["card data running on after the story", scene + "\n\n[Character(\"Pell\")]\n[Occupation(\"miller\")]"],
+    ["an instruction marker after a colon and another after the story", "The format is: [INST] words [/INST]\n\n" + scene + "[/INST] and the weir."],
   ];
   const fine: Array<[string, string]> = [
     ["a tracker in brackets", scene + "[Health: 8/10] [Mood: tired] [Location: the barn]"],
@@ -88,6 +90,11 @@ describe("the prompt's format leaked into the reply", () => {
     ["the markers inside a code block", scene + "\n```\n[INST] example [/INST]\n<<SYS>>\n```\n"],
     ["a turn marker that opens the reply", "<|im_start|>assistant\n" + scene],
     ["a heading that is part of the story", scene + "\n\n### Chapter Two\nThe weir was quiet."],
+    // An assistant asked to write a character card, or to explain a format.
+    ["a character card the reply was asked to write", "[Character(\"Pell\")]\n[Occupation(\"miller\")]\n[Mind(\"patient\" + \"wry\")]\n[Likes(\"quiet water\")]"],
+    ["a character card after a colon", "Sure. Here is the card for Pell:\n\n[Character(\"Pell\")]\n[Occupation(\"miller\")]\n[Mind(\"patient\")]"],
+    ["an instruction template after a colon", "The template looks like this:\n### Instruction:\nWrite the next scene.\n### Response:"],
+    ["an instruction marker explained after a colon", "Llama 2 wraps your turn like this: [INST] your words go here [/INST]"],
   ];
   for (const [label, text] of broken) test("caught: " + label, () => expect(leakVerdict(text, cfg)).toBe(true));
   for (const [label, text] of fine) test("left alone: " + label, () => expect(leakVerdict(text, cfg)).toBe(false));

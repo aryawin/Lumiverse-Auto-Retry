@@ -1774,7 +1774,9 @@ function spanIsSetApart(text, start) {
 // The prompt's own format written into the reply. A model that runs past the
 // end of its turn can write the template's markers, the start of your next
 // turn, or a character card's data, as in `[/INST] [Character("Mara")]`. No
-// character writes these in a scene, so one is enough, outside code.
+// character writes these in a scene, so one is enough, outside code. A marker
+// or card data that opens the reply or follows a colon is shown on purpose
+// (see shownOnPurpose).
 //
 // The turn markers of chat formats, such as <|im_start|>user, also open a
 // message, so they count only after some of the reply has been written.
@@ -1789,13 +1791,38 @@ const LEAK_TURNS = /<\|im_start\|>[ \t]*(?:user|system)\b|<\|start_header_id\|>[
 // or [Personality("calm" + "dry")]. Two of them, since one could be a coded
 // note a character writes.
 const LEAK_CARD = /\[[ \t]*[A-Za-z][A-Za-z ]{0,24}\([ \t]*"[^"\n]{1,120}"/g;
+// Whether what starts at `at` is shown on purpose: it opens the reply, or it
+// comes after a colon, as in "Here is the card:" or "The format looks like
+// this:". A reply asked to write a character card, or to explain a prompt
+// format, writes them that way. A leak runs on after the story instead.
+function shownOnPurpose(text, at) {
+    const before = text.slice(0, at);
+    return !before.trim() || /:[\s*_"'\u201c]*$/.test(before);
+}
 function leakVerdict(content, cfg) {
     const raw = withoutCode(String(content == null ? "" : content));
     const visible = stripThinkingAlways(raw, cfg);
-    for (const mark of LEAK_MARKS)
-        if (mark.test(visible))
+    // Every marker, in order. One shown on purpose makes an example, and the
+    // other markers in its paragraph are part of it, as in a template written
+    // out line by line. A marker in a later paragraph is judged on its own.
+    const hits = [];
+    for (const mark of LEAK_MARKS) {
+        const all = new RegExp(mark.source, mark.flags.indexOf("g") < 0 ? mark.flags + "g" : mark.flags);
+        for (const hit of visible.matchAll(all))
+            hits.push(hit.index || 0);
+    }
+    hits.sort((a, b) => a - b);
+    let example = -1;
+    for (const at of hits) {
+        if (at < example)
+            continue;
+        if (!shownOnPurpose(visible, at))
             return true;
-    if ((visible.match(LEAK_CARD) || []).length >= 2)
+        const end = visible.indexOf("\n\n", at);
+        example = end < 0 ? visible.length : end;
+    }
+    const cards = Array.from(visible.matchAll(LEAK_CARD));
+    if (cards.length >= 2 && !shownOnPurpose(visible, cards[0].index || 0))
         return true;
     const turn = LEAK_TURNS.exec(raw);
     if (turn && stripThinkingAlways(raw.slice(0, turn.index), cfg).trim())
@@ -13475,16 +13502,17 @@ export function setup(ctx, opts) {
         // by tag and text, which is how a check ends up passing over nothing.
         status.setAttribute("data-ar-save-status", "");
         status.setAttribute("role", "status");
-        // Drawn like the section cards above it: the window's own color with the
-        // theme's raised layer over it, the same border and the same corners.
+        // Tinted with the theme's accent color, with an accent border, so it
+        // stands out from the cards around it on any theme. The tint sits on the
+        // window's own solid color, so nothing behind it shows through.
         status.style.cssText =
             "position:absolute;left:0;right:0;bottom:calc(100% + 6px);z-index:1;box-sizing:border-box;padding:8px 12px;" +
-                "border-radius:var(--lumiverse-radius-md,10px);border:1px solid var(--lumiverse-border,rgba(255,255,255,.12));" +
+                "border-radius:var(--lumiverse-radius-md,10px);border:1px solid var(--lumiverse-primary,rgb(147,112,219));" +
                 "background-color:var(--lumiverse-bg,rgb(24,20,34));" +
-                "background-image:linear-gradient(var(--lumiverse-bg-elevated,rgba(35,30,48,.9)),var(--lumiverse-bg-elevated,rgba(35,30,48,.9)))," +
-                "linear-gradient(var(--lumiverse-bg-elevated,rgba(35,30,48,.9)),var(--lumiverse-bg-elevated,rgba(35,30,48,.9)));" +
-                "font-size:12px;line-height:1.4;" +
-                "color:var(--lumiverse-text-muted,rgba(255,255,255,.65));pointer-events:none;" +
+                "background-image:linear-gradient(var(--lumiverse-primary-020,rgba(147,112,219,.2)),var(--lumiverse-primary-020,rgba(147,112,219,.2)))," +
+                "linear-gradient(var(--lumiverse-primary-020,rgba(147,112,219,.2)),var(--lumiverse-primary-020,rgba(147,112,219,.2)));" +
+                "box-shadow:var(--lumiverse-shadow-md,0 8px 24px rgba(0,0,0,.4));font-size:12px;line-height:1.4;" +
+                "color:var(--lumiverse-text,#eee);pointer-events:none;" +
                 "opacity:0;visibility:hidden;transform:translateY(4px);transition:opacity .18s ease,transform .18s ease,visibility 0s linear .18s";
         let statusGone = 0;
         const say = (text) => {

@@ -18,7 +18,8 @@ _2026-10-19_
 
 ### Fixed
 
-- **The Save message moved the buttons.** On a phone, a message such as "These settings are already saved. Nothing changed." wrapped onto two or three lines in the row beside **Reset** and **Save**. The row grew taller, and the buttons jumped up. The message now shows in a small box just above the buttons, and nothing in the row moves. The box is drawn like the section cards and stops where they stop, so the list's scroll bar stays in view.
+- **A character card written on purpose was retried as a leak.** **It leaked the prompt's format** retried a reply that was asked to write a character card, or to explain a prompt format such as `[INST]`. Card data or a marker at the very start of the reply, or after a colon such as "Here is the card:", is now left alone, along with the rest of that example. Card data or a marker that runs on after the story still counts.
+- **The Save message moved the buttons.** On a phone, a message such as "These settings are already saved. Nothing changed." wrapped onto two or three lines in the row beside **Reset** and **Save**. The row grew taller, and the buttons jumped up. The message now shows in a small box just above the buttons, and nothing in the row moves. The box is tinted with your theme's accent color, so it stands out, and it stops where the section cards stop, so the list's scroll bar stays in view.
 
 ---
 

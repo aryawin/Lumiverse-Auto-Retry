@@ -12150,10 +12150,10 @@ for (const [label, w, h, touch] of [["small phone", 360, 640, true], ["phone", 3
   check(label + ": no console errors", errors.length === 0, errors);
 }
 
-// The message above the buttons is drawn like the section cards, and stops
-// where they stop, so the list's scroll bar stays in view. The colors are
-// read from what is drawn.
-console.log("\nSave's message looks like the cards and leaves the scroll bar in view");
+// The message above the buttons is tinted with the theme's accent, so it
+// stands out from the section cards, and stops where they stop, so the list's
+// scroll bar stays in view. The colors are read from what is drawn.
+console.log("\nSave's message stands out from the cards and leaves the scroll bar in view");
 for (const [label, w, h, touch] of [["phone", 390, 844, true], ["laptop", 1280, 900, false]]) {
   const body =
     '<div style="position:fixed;inset:0;z-index:10003;display:flex;align-items:center;justify-content:center">' +
@@ -12198,11 +12198,21 @@ for (const [label, w, h, touch] of [["phone", 390, 844, true], ["laptop", 1280, 
     };
     const noteInk = await at(geo.note.left + 5, geo.note.top + 3);
     const cardInk = geo.card ? await at(geo.card.left + 5, geo.card.top + 3) : null;
-    return { geo, noteInk, cardInk };
+    const textInk = await page.evaluate(() => getComputedStyle(document.querySelector("[data-ar-save-status]")).color);
+    return { geo, noteInk, cardInk, textInk };
   });
-  const { geo, noteInk, cardInk } = out;
-  const diff = noteInk && cardInk ? Math.max(Math.abs(noteInk.r - cardInk.r), Math.abs(noteInk.g - cardInk.g), Math.abs(noteInk.b - cardInk.b)) : 999;
-  check(label + ": the message is drawn in the cards' color", diff <= 8, { noteInk, cardInk });
+  const { geo, noteInk, cardInk, textInk } = out;
+  const diff = noteInk && cardInk ? Math.max(Math.abs(noteInk.r - cardInk.r), Math.abs(noteInk.g - cardInk.g), Math.abs(noteInk.b - cardInk.b)) : 0;
+  const lum = (c) => {
+    const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+    return 0.2126 * f(c.r) + 0.7152 * f(c.g) + 0.0722 * f(c.b);
+  };
+  const tm = /rgba?\(([^)]+)\)/.exec(textInk || "");
+  const tp = tm ? tm[1].split(",").map((x) => parseFloat(x)) : [0, 0, 0];
+  const text = { r: tp[0], g: tp[1], b: tp[2] };
+  const ratio = noteInk ? (Math.max(lum(text), lum(noteInk)) + 0.05) / (Math.min(lum(text), lum(noteInk)) + 0.05) : 0;
+  check(label + ": the message is a clearly different color from the cards", diff >= 20, { noteInk, cardInk, diff });
+  check(label + ": and its words read clearly on it", ratio >= 4.5, { textInk, noteInk, ratio: Math.round(ratio * 10) / 10 });
   check(label + ": it ends where the cards end", !!geo.card && Math.abs(geo.note.right - geo.card.right) <= 1, geo);
   check(label + ": and the list's scroll bar stays in view beside it",
     geo.hasBar && geo.note.right <= geo.barLeft + 0.5, geo);
