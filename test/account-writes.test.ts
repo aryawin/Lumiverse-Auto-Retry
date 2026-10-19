@@ -19,6 +19,7 @@ function boot() {
   let frontendHandler: any = null;
   const stored: Record<string, any> = {};
   const delays: number[] = [];
+  const sent: Array<{ msg: any; user: any }> = [];
   const spindle = {
     storage: {
       read: async () => {
@@ -40,7 +41,9 @@ function boot() {
     onFrontendMessage: (fn: any) => {
       frontendHandler = fn;
     },
-    sendToFrontend: () => {},
+    sendToFrontend: (msg: any, user: any) => {
+      sent.push({ msg, user });
+    },
     on: () => {},
     chat: { getMessages: async () => [], updateMessage: async () => {} },
     registerInterceptor: () => {},
@@ -50,7 +53,8 @@ function boot() {
   return {
     stored,
     slowFirst: (ms: number) => delays.push(ms, 0),
-    ask: (payload: any) => frontendHandler(payload, "u1"),
+    ask: (payload: any, user = "u1") => frontendHandler(payload, user),
+    sent,
   };
 }
 
@@ -75,5 +79,39 @@ describe("saves reach the account in the order they were made", () => {
     await Promise.all([older, newer]);
     await wait(60);
     expect(h.stored["u1:presets.json"].retry[0].at).toBe(2);
+  });
+});
+
+// The chats switched off and the notices already read follow each account on
+// its own. Two accounts on one server never see each other's.
+describe("the chats switched off follow each account", () => {
+  test("each account reads back only its own", async () => {
+    const h = boot();
+    await h.ask({ type: "save_state", state: { chatsOff: ["chat-a"], builtInSeen: "", movedSeen: "m1" } }, "u1");
+    await h.ask({ type: "save_state", state: { chatsOff: ["chat-b"], builtInSeen: "", movedSeen: "" } }, "u2");
+    await h.ask({ type: "load_state", requestId: "r1" }, "u1");
+    await h.ask({ type: "load_state", requestId: "r2" }, "u2");
+    const back = (id: string) => h.sent.find((x) => x.msg && x.msg.type === "loaded_state" && x.msg.requestId === id);
+    expect(back("r1")!.msg.state.chatsOff).toEqual(["chat-a"]);
+    expect(back("r1")!.user).toBe("u1");
+    expect(back("r2")!.msg.state.chatsOff).toEqual(["chat-b"]);
+    expect(back("r2")!.user).toBe("u2");
+  });
+
+  test("an account with nothing saved reads back nothing", async () => {
+    const h = boot();
+    await h.ask({ type: "load_state", requestId: "r3" }, "u3");
+    const back = h.sent.find((x) => x.msg && x.msg.requestId === "r3");
+    expect(back!.msg.state).toBe(null);
+  });
+
+  test("an older save cannot finish after a newer one and stand", async () => {
+    const h = boot();
+    h.slowFirst(40);
+    const older = h.ask({ type: "save_state", state: { chatsOff: ["chat-a"] } });
+    const newer = h.ask({ type: "save_state", state: { chatsOff: [] } });
+    await Promise.all([older, newer]);
+    await wait(60);
+    expect(h.stored["u1:state.json"].chatsOff).toEqual([]);
   });
 });

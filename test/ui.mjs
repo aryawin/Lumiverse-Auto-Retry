@@ -5578,6 +5578,59 @@ console.log("\nnote presets from the account and the reset");
   check("the account's note presets arrive", sync.notes.join() === "accountnote", sync);
   check("and the store holds only note presets", sync.keys.join() === "notes", sync);
 
+  // The chats switched off, and the notices already read, follow the account.
+  // One browser that has them and an account that has nothing sends them up.
+  // A second browser with nothing of its own takes them from the account, and
+  // tells the backend which chats to leave alone. Nothing goes up before the
+  // account answers, so a new browser cannot put its empty copy over it.
+  const two = async (local, account, delay) => fresh(async ({ local, account, delay }) => {
+    for (const k of Object.keys(local)) localStorage.setItem(k, local[k]);
+    const listeners = [];
+    const sent = [];
+    window.__setup({
+      events: { on: () => () => {} },
+      sendToBackend: (m) => {
+        sent.push({ m, at: Date.now() });
+        if (m && m.type === "load_state")
+          setTimeout(() => listeners.forEach((f) =>
+            f({ type: "loaded_state", requestId: m.requestId, state: account })), delay);
+      },
+      onBackendMessage: (cb) => { listeners.push(cb); return () => {}; },
+      ui: { showModal: () => ({ root: document.getElementById("modal"), onDismiss: () => {}, dismiss: () => {} }),
+            registerInputBarAction: () => ({ onClick: () => () => {}, destroy: () => {} }) },
+    }, { toast: false });
+    await new Promise((r) => setTimeout(r, delay + 250));
+    const saves = sent.filter((x) => x.m && x.m.type === "save_state").map((x) => x.m.state);
+    const told = sent.filter((x) => x.m && x.m.type === "set_chats_off").map((x) => x.m.chats);
+    return {
+      saves,
+      told: told[told.length - 1] || [],
+      local: JSON.parse(localStorage.getItem("lv-auto-retry:chats-off:v1") || "[]"),
+      moved: localStorage.getItem("lv-auto-retry:moved-seen:v1") || "",
+    };
+  }, { local, account, delay });
+  const first = await two(
+    { "lv-auto-retry:chats-off:v1": JSON.stringify(["chat-quiet", "chat-test"]), "lv-auto-retry:moved-seen:v1": "mark1" },
+    null, 50,
+  );
+  const up = first.saves[first.saves.length - 1];
+  check("a browser's chats switched off go up to an account that has none",
+    !!up && up.chatsOff.join() === "chat-quiet,chat-test" && up.movedSeen === "mark1", first);
+  const second = await two({}, up || null, 50);
+  check("a second browser takes the chats switched off from the account",
+    second.local.join() === "chat-quiet,chat-test", second);
+  check("and tells the backend to leave them alone", second.told.join() === "chat-quiet,chat-test", second);
+  check("and takes the notices already read", second.moved === "mark1", second);
+  check("and sends nothing back up when it has nothing the account lacks", second.saves.length === 0, second);
+  // This browser holds another list, as one shared by two accounts can. The
+  // account's list replaces it, and this browser's is never sent up over it.
+  const late = await two(
+    { "lv-auto-retry:chats-off:v1": JSON.stringify(["chat-other-account"]) },
+    { chatsOff: ["chat-quiet"], builtInSeen: "", movedSeen: "" }, 600,
+  );
+  check("the account's list replaces this browser's", late.local.join() === "chat-quiet" && late.told.join() === "chat-quiet", late);
+  check("and this browser's is never sent up over it", late.saves.length === 0, late);
+
   // The reset line names presets, so it has to mean all of them: counted,
   // cleared, and with the notes key left in place for the next read.
   const del = await fresh(async () => {

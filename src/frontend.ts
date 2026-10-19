@@ -43,11 +43,12 @@ const PICK_KEY = "lv-auto-retry:preset-pick:v1";
 // read before most of setup() exists, and a const declared further down is
 // not initialized yet when that happens.
 const SWIPE_FIRST_KEY = "lv-auto-retry:swipe-first:v1";
-// The note sets that come with it, as they were when this browser last took one. Its own
+// The note sets that come with it, as they were when the reader last took one. Its own
 // key rather than a setting, because it is not something anybody sets and a
-// setting would carry it into an export.
+// setting would carry it into an export. It follows the account with the
+// chats switched off (see loadStateFromAccount).
 const BUILT_IN_SEEN_KEY = "lv-auto-retry:built-in-seen:v1";
-// Which set of moved defaults this browser has already been told about. Its own
+// Which set of moved defaults the reader has already been told about. Its own
 // key for the same two reasons, and separate from the one above so saying got it
 // to a line about a number never marks the note sets as seen too.
 const MOVED_SEEN_KEY = "lv-auto-retry:moved-seen:v1";
@@ -4189,6 +4190,7 @@ export function setup(ctx: Ctx, opts?: any) {
     if (Date.now() - accountAskedAt < STALE_AFTER_MS) return;
     loadFromAccount();
     loadPresetsFromAccount();
+    loadStateFromAccount();
   }
   // The listener for an ask still waiting on its answer, one for settings and
   // one for presets. An ask sent before the backend was listening is never
@@ -7698,6 +7700,7 @@ export function setup(ctx: Ctx, opts?: any) {
     try {
       if (typeof localStorage !== "undefined") localStorage.setItem(MOVED_SEEN_KEY, MOVED_MARK);
     } catch (_) {}
+    saveStateToAccount();
   }
 
   // Written down as seen. Called when one of the sets is loaded, when the panel
@@ -7707,6 +7710,7 @@ export function setup(ctx: Ctx, opts?: any) {
     try {
       if (typeof localStorage !== "undefined") localStorage.setItem(BUILT_IN_SEEN_KEY, builtInMark);
     } catch (_) {}
+    saveStateToAccount();
   }
 
   // Whether the sets have changed since this browser last took one, and whether
@@ -7981,9 +7985,10 @@ export function setup(ctx: Ctx, opts?: any) {
   // Turning the whole extension off for that means remembering to turn it back
   // on, and forgetting looks exactly like the extension having stopped working.
   //
-  // Kept in the browser rather than in the settings. It is a list of chat ids,
-  // which are not settings, would be meaningless on another account, and have
-  // does not belong in an export somebody might share.
+  // Kept apart from the settings. It is a list of chat ids, which are not
+  // settings and do not belong in an export somebody might share. It is held
+  // in this browser and on the account (see loadStateFromAccount), so every
+  // browser of the same account has the same chats switched off.
   const CHATS_OFF_KEY = "lv-auto-retry:chats-off:v1";
   const CHATS_OFF_CAP = 200;
   let chatsOff: string[] = [];
@@ -8007,9 +8012,8 @@ export function setup(ctx: Ctx, opts?: any) {
   const isCardless = (chatId: any): boolean =>
     chatId != null && cardless.has(String(chatId));
 
-  // The off list lives in this browser and is not a setting, so it is not in
-  // what gets saved to the account and the backend cannot read it, so it is
-  // sent over on its own.
+  // The off list is not a setting, so it is not in the settings saved to the
+  // account, and the backend is sent it on its own.
   function tellBackendChatsOff() {
     try {
       if (ctx && typeof (ctx as any).sendToBackend === "function")
@@ -8070,6 +8074,7 @@ export function setup(ctx: Ctx, opts?: any) {
       }
     } catch (_) {}
     tellBackendChatsOff();
+    saveStateToAccount();
     // Anything already in flight for that chat goes with it.
     if (off) standDown(id, false);
     // Every one of these describes the chat that just changed, so they are all
@@ -8087,6 +8092,94 @@ export function setup(ctx: Ctx, opts?: any) {
     syncToggleAction();
     paintNow();
     return remembered;
+  }
+
+  // ---- what follows the account apart from the settings ----
+  // The chats switched off, and which built-in note sets and moved defaults
+  // the reader has already been told about. Held on the account as well as in
+  // this browser, so another browser or a phone opens with the same chats off
+  // and does not tell the reader again about something already answered.
+  //
+  // This browser's copy is used until the account answers, and the account's
+  // copy then replaces it. Nothing is written to the account before that
+  // answer, so a new browser cannot put its empty copy over the account's.
+  // An account with nothing saved yet takes this browser's copy, so updating
+  // loses nothing.
+  let stateLoaded = false;
+  let stateWaiting: (() => void) | null = null;
+  function readKey(key: string): string {
+    try {
+      return typeof localStorage !== "undefined" ? String(localStorage.getItem(key) || "") : "";
+    } catch (_) {
+      return "";
+    }
+  }
+  function writeKey(key: string, value: string) {
+    try {
+      if (typeof localStorage !== "undefined") localStorage.setItem(key, value);
+    } catch (_) {}
+  }
+  function stateNow() {
+    return {
+      chatsOff: chatsOff.filter((c) => !cardless.has(c)),
+      builtInSeen: readKey(BUILT_IN_SEEN_KEY),
+      movedSeen: readKey(MOVED_SEEN_KEY),
+    };
+  }
+  function saveStateToAccount() {
+    if (!stateLoaded) return;
+    try {
+      if (ctx && typeof (ctx as any).sendToBackend === "function")
+        (ctx as any).sendToBackend({ type: "save_state", state: stateNow() });
+    } catch (_) {}
+  }
+  function loadStateFromAccount() {
+    try {
+      if (!ctx || typeof (ctx as any).sendToBackend !== "function" || typeof (ctx as any).onBackendMessage !== "function") return;
+      if (stateWaiting) stateWaiting();
+      const reqId = "ar-state-" + Date.now() + "-" + Math.random().toString(36).slice(2);
+      const off = (ctx as any).onBackendMessage((msg: any) => {
+        if (!msg || msg.type !== "loaded_state" || msg.requestId !== reqId) return;
+        try { off && off(); } catch (_) {}
+        stateWaiting = null;
+        const st = msg.state && typeof msg.state === "object" ? msg.state : null;
+        let sendUp = !st;
+        if (st) {
+          if (Array.isArray(st.chatsOff)) {
+            // A temporary chat switched off in this browser stays off while it
+            // is open. It was never written down, so the account cannot know it.
+            const open = chatsOff.filter((c) => cardless.has(c));
+            const fromAccount = st.chatsOff.map(String).slice(-CHATS_OFF_CAP);
+            chatsOff = fromAccount.concat(open.filter((c) => fromAccount.indexOf(c) < 0));
+            writeKey(CHATS_OFF_KEY, JSON.stringify(fromAccount));
+            tellBackendChatsOff();
+            if (chatSwitchPaint) {
+              try { chatSwitchPaint(); } catch (_) {}
+            }
+            paintFloat();
+            syncMasterNote();
+            syncToggleAction();
+            paintNow();
+          } else sendUp = true;
+          // Each mark from the account when it has one. One it lacks is taken
+          // from this browser and sent up.
+          for (const [field, key] of [["builtInSeen", BUILT_IN_SEEN_KEY], ["movedSeen", MOVED_SEEN_KEY]] as const) {
+            const there = typeof st[field] === "string" ? st[field] : "";
+            if (there) writeKey(key, there);
+            else if (readKey(key)) sendUp = true;
+          }
+        }
+        stateLoaded = true;
+        if (sendUp) saveStateToAccount();
+        log(st ? "chats switched off and notices read from the account" : "chats switched off and notices sent up to the account");
+      });
+      stateWaiting = () => {
+        try { off && off(); } catch (_) {}
+        stateWaiting = null;
+      };
+      disposers.push(() => { try { off && off(); } catch (_) {} });
+      (ctx as any).sendToBackend({ type: "load_state", requestId: reqId });
+    } catch (_) {}
   }
 
   // Both switches have to be on for anything to happen, and this is the one
@@ -15396,6 +15489,7 @@ export function setup(ctx: Ctx, opts?: any) {
   chaseActiveChat();
   loadFromAccount();
   loadPresetsFromAccount();
+  loadStateFromAccount();
   askReplaced();
   askThinkMarks();
   // A tab brought back after a while asks the account again, so what it shows
@@ -15432,6 +15526,7 @@ export function setup(ctx: Ctx, opts?: any) {
           // the account's.
           if (settingsWaiting) loadFromAccount();
           if (presetsWaiting) loadPresetsFromAccount();
+          if (stateWaiting) loadStateFromAccount();
           askReplaced();
           askThinkMarks();
           askForPermissions();
@@ -15537,6 +15632,14 @@ export function setup(ctx: Ctx, opts?: any) {
           log("the replaced reply could not be saved on the server");
           showToast(
             "The reply a retry replaced could not be saved on your server, so an update or a restart will clear it.",
+            { force: true, kind: "error" },
+          );
+          return;
+        }
+        if (msg.type === "account_save_failed" && msg.what === "state") {
+          log("the account copy of the chats switched off could not be saved");
+          showToast(
+            "The chats you switched off are saved in this browser, but could not be saved to your account, so they will not follow you to another device.",
             { force: true, kind: "error" },
           );
           return;

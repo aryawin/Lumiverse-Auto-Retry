@@ -95,6 +95,9 @@ async function writeUserJson(file, value, userId) {
 // their own line, so a save of one never waits on a save of the other.
 const settingsWrites = new Map();
 const presetWrites = new Map();
+const stateWrites = new Map();
+// The chats switched off, and the notices the reader has already read.
+const STATE_FILE = 'state.json';
 function inTurn(queue, userId, job) {
     const k = String(userId == null ? '' : userId);
     const before = queue.get(k) || Promise.resolve();
@@ -1022,6 +1025,34 @@ spindle.onFrontendMessage(async (payload, userId) => {
             if (payload.save === true)
                 await readReplaced(userId);
             replyTo(userId, { type: 'replaced_list', requestId: payload.requestId, items: replacedFor(userId).slice() });
+            return;
+        }
+        // The chats switched off and the notices already read, which follow the
+        // account apart from the settings. One write at a time, in order.
+        if (payload.type === 'save_state' && payload.state && typeof payload.state === 'object') {
+            await inTurn(stateWrites, userId, async () => {
+                try {
+                    await writeUserJson(STATE_FILE, payload.state, userId);
+                }
+                catch (e) {
+                    try {
+                        spindle.log.warn('could not save the chats switched off to the account: ' + ((e && e.message) || String(e)));
+                    }
+                    catch (_) { }
+                    replyTo(userId, { type: 'account_save_failed', what: 'state' });
+                }
+            });
+            return;
+        }
+        if (payload.type === 'load_state') {
+            let state = null;
+            try {
+                state = await readUserJson(STATE_FILE, userId);
+            }
+            catch (_) {
+                state = null;
+            }
+            replyTo(userId, { type: 'loaded_state', requestId: payload.requestId, state: state });
             return;
         }
         if (payload.type === 'load_presets') {

@@ -101,14 +101,15 @@ What it reads, and for how long:
 
 ## What it keeps
 
-**In your browser and your account:** your settings and saved presets. They follow your account between devices. This is the only thing that reaches your account.
+**In your browser and your account:** these follow your account between devices and browsers.
 
-**In this browser only:**
-
-- where you left the on-screen panel and the floating button, their size, and which tab was open
+- your settings and saved presets
 - the chats you switched Auto Retry off in, as chat ids only: no titles and no text
+- which built-in note sets and which changed defaults you have already been told about, as two short marks
 
-Neither of these is in an export, because a screen position or a chat id means nothing on another device.
+**In this browser only:** where you left the on-screen panel and the floating button, their size, and which tab was open. A phone and a computer need different places.
+
+The chat ids, the marks and the panel's place are not in an export. A chat id means nothing on another account, and a screen position means nothing on another device.
 
 **In memory only, gone when you close the tab:**
 
