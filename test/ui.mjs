@@ -12046,13 +12046,15 @@ for (const [label, viewport, touch, boxH] of [
         const inner = Array.from(document.querySelectorAll("#modal *")).find(
           (n) => /auto|scroll/.test(getComputedStyle(n).overflowY) && n.scrollHeight > n.clientHeight + 100,
         );
-        return {
-          extra: document.body.scrollHeight - document.body.clientHeight,
-          listScrolls: !!inner,
-        };
+        // Whether it can scroll at all. The two heights are whole numbers
+        // and can read as equal while the window still scrolls a fraction.
+        document.body.scrollTop = 1e6;
+        const moved = document.body.scrollTop;
+        document.body.scrollTop = 0;
+        return { moved, listScrolls: !!inner };
       });
     });
-    check(label + ", zoom " + zoom + ": the host's window has nothing of its own to scroll", out.extra <= 1, out);
+    check(label + ", zoom " + zoom + ": the host's window has nothing of its own to scroll", out.moved === 0, out);
     check(label + ", zoom " + zoom + ": the settings list still scrolls", out.listScrolls, out);
     check(label + ", zoom " + zoom + ": no console errors", errors.length === 0, errors);
   }
@@ -12067,12 +12069,15 @@ for (const [label, viewport, touch, boxH] of [
 // check is whether the window can be scrolled at all. The window is built the
 // way Lumiverse builds it, under a zoomed body.
 console.log("\nthe host's window cannot scroll at any UI Scale");
+// Every step Lumiverse offers, 50% to 150%. Before the spare pixel, 115%,
+// 140%, 145% and 150% each scrolled on at least one of these screens.
+const UI_SCALES = Array.from({ length: 21 }, (_, k) => Math.round((0.5 + k * 0.05) * 100) / 100);
 for (const [label, w, h, touch, scale] of [
   ["phone", 390, 640, true, 2.625],
-  ["phone", 390, 731, true, 3],
-  ["laptop", 1280, 700, false, 1],
+  ["phone", 412, 844, true, 2.625],
+  ["laptop", 1366, 768, false, 1.25],
 ]) {
-  for (const ui of [1, 0.9, 1.15, 1.25]) {
+  for (const ui of UI_SCALES) {
     const maxH = Math.min(720, h - 24, h / ui - 40);
     const width = Math.min(460, w - 24, w / ui - 40);
     const body =
