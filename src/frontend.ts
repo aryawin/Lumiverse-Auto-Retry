@@ -13315,13 +13315,42 @@ export function setup(ctx: Ctx, opts?: any) {
     // rule. flex-wrap lets the buttons stack on a narrow phone screen.
     const actions = document.createElement("div");
     actions.style.cssText =
-      "display:flex;align-items:center;flex-wrap:wrap;gap:8px;flex:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--lumiverse-border,rgba(255,255,255,.08))";
-    const status = document.createElement("span");
+      "position:relative;display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px;flex:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--lumiverse-border,rgba(255,255,255,.08))";
+    // The line that answers Save and Reset. It floats just above the buttons
+    // rather than sitting in their row, so a message that wraps onto two or
+    // three lines on a phone never makes the row taller and moves the buttons.
+    // It fades and slides 4 pixels in and out.
+    const status = document.createElement("div");
     // Named so the browser checks can read this line rather than guessing at it
     // by tag and text, which is how a check ends up passing over nothing.
     status.setAttribute("data-ar-save-status", "");
+    status.setAttribute("role", "status");
     status.style.cssText =
-      "flex:1;min-width:120px;font-size:12px;color:var(--lumiverse-text-muted,rgba(255,255,255,.65))";
+      "position:absolute;left:0;right:0;bottom:calc(100% + 6px);z-index:1;box-sizing:border-box;padding:6px 10px;" +
+      "border-radius:var(--lumiverse-radius,8px);border:1px solid var(--lumiverse-border,rgba(255,255,255,.12));" +
+      "background-color:var(--lumiverse-card-bg-solid,rgb(24,20,34));font-size:12px;line-height:1.4;" +
+      "color:var(--lumiverse-text-muted,rgba(255,255,255,.65));pointer-events:none;" +
+      "opacity:0;visibility:hidden;transform:translateY(4px);transition:opacity .18s ease,transform .18s ease,visibility 0s linear .18s";
+    let statusGone = 0;
+    const say = (text: string) => {
+      clearTimeout(statusGone);
+      if (text) {
+        status.textContent = text;
+        status.style.transition = "opacity .18s ease,transform .18s ease,visibility 0s";
+        status.style.visibility = "visible";
+        status.style.opacity = "1";
+        status.style.transform = "none";
+        return;
+      }
+      status.style.transition = "opacity .18s ease,transform .18s ease,visibility 0s linear .18s";
+      status.style.visibility = "hidden";
+      status.style.opacity = "0";
+      status.style.transform = "translateY(4px)";
+      // Emptied once it has faded, so the words do not vanish mid-fade.
+      statusGone = window.setTimeout(() => {
+        if (status.style.opacity === "0") status.textContent = "";
+      }, noMotion() ? 0 : 200);
+    };
 
     // Opens the picker rather than resetting on the spot. There is no confirm
     // dialog in front of it: the picker itself is the confirmation,
@@ -13334,11 +13363,13 @@ export function setup(ctx: Ctx, opts?: any) {
         // Deleting presets is the one thing here that has already happened, so
         // a line telling the user to press Save after only doing that would be
         // telling them to save something that is not waiting on them.
-        status.textContent = done.settings
-          ? "Reset in the panel. Press Save to keep it."
-          : done.presets
-            ? "Presets deleted."
-            : "";
+        say(
+          done.settings
+            ? "Reset in the panel. Press Save to keep it."
+            : done.presets
+              ? "Presets deleted."
+              : "",
+        );
       });
     });
 
@@ -13352,9 +13383,9 @@ export function setup(ctx: Ctx, opts?: any) {
         const now: any = {};
         for (const g of SCHEMA) for (const fl of g.fields) now[fl.key] = cfg[fl.key];
         if (sameSettings(now, modalBaseline)) {
-          status.textContent = "These settings are already saved. Nothing changed.";
+          say("These settings are already saved. Nothing changed.");
           setTimeout(() => {
-            if (status.textContent === "These settings are already saved. Nothing changed.") status.textContent = "";
+            if (status.textContent === "These settings are already saved. Nothing changed.") say("");
           }, 2600);
           return;
         }
@@ -13363,15 +13394,14 @@ export function setup(ctx: Ctx, opts?: any) {
       if (!storedHere) {
         // Left on screen rather than cleared after a moment: this one is not a
         // confirmation somebody can miss without cost.
-        status.textContent =
-          "Could not save in this browser. Check that it is not blocking site data.";
+        say("Could not save in this browser. Check that it is not blocking site data.");
         log("settings could not be saved in this browser");
         return;
       }
-      status.textContent = "Saved. Takes effect on the next reply.";
+      say("Saved. Takes effect on the next reply.");
       log("settings saved", cfg);
       setTimeout(() => {
-        status.textContent = "";
+        if (status.textContent === "Saved. Takes effect on the next reply.") say("");
       }, 2600);
     });
 

@@ -16,6 +16,10 @@ _2026-10-19_
 
 - **A second scroll bar in the settings window.** 5.17.0 fitted the settings to the window Lumiverse gives them, but missed one case. With **UI Scale** set to a size such as 115%, the window's height has a fraction of a pixel in it. The settings came out less than a pixel too tall, so the window could still scroll, with a long scroll bar of its own beside the settings' one. The settings now leave a pixel spare, at every UI Scale, on a phone and on a laptop.
 
+### Fixed
+
+- **The Save message moved the buttons.** On a phone, a message such as "These settings are already saved. Nothing changed." wrapped onto two or three lines in the row beside **Reset** and **Save**. The row grew taller, and the buttons jumped up. The message now shows in a small box just above the buttons, and nothing in the row moves.
+
 ---
 
 ## 5.19.1

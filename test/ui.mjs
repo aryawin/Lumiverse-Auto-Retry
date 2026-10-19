@@ -12106,6 +12106,50 @@ for (const [label, w, h, touch, scale] of [
   }
 }
 
+// The line that answers Save floats above the buttons. A message that wraps
+// onto two or three lines on a phone used to make the button row taller, and
+// the row and the Save button jumped up.
+console.log("\nSave's message does not move the buttons");
+for (const [label, w, h, touch] of [["small phone", 360, 640, true], ["phone", 390, 844, true], ["laptop", 1280, 900, false]]) {
+  const body =
+    '<div style="position:fixed;inset:0;z-index:10003;display:flex;align-items:center;justify-content:center">' +
+    '<div id=hostbox style="width:' + Math.min(460, w - 24) + 'px;max-height:' + Math.min(720, h - 24) + 'px;border:1px solid #555;display:flex;flex-direction:column;overflow:hidden">' +
+    '<div style="padding:12px 16px"><h3 style="margin:0;font-size:15px">Auto Retry settings</h3></div>' +
+    '<div id=hostscroll style="padding:16px;overflow-y:auto;flex:1"><div id=modal></div></div></div></div>';
+  const { out, errors } = await inPanel(browser, { css: "body{margin:0}", viewport: { width: w, height: h }, touch, body }, async (page) => {
+    await page.waitForTimeout(400);
+    const read = () => page.evaluate(() => {
+      const save = Array.from(document.querySelectorAll("#modal button")).find((b) => b.textContent.trim() === "Save");
+      const row = save.parentElement;
+      const r = row.getBoundingClientRect();
+      const note = document.querySelector("[data-ar-save-status]");
+      const n = note.getBoundingClientRect();
+      const box = document.getElementById("hostbox").getBoundingClientRect();
+      return {
+        rowTop: r.top, rowH: r.height, saveTop: save.getBoundingClientRect().top,
+        text: note.textContent, shown: getComputedStyle(note).visibility === "visible" && Number(getComputedStyle(note).opacity) > 0.9,
+        noteInside: n.left >= box.left - 1 && n.right <= box.right + 1 && n.bottom <= r.top + 1,
+        sideways: document.documentElement.scrollWidth > window.innerWidth + 1,
+      };
+    });
+    const before = await read();
+    await page.evaluate(() => Array.from(document.querySelectorAll("#modal button")).find((b) => b.textContent.trim() === "Save").click());
+    await page.waitForTimeout(400);
+    const after = await read();
+    await page.waitForTimeout(2800);
+    const later = await read();
+    return { before, after, later };
+  });
+  const { before, after, later } = out;
+  check(label + ": the button row keeps its place and height",
+    Math.abs(after.rowTop - before.rowTop) < 0.5 && Math.abs(after.rowH - before.rowH) < 0.5, out);
+  check(label + ": the Save button does not move", Math.abs(after.saveTop - before.saveTop) < 0.5, out);
+  check(label + ": the message shows in full above the buttons, inside the window",
+    /already saved/.test(after.text) && after.shown && after.noteInside && !after.sideways, out);
+  check(label + ": and goes away afterwards", !later.shown && later.text === "", out);
+  check(label + ": no console errors", errors.length === 0, errors);
+}
+
 // Lumiverse's own window: a box with a fixed most-height, and a body inside it// Lumiverse's own window: a box with a fixed most-height, and a body inside it
 // that is only as tall as what it holds. The settings measure the space that
 // window can give them. A keyboard that opens and closes, or a search that
