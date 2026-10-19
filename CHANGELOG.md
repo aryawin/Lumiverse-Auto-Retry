@@ -8,6 +8,16 @@ Versions follow [Semantic Versioning](https://semver.org). A new major version m
 
 ---
 
+## 5.19.2
+
+_2026-10-19_
+
+### Fixed again
+
+- **A second scroll bar in the settings window.** 5.17.0 fitted the settings to the window Lumiverse gives them, but missed one case. With **UI Scale** set to a size such as 115%, the window's height has a fraction of a pixel in it. The settings came out less than a pixel too tall, so the window could still scroll, with a long scroll bar of its own beside the settings' one. The settings now leave a pixel spare, at every UI Scale, on a phone and on a laptop.
+
+---
+
 ## 5.19.1
 
 _2026-10-18_

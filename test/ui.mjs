@@ -124,9 +124,9 @@ body{background:rgb(10,8,18);margin:0}#modal{background:rgb(35,30,48);padding:0;
 
 // Boots the extension in a page with the settings panel open, and hands the
 // callback the same helpers every check needs.
-async function inPanel(browser, { css = "", viewport, touch = false, settings = null, seed = null, body = "<div id=modal></div>" } = {}, fn) {
+async function inPanel(browser, { css = "", viewport, touch = false, scale = 0, settings = null, seed = null, body = "<div id=modal></div>" } = {}, fn) {
   const page = await browser.newPage(
-    viewport ? { viewport, hasTouch: touch, isMobile: touch } : {},
+    viewport ? { viewport, hasTouch: touch, isMobile: touch, ...(scale ? { deviceScaleFactor: scale } : {}) } : {},
   );
   const errors = [];
   page.on("pageerror", (e) => errors.push("pageerror: " + e.message));
@@ -12058,7 +12058,50 @@ for (const [label, viewport, touch, boxH] of [
   }
 }
 
-// Lumiverse's own window: a box with a fixed most-height, and a body inside it
+// Lumiverse works out its window's height from the screen height divided by
+// UI Scale, so the height can have a fraction in it. A height read as a whole
+// number can then be up to half a pixel taller than the space, and settings
+// fitted to that overflow the window by less than a pixel. That is still
+// enough for the window to scroll, with a long second scroll bar of its own,
+// and its scroll height and height still read as equal whole numbers. So the
+// check is whether the window can be scrolled at all. The window is built the
+// way Lumiverse builds it, under a zoomed body.
+console.log("\nthe host's window cannot scroll at any UI Scale");
+for (const [label, w, h, touch, scale] of [
+  ["phone", 390, 640, true, 2.625],
+  ["phone", 390, 731, true, 3],
+  ["laptop", 1280, 700, false, 1],
+]) {
+  for (const ui of [1, 0.9, 1.15, 1.25]) {
+    const maxH = Math.min(720, h - 24, h / ui - 40);
+    const width = Math.min(460, w - 24, w / ui - 40);
+    const body =
+      '<div style="position:fixed;inset:0;z-index:10003;display:flex;align-items:center;justify-content:center">' +
+      '<div style="width:' + width + 'px;max-height:' + maxH + 'px;border:1px solid #555;display:flex;flex-direction:column;overflow:hidden">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #555"><h3 style="margin:0;font-size:15px">Auto Retry settings</h3></div>' +
+      '<div id=hostscroll style="padding:16px;overflow-y:auto;flex:1"><div id=modal></div></div></div></div>';
+    const css = "body{margin:0;zoom:" + ui + "}";
+    const name = label + " " + w + "x" + h + ", UI Scale " + ui;
+    const { out, errors } = await inPanel(browser, { css, viewport: { width: w, height: h }, touch, scale, body }, async (page) => {
+      await page.waitForTimeout(350);
+      return page.evaluate(() => {
+        const box = document.getElementById("hostscroll");
+        box.scrollTop = 1e6;
+        const moved = box.scrollTop;
+        box.scrollTop = 0;
+        const list = Array.from(document.querySelectorAll("#modal *")).find(
+          (n) => /auto|scroll/.test(getComputedStyle(n).overflowY) && n.scrollHeight > n.clientHeight + 100,
+        );
+        return { moved, listScrolls: !!list };
+      });
+    });
+    check(name + ": the host's window does not scroll at all", out.moved === 0, out);
+    check(name + ": the settings list still scrolls", out.listScrolls, out);
+    check(name + ": no console errors", errors.length === 0, errors);
+  }
+}
+
+// Lumiverse's own window: a box with a fixed most-height, and a body inside it// Lumiverse's own window: a box with a fixed most-height, and a body inside it
 // that is only as tall as what it holds. The settings measure the space that
 // window can give them. A keyboard that opens and closes, or a search that
 // shows a few rows and is then cleared, makes the body short for a moment, and

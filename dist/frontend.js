@@ -141,7 +141,7 @@ const NOTE_FROM_TRY_MAX = 20;
 const STREAM_BUF_MAX = 200000;
 // Bumped on each release. Shown in the startup log and in the Copy debug info
 // report, so a bug report always says which version it came from.
-const VERSION = "5.19.1";
+const VERSION = "5.19.2";
 // Whether two saved settings hold the same values, whatever order their keys
 // were written in. A key left undefined counts as not there, the way it is
 // when saved. Used to tell an update or a put-back that would change nothing.
@@ -11997,11 +11997,15 @@ export function setup(ctx, opts) {
         // page is drawn, so nothing is seen at the taller size.
         const held = root.style.minHeight;
         root.style.minHeight = "100000px";
-        const room = box.clientHeight - pads;
+        // One pixel less than the box reports. Its height is read as a whole
+        // number, rounded, and with UI Scale on the real height can have a
+        // fraction in it. Rounded up, settings fitted to the reading overflow the
+        // box by less than a pixel, and it scrolls with a long second bar.
+        const room = box.clientHeight - pads - 1;
         root.style.minHeight = held;
         if (room > 0)
             root.style.setProperty("--ar-fit", room + "px");
-        const inner = box.clientHeight - pads;
+        const inner = box.clientHeight - pads - 1;
         if (inner > 0)
             root.style.setProperty("--ar-view", inner + "px");
     }
