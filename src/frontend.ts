@@ -11299,19 +11299,19 @@ export function setup(ctx: Ctx, opts?: any) {
   // The same motion as a card of ours: it fades in and slides 10px into
   // place, slowing as it lands, and fades out sliding 6px away. It keeps its
   // size. The slide is toward the edge it sits at, so a box at the top comes
-  // down into place and one at the bottom comes up. The picker's message only
-  // fades, in and out, and stays where it is.
+  // down into place and one at the bottom comes up. The picker's message has
+  // no way in: it is there at once, and only its way out moves.
   //
   // Run as a Web Animation, which the browser draws apart from the page, so
   // a busy page does not hold it back. The styles on the element are always
   // where the box ends up, and the animation only covers the way there, so
   // code that reads the box sees its real state at once.
   //
-  // The way in starts two frames late. The picker puts this up in the same
-  // moment Lumiverse takes the settings window and its blurred backdrop off
-  // the page, and that frame is slow to draw on a phone. A fade started in it
-  // loses its first frames, and the box jumps in partway. With less motion
-  // asked for, nothing moves or fades: see noMotion.
+  // The way in starts two frames late. A message can go up in the same moment
+  // the page has a slow frame to draw, such as a chat redrawing as a reply
+  // ends. A fade started in that frame loses its first frames, and the box
+  // jumps in partway. With less motion asked for, nothing moves or fades:
+  // see noMotion.
   const TOAST_IN_MS = 220;
   const TOAST_OUT_MS = 160;
   const TOAST_IN_EASE = "cubic-bezier(.2,.8,.28,1)";
@@ -11319,7 +11319,7 @@ export function setup(ctx: Ctx, opts?: any) {
   // where frames do not come.
   const TOAST_WAIT_MS = 120;
   const toastAway = (t: any, px: number): string =>
-    t && t.__fadeOnly ? "none" : "translateY(" + (t && t.style.bottom === "auto" ? -px : px) + "px)";
+    "translateY(" + (t && t.style.bottom === "auto" ? -px : px) + "px)";
   const canMove = (t: any): boolean => !noMotion() && !!t && typeof t.animate === "function";
   // Where a box caught partway is drawn right now, so the next move starts
   // from there and not from either end.
@@ -11386,7 +11386,7 @@ export function setup(ctx: Ctx, opts?: any) {
     t.style.opacity = "1";
     // Already up, or already on its way up: nothing to start.
     if (was) return;
-    if (!canMove(t)) {
+    if (!canMove(t) || t.__noEntrance) {
       stopToastMove(t);
       return;
     }
@@ -11584,7 +11584,7 @@ export function setup(ctx: Ctx, opts?: any) {
   // retry or the pick the bar is about is still going.
   function showToast(
     msg: string,
-    opts?: { cancel?: () => void; sticky?: boolean; force?: boolean; top?: boolean; kind?: NoteKind; fadeOnly?: boolean },
+    opts?: { cancel?: () => void; sticky?: boolean; force?: boolean; top?: boolean; kind?: NoteKind; noEntrance?: boolean },
   ) {
     if (!cfg.toast && !(opts && opts.force)) return;
     if (!(opts && (opts.cancel || opts.sticky))) {
@@ -11658,7 +11658,7 @@ export function setup(ctx: Ctx, opts?: any) {
       // Sticky and cancellable messages are the ones rewritten in place. Set
       // before the fit, which reads it.
       t.__holds = !!(opts && (opts.cancel || opts.sticky));
-      t.__fadeOnly = !!(opts && opts.fadeOnly);
+      t.__noEntrance = !!(opts && opts.noEntrance);
       hugToast(t);
       toastIn(t);
       ensureReadableTree(t);
@@ -15409,7 +15409,7 @@ export function setup(ctx: Ctx, opts?: any) {
         sticky: true,
         force: true,
         top: true,
-        fadeOnly: true,
+        noEntrance: true,
         cancel: () => finish(null, "Picking canceled."),
       },
     );

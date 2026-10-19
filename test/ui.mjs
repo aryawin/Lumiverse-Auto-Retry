@@ -4560,13 +4560,11 @@ console.log("\npop-ups come up and go down");
   check("no console errors", moving.errors.length + still.errors.length === 0, moving.errors.concat(still.errors));
 
   // The picker's message, "Press and hold your stop button", goes up in the
-  // same click that closes the settings window. Lumiverse takes the window
-  // and its blurred backdrop off the page then, which is a slow frame to
-  // draw, so the message waits two frames and only then fades in, with the
-  // same timing and curve as a card of ours. It does not slide. It fades out,
-  // and the settings window comes back only once it has faded out, so the
-  // window's slow frame does not take the fade. With less motion asked for,
-  // it comes and goes at once.
+  // same click that closes the settings window. It has no way in: it is there
+  // at once. It goes the way a card does, fading and sliding a little, and the
+  // settings window comes back only once it has faded out, so the window's
+  // slow frame does not take the fade. With less motion asked for, it goes
+  // at once too.
   for (const [label, viewport, touch] of [["phone", { width: 390, height: 860 }, true], ["laptop", { width: 1280, height: 860 }, false]]) {
     for (const reducedMotion of ["no-preference", "reduce"]) {
       const page = await browser.newPage({ viewport, hasTouch: touch, isMobile: touch, reducedMotion });
@@ -4612,22 +4610,15 @@ console.log("\npop-ups come up and go down");
         if (!box) return null;
         const windowGone = !open.root.isConnected;
         const shown = box.style.opacity === "1";
-        // The frame Lumiverse draws without its window, and the one after.
-        // The message has not started to move yet.
-        await frame();
+        // The frame Lumiverse draws without its window. The message is
+        // already fully shown in it.
         await frame();
         const heldOpacity = getComputedStyle(box).opacity;
         const moves = box.getAnimations();
-        // How far into its motion the message is in that frame.
-        const heldAt = moves.length ? moves[0].currentTime : null;
         const timing = moves.map((a) => {
           const t = a.effect && a.effect.getTiming ? a.effect.getTiming() : {};
           return { kind: a.constructor.name, duration: t.duration, easing: t.easing };
         });
-        // Every transform the motion passes through. The message only fades.
-        const slides = (list) => list.flatMap((a) => (a.effect && a.effect.getKeyframes ? a.effect.getKeyframes() : []))
-          .map((k) => String(k.transform == null ? "none" : k.transform)).filter((x) => x !== "none" && x !== "");
-        const inSlides = slides(moves);
         await wait(400);
         const landed = { opacity: getComputedStyle(box).opacity, transform: getComputedStyle(box).transform, moving: box.getAnimations().length };
         // Cancel stands the picker down, which takes the message away and
@@ -4638,7 +4629,6 @@ console.log("\npop-ups come up and go down");
         if (!cancel) return { noCancel: true };
         cancel.click();
         const windowAtOnce = opened.length > opensBefore;
-        const outSlides = slides(box.getAnimations());
         const outMoves = box.getAnimations().map((a) => {
           const t = a.effect && a.effect.getTiming ? a.effect.getTiming() : {};
           return { duration: t.duration, easing: t.easing };
@@ -4647,14 +4637,9 @@ console.log("\npop-ups come up and go down");
         await wait(300);
         const gone = getComputedStyle(box).opacity;
         const reopen = opened[opensBefore] || null;
-        // The timing every card of ours uses, read from the stylesheet so
-        // this follows it.
-        const cardRule = [...document.styleSheets].map((x) => { try { return [...x.cssRules].map((r) => r.cssText).join(" "); } catch (_) { return ""; } })
-          .join(" ").match(/\[data-ar-card\]\s*\{\s*animation:\s*(\d+)ms\s+(cubic-bezier\([^)]*\))/);
         teardown();
-        return { inSlides, outSlides, windowAtOnce, reopen: reopen && { after: Math.round(reopen.at - cancelAt), drawn: reopen.drawn },
-          windowGone, shown, heldOpacity, heldAt, timing, landed, outMoves, outOpacity, gone,
-          card: cardRule ? { duration: +cardRule[1], easing: cardRule[2].replace(/\s+/g, "") } : null };
+        return { windowAtOnce, reopen: reopen && { after: Math.round(reopen.at - cancelAt), drawn: reopen.drawn },
+          windowGone, shown, heldOpacity, timing, landed, outMoves, outOpacity, gone };
       });
       await page.close();
       const say = "the picker's message, " + label + (reducedMotion === "reduce" ? ", reduce motion" : "") + ": ";
@@ -4664,13 +4649,8 @@ console.log("\npop-ups come up and go down");
         check(say + "and goes with no animation", !!out && out.outMoves.length === 0 && out.gone === "0", out);
         check(say + "and the settings window comes back at once", !!out && out.windowAtOnce === true, out);
       } else {
-        check(say + "it waits out the frame the window closes in", !!out && out.heldOpacity === "0" && out.heldAt === 0, out);
-        check(say + "it fades in with a card's timing and curve",
-          !!out && !!out.card && out.timing.length === 1 && out.timing[0].kind === "Animation" &&
-            out.timing[0].duration === out.card.duration && String(out.timing[0].easing).replace(/\s+/g, "") === out.card.easing, out);
-        check(say + "it only fades, in and out, with no slide",
-          !!out && out.inSlides.length === 0 && out.outSlides.length === 0, out);
-        check(say + "and lands in place, fully shown, with nothing left running",
+        check(say + "it is there at once, with no way in", !!out && out.timing.length === 0 && out.heldOpacity === "1", out);
+        check(say + "in its own place, fully shown, with nothing running",
           !!out && out.landed.opacity === "1" && out.landed.transform === "none" && out.landed.moving === 0, out);
         check(say + "it fades out the way a card does",
           !!out && out.outOpacity === "0" && out.outMoves.length === 1 && out.outMoves[0].duration === 160 && out.outMoves[0].easing === "ease-in", out);
