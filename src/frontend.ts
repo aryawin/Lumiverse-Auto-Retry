@@ -127,6 +127,18 @@ const AT_ONCE_MAX = 5;
 // The page event raised when Several tries at once adds a reroll. Auto Refine
 // listens for it, so the new reply is refined like one that ended.
 const REROLL_EVENT = "auto-retry:reroll-added";
+// The page events raised when a retry of a chat's reply is set to happen, and
+// when one that was set is called off before it starts. Auto Refine listens,
+// so it does not refine a reply that is about to be replaced, and refines it
+// after all when the retry is called off.
+const RETRYING_EVENT = "auto-retry:retrying";
+const RETRY_OFF_EVENT = "auto-retry:retry-off";
+function tellPage(name: string, chatId: string) {
+  try {
+    if (typeof window !== "undefined" && typeof CustomEvent === "function")
+      window.dispatchEvent(new CustomEvent(name, { detail: { chatId: String(chatId) } }));
+  } catch (_) {}
+}
 // The roles a note may carry, and how each is offered in the panel. One list,
 // because the picker was written out twice: once to build the dropdown and
 // again to check what came back out of it, so adding a role in one place would
@@ -153,7 +165,7 @@ const STREAM_BUF_MAX = 200000;
 
 // Bumped on each release. Shown in the startup log and in the Copy debug info
 // report, so a bug report always says which version it came from.
-const VERSION = "5.20.0";
+const VERSION = "5.20.1";
 
 // Whether two saved settings hold the same values, whatever order their keys
 // were written in. A key left undefined counts as not there, the way it is
@@ -9245,6 +9257,7 @@ export function setup(ctx: Ctx, opts?: any) {
     // more, so the box was left where it was and Cancel looked broken.
     hideToast();
     if (hadPending) {
+      tellPage(RETRY_OFF_EVENT, chatId);
       // The retry this note was armed for is off, so the note goes with it.
       disarmRefusalNote(chatId);
       if (announce) showToast("Auto Retry stopped.");
@@ -9881,6 +9894,7 @@ export function setup(ctx: Ctx, opts?: any) {
       log("retry click produced no generation; resetting stale state", chatId);
       disarmRefusalNote(chatId);
       s.selfTriggered = false;
+      tellPage(RETRY_OFF_EVENT, chatId);
       // The try is not refunded. A click that worked on a host slow to
       // announce it looks exactly like one that did nothing, and refunding on
       // that guess let the reply arrive later and be judged on a full budget
@@ -10089,6 +10103,7 @@ export function setup(ctx: Ctx, opts?: any) {
     // first repaint has something to say rather than a blank second.
     s.retryAt = Date.now() + delay;
     s.retryReason = rl ? "Rate limited" : reason.charAt(0).toUpperCase() + reason.slice(1);
+    tellPage(RETRYING_EVENT, chatId);
     const opening = chatStatus(s);
     showToast(opening ? opening.text : "Retrying", {
       cancel: () => standDown(chatId, true),
@@ -10133,6 +10148,7 @@ export function setup(ctx: Ctx, opts?: any) {
     if (Date.now() < s.suppressUntil) {
       disarmRefusalNote(chatId);
       s.selfTriggered = false;
+      tellPage(RETRY_OFF_EVENT, chatId);
       return;
     }
     // Marked before the click, not after: some builds dispatch the start event
@@ -10151,6 +10167,7 @@ export function setup(ctx: Ctx, opts?: any) {
       s.expectingStart = 0;
       s.selfTriggered = false;
       s.attempts = 0;
+      tellPage(RETRY_OFF_EVENT, chatId);
       return;
     }
     armStartWatchdog(chatId, via, true);

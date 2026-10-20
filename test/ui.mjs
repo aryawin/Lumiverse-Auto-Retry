@@ -4331,6 +4331,54 @@ console.log("\ndropdown focus");
 // so the box stayed up narrating the reply that followed. And standing down
 // hid it only when something was still pending, which after a successful retry
 // is nothing, so pressing Cancel left it exactly where it was.
+// Auto Refine listens in the page for a retry being set and for one being
+// called off, so it leaves a reply that is about to be replaced and refines it
+// after all when the retry is called off.
+console.log("\nthe page is told when a retry is set and called off");
+{
+  const page = await browser.newPage();
+  const errors = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await stage(page, '<div id=modal></div><button data-testid="regenerate">Regenerate</button>');
+  await page.addStyleTag({ content: THEME });
+  await page.addScriptTag({ content: SOURCE, type: "module" });
+  await page.waitForFunction(() => !!window.__setup);
+  const out = await page.evaluate(async () => {
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const heard = [];
+    for (const name of ["auto-retry:retrying", "auto-retry:retry-off"])
+      window.addEventListener(name, (e) => heard.push(name + ":" + (e.detail && e.detail.chatId)));
+    const handlers = {};
+    const teardown = window.__setup(
+      { events: { on: (n, fn) => { handlers[n] = fn; return () => {}; } }, sendToBackend: () => {},
+        ui: { showModal: () => ({ root: document.getElementById("modal"), onDismiss: () => {}, dismiss: () => {} }),
+              registerInputBarAction: () => ({ onClick: () => () => {}, destroy: () => {} }) } },
+      { toast: true, retryDelayMs: 3000, backoffFactor: 1, maxDelayMs: 3000, jitter: false,
+        maxRetries: 3, stuckTimeoutMs: 0, idleTimeoutMs: 0, pauseWhenFailing: false },
+    );
+    // An empty reply, so a retry is set.
+    handlers.GENERATION_STARTED({ chatId: "c7", generationId: "g1" });
+    handlers.GENERATION_ENDED({ chatId: "c7", content: "" });
+    await wait(100);
+    const afterSet = heard.slice();
+    const cancel = [...document.querySelectorAll("#__lvRetryToast button")].find((b) => (b.textContent || "").trim() === "Cancel");
+    if (cancel) cancel.click();
+    await wait(100);
+    const afterCancel = heard.slice();
+    // A good reply sets nothing.
+    handlers.GENERATION_STARTED({ chatId: "c8", generationId: "g2" });
+    handlers.GENERATION_ENDED({ chatId: "c8", content: "She closed the door behind her and sat down by the fire to wait." });
+    await wait(100);
+    teardown();
+    return { afterSet, afterCancel, all: heard.slice(), hadCancel: !!cancel };
+  });
+  await page.close();
+  check("setting a retry tells the page which chat", out.afterSet.join() === "auto-retry:retrying:c7", out);
+  check("calling it off with Cancel tells the page too", out.hadCancel && out.afterCancel.join() === "auto-retry:retrying:c7,auto-retry:retry-off:c7", out);
+  check("a good reply tells the page nothing", out.all.length === 2, out);
+  check("no console errors", errors.length === 0, errors);
+}
+
 console.log("\npop-up goes away");
 {
   const page = await browser.newPage();

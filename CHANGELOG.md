@@ -8,6 +8,16 @@ Versions follow [Semantic Versioning](https://semver.org). A new major version m
 
 ---
 
+## 5.20.1
+
+_2026-10-20_
+
+### Fixed
+
+- **Auto Refine could refine a reply that Auto Retry was about to retry.** Auto Retry waits a few seconds before a retry, and in that time Auto Refine refined the reply and paid for a rewrite that was then replaced. Auto Retry now tells Auto Refine in the page when it sets a retry, and when it calls one off. With Auto Refine 1.46.0 or later, the reply is left, and it is refined after all if the retry is called off. See [With Auto Refine](docs/settings.md#with-auto-refine).
+
+---
+
 ## 5.20.0
 
 _2026-10-19_

@@ -244,6 +244,14 @@ A retry that adds a reroll already leaves the old reply to swipe back to. But re
 - **Clear** drops the one you are looking at.
 - Turn it off with **Keep the reply a retry replaced**, under **How it retries**.
 
+## With Auto Refine
+
+Auto Retry waits a few seconds before a retry. It tells [Auto Refine](https://github.com/starlitcode/Lumiverse-Auto-Refine) in the page when it sets a retry, and when it calls one off.
+
+- Auto Refine leaves a reply that Auto Retry is going to retry, so it does not pay for a rewrite of a reply that is about to be replaced.
+- If the retry is called off, such as when you press **Cancel**, Auto Refine refines the reply after all.
+- This needs Auto Refine 1.46.0 or later.
+
 ## Every option and its default
 
 These are the defaults for a new install. They are in the `CONFIG` block at the top of `src/frontend.ts` and `dist/frontend.js`. `dist/frontend.js` is the file Lumiverse loads.
