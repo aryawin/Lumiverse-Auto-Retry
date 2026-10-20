@@ -142,7 +142,7 @@ const NOTE_FROM_TRY_MAX = 20;
 const STREAM_BUF_MAX = 200000;
 // Bumped on each release. Shown in the startup log and in the Copy debug info
 // report, so a bug report always says which version it came from.
-const VERSION = "5.19.3";
+const VERSION = "5.19.4";
 // Whether two saved settings hold the same values, whatever order their keys
 // were written in. A key left undefined counts as not there, the way it is
 // when saved. Used to tell an update or a put-back that would change nothing.
@@ -251,7 +251,7 @@ const CONFIG = {
     retryOnEmpty: true, // also catches a generation cut off mid-reasoning (reasoning seen, content empty)
     retryOnSpam: true, // the reply is one character over and over, such as "!!!!!!!!" (see spamVerdict)
     retryOnSpamThinking: true, // the thinking is one character over and over, even when the reply after it looks fine
-    retryOnGarbled: true, // words run together across languages and scripts, broken characters, or a switch to another alphabet for the rest of the reply (see garbledVerdict)
+    retryOnGarbled: true, // words run together across languages and scripts, words with no spaces between them, broken characters, or a switch to another alphabet for the rest of the reply (see garbledVerdict and gluedVerdict)
     retryOnLeak: true, // the prompt's own format written into the reply, such as [/INST] or a character card's data (see leakVerdict)
     retryOnLoop: true, // a word or phrase repeated over and over to the end of the reply, a short pattern repeated many times, or words with no punctuation running on to the end (see loopVerdict)
     retryOnTruncated: true, // final content present but cut off mid-sentence (structural heuristic, see looksTruncated)
@@ -714,7 +714,7 @@ const SCHEMA = [
                 run: "broken",
                 label: "It was garbled",
                 type: "bool",
-                hint: "Retry when the reply turns into a jumble: words from several languages run together, broken characters, or a sudden switch to another alphabet.",
+                hint: "Retry when the reply turns into a jumble: mixed languages, words with no spaces, broken characters, or a sudden switch to another alphabet.",
             },
             {
                 key: "retryOnLeak",
@@ -1686,8 +1686,8 @@ function withoutCode(text) {
         .replace(/`[^`\n]*`/g, " ");
 }
 // Broken characters: text decoded with the wrong encoding, such as "Ã©" for
-// "é" or "â€™" for an apostrophe, the replacement character, and control
-// characters. One or two are a provider's slip in a reply that still reads.
+// "é" or "â€™" for an apostrophe, the replacement character, control
+// characters, and a tokenizer's marks for a space or a line break. One or two are a provider's slip in a reply that still reads.
 // A reply counts when there are at least SOUP_MIN_HITS of them and they are at
 // least SOUP_MIN_SHARE of its characters.
 //
@@ -1698,9 +1698,33 @@ const SOUP_MIN_HITS = 8;
 const SOUP_MIN_SHARE = 0.02;
 const SOUP_PAIR = /[\u00C2-\u00C5\u00D0\u00D1\u00E2-\u00E9][\u0080-\u00BF\u0152\u0153\u0160\u0161\u0178\u017D\u017E\u0192\u02C6\u02DC\u2013\u2014\u2018-\u201E\u2020-\u2022\u2026\u2030\u2039\u203A\u20AC\u2122]/g;
 const SOUP_CHAR = /[\uFFFD\u0000-\u0008\u000B\u000C\u000E-\u001F]/g;
+// A model's own word marks printed as text. Some tokenizers store a space as
+// "Ġ" and a line break as "Ċ", and a broken backend can print those in place
+// of the space or the break, as in "HeĠsaidĠyes.ĊShe". Maltese writes Ġ and Ċ
+// as letters at the start of a word: after a space, a hyphen as in "Il-Ġ", or
+// an opening bracket or quotation mark. Those are not counted, and neither is
+// one with a space after it.
+function wordMarks(text) {
+    let n = 0;
+    for (const m of text.matchAll(/[\u0120\u010A]/g)) {
+        const at = m.index || 0;
+        const before = text.charAt(at - 1);
+        const after = text.charAt(at + 1);
+        if (!before || /\s/.test(before) || !after || /\s/.test(after))
+            continue;
+        if (/[-([{\u201c\u2018]/.test(before))
+            continue;
+        if (/["'*_]/.test(before) && (at < 2 || /\s/.test(text.charAt(at - 2))))
+            continue;
+        n++;
+    }
+    return n;
+}
 function soupVerdict(visible) {
     const text = withoutCode(visible);
-    const hits = (text.match(SOUP_PAIR) || []).length + (text.match(SOUP_CHAR) || []).length;
+    const hits = (text.match(SOUP_PAIR) || []).length +
+        (text.match(SOUP_CHAR) || []).length +
+        wordMarks(text);
     if (hits < SOUP_MIN_HITS)
         return false;
     const size = text.replace(/\s+/g, "").length;
@@ -1771,6 +1795,66 @@ function spanIsSetApart(text, start) {
     if (/^[ \t]*_/.test(before) || /[\s(]_[^_\s]*$/.test(before))
         return true;
     return /:[ \t]*$/.test(text.slice(0, start).replace(/[^\p{L}\p{N}:]*$/u, ""));
+}
+// Words run together with no spaces, as in "shesaidshewasstillwaiting". A
+// model breaking down can drop its spaces for whole sentences. A run counts
+// when it is GLUED_MIN or more plain letters, a to z, with GLUED_DISTINCT or
+// more different letters in it. That leaves out a held sound such as
+// "nooooooo", a short keysmash, and words with accents, such as German
+// compounds with ä or ü. Web addresses, handles, hashtags and email addresses
+// are left out first, and a few well-known long words are allowed.
+//
+// One long English word can turn up in a good reply, so one run is not
+// enough. A reply counts when GLUED_WINDOW words in a row hold three runs, or
+// two runs where one is GLUED_LONG letters or more.
+//
+// Only a reply in English is judged. German and Dutch write long words on
+// purpose. A reply of GLUED_LANG_WORDS words or more is English here when at
+// least GLUED_ENGLISH of its words are among the most common English ones. A
+// shorter reply is judged either way, since a reply whose words all run
+// together has few words to count.
+const GLUED_MIN = 18;
+const GLUED_LONG = 30;
+const GLUED_DISTINCT = 10;
+const GLUED_WINDOW = 80;
+const GLUED_LANG_WORDS = 40;
+const GLUED_ENGLISH = 0.06;
+const GLUED_COMMON = new Set("the and a an to of in i you he she it was her his him that with for on at but not is as my me so we they be had have this just".split(" "));
+const GLUED_KNOWN = /^(?:supercalifragilisticexpialidocious|pneumonoultramicroscopicsilicovolcanoconiosis|antidisestablishmentarianism|floccinaucinihilipilification|hippopotomonstrosesquippedaliophobia|incomprehensibilities|uncharacteristically|counterrevolutionary|internationalization|institutionalization)$/i;
+function gluedVerdict(visible) {
+    const text = withoutCode(visible).replace(/\bhttps?:\/\/\S+|\bwww\.\S+|\S+@\S+\.\S+|[@#][\w.-]+/gi, " ");
+    const words = text.split(/\s+/).filter(Boolean);
+    if (words.length >= GLUED_LANG_WORDS) {
+        let common = 0;
+        for (const w of words)
+            if (GLUED_COMMON.has(w.toLowerCase().replace(/^[^a-z]+|[^a-z]+$/g, "")))
+                common++;
+        if (common / words.length < GLUED_ENGLISH)
+            return false;
+    }
+    const runs = [];
+    words.forEach((word, at) => {
+        // Every run of letters, so a letter with an accent splits nothing: a run
+        // holding one is not English and is passed over whole.
+        for (const m of word.matchAll(/\p{L}+/gu)) {
+            const run = m[0];
+            if (!/^[A-Za-z]+$/.test(run))
+                continue;
+            if (run.length < GLUED_MIN || run === run.toUpperCase() || GLUED_KNOWN.test(run))
+                continue;
+            if (new Set(run.toLowerCase()).size < GLUED_DISTINCT)
+                continue;
+            runs.push({ at: at, size: run.length });
+        }
+    });
+    for (let k = 0; k < runs.length; k++) {
+        const near = runs.filter((r) => r.at >= runs[k].at && r.at < runs[k].at + GLUED_WINDOW);
+        if (near.length >= 3)
+            return true;
+        if (near.length >= 2 && near.some((r) => r.size >= GLUED_LONG))
+            return true;
+    }
+    return false;
 }
 // The prompt's own format written into the reply. A model that runs past the
 // end of its turn can write the template's markers, the start of your next
@@ -1854,7 +1938,9 @@ function leakVerdict(content, cfg) {
 //   languages are written without punctuation.
 const LOOP_WHY = "stuck repeating or rambling";
 const LOOP_MIN_REPEATS = 10;
-const LOOP_MIN_WORDS = 60;
+// The loop's size in words, counting every repeat. A one-word loop such as
+// "and, and, and," needs this many repeats, and a three-word one needs ten.
+const LOOP_MIN_WORDS = 30;
 const LOOP_MAX_UNIT = 12;
 const LOOP_CHAR_REPEATS = 60;
 const LOOP_LETTER_REPEATS = 150;
@@ -3354,7 +3440,7 @@ function replyProblem(content, thought, cfg) {
     }
     if (cfg.retryOnGarbled) {
         const visible = stripMarkup(stripThinkingAlways(content, cfg));
-        if (garbledVerdict(visible) || soupVerdict(visible) || switchVerdict(visible))
+        if (garbledVerdict(visible) || soupVerdict(visible) || switchVerdict(visible) || gluedVerdict(visible))
             return "garbled";
     }
     if (cfg.retryOnLeak && leakVerdict(content, cfg))
@@ -16196,6 +16282,7 @@ export const __testing = {
     replyProblem,
     garbledVerdict,
     soupVerdict,
+    gluedVerdict,
     switchVerdict,
     leakVerdict,
     loopVerdict,

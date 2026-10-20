@@ -12,7 +12,7 @@
 import { expect, test, describe } from "bun:test";
 import { __testing } from "../src/frontend";
 
-const { soupVerdict, switchVerdict, leakVerdict, loopVerdict, garbledVerdict, replyProblem } = __testing as any;
+const { soupVerdict, switchVerdict, gluedVerdict, leakVerdict, loopVerdict, garbledVerdict, replyProblem } = __testing as any;
 const cfg = { ...(__testing as any).CONFIG };
 
 const scene =
@@ -30,12 +30,22 @@ describe("broken characters", () => {
         "lay on the table beside the Ã©clair and the piÃ±ata, and nobody knew whatâ€™s next.",
     ],
     ["replacement characters and control characters", scene + "��\u0001 the �� lamp \u0002���\u0003 went �� out."],
+    [
+      "a tokenizer's marks for a space and a line break printed as text",
+      scene +
+        "He\u0120set\u0120the\u0120cup\u0120down.\u010A\"Fine.\"\u0120She\u0120turned\u0120to\u0120the\u0120window\u0120and\u0120waited.\u010A" +
+        "The\u0120rain\u0120kept\u0120on.",
+    ],
   ];
   const fine: Array<[string, string]> = [
     ["one slip in a reply that reads", scene + "She said itâ€™s fine."],
     ["French with its accents", scene + "\"Très bien, à demain,\" said Élodie. \"Ça va? Le café était déjà fermé.\""],
     ["Spanish punctuation", scene + "\"¿Dónde está el señor?\" asked Inés. \"¡Allí, junto a la puerta!\""],
     ["a redacted file", scene + "The report read: Subject ████████ was moved to ██████ on the third night."],
+    [
+      "Maltese, which writes \u0120 and \u010A as letters at the start of a word",
+      "Il-\u0120imgħa li għaddiet \u0120ejt id-dar. \"\u010Airasa u \u0120obon,\" qalet. Il-\u0120urnata kienet sabiħa (\u010Aertament). ".repeat(4),
+    ],
   ];
   for (const [label, text] of broken) test("caught: " + label, () => expect(soupVerdict(text)).toBe(true));
   for (const [label, text] of fine) test("left alone: " + label, () => expect(soupVerdict(text)).toBe(false));
@@ -72,6 +82,44 @@ describe("a switch to another alphabet for the rest of the reply", () => {
   test("left alone: a passage in Russian in a quoted block", () => {
     expect(switchVerdict(scene + scene + "\n> " + russianTail)).toBe(false);
   });
+});
+
+describe("words run together with no spaces", () => {
+  const broken: Array<[string, string]> = [
+    [
+      "narration that drops its spaces",
+      scene +
+        "*Tamsin'sshouldersloosenedalittle,butshekeptherfacestill.* She stood. Hethoughtaboutthebridgeandtheriverthatnight " +
+        "and saidnothingatallforthelongestwhile.",
+    ],
+    [
+      "a short reply that falls apart into joined words",
+      "\"Fine, I only wanted to go home as fast aspossibly can, lol . ... ughfinewhateverOrrinpal. Vessa ko Orrin " +
+        "laterdriftedwantedtoanswerramsleevesat2nd, he ffornelved rider the khin pon ei unmaking oxvlet " +
+        "Ebrandat QRTloomsal)- !! ` \" n .\"T vrnumber Wrongreturnedsfasde le corridera)' sankfistem leaningpath tor",
+    ],
+  ];
+  const fine: Array<[string, string]> = [
+    ["one long word in a good reply", scene + "It was, she said, uncharacteristically quiet for a market day, and disproportionately cold."],
+    ["a well-known long word", scene + "\"Supercalifragilisticexpialidocious,\" Orrin sang, badly, and Tamsin threw a glove at him."],
+    ["a scream held long", scene + "\"Noooooooooooooooooooooooooooooooooooooooooo!\" and then \"Ahhhhhhhhhhhhhhhhhhhhhhhhhhhhh!\""],
+    ["a keysmash in a text message", scene + "Her phone buzzed: asdfghjkasdfgjhkasdfgh and sdkjfhsdkjfhskdjfh lol."],
+    ["web addresses, hashtags and handles", scene + "See https://example.com/averylongpathwithoutanyspacesinit and #averylonghashtagwithnospaces from @averylongusernamehereforsure."],
+    ["one text message written with no spaces", scene + "It read: iamsorryicouldnotfindyouanywhere. She put the phone away."],
+    [
+      "a reply in German with long words",
+      ("Die Kraftfahrzeughaftpflichtversicherung war teuer, sagte sie leise. Er nickte nur und las die Liste der " +
+        "Rechtsschutzversicherungsgesellschaften noch einmal durch, bevor er den Brief faltete. Draussen fuhr die " +
+        "Strassenbahn vorbei, und die Donaudampfschifffahrtsgesellschaft hatte wieder geschrieben. ").repeat(2),
+    ],
+    [
+      "a reply in Dutch with long words",
+      ("De Arbeidsongeschiktheidsverzekering was duur, zei ze zacht. Hij knikte en las de Kinderbijslagvoorzieningen " +
+        "nog een keer door. Buiten reed de tram voorbij en de Hoogspanningsverbindingen zoemden. ").repeat(3),
+    ],
+  ];
+  for (const [label, text] of broken) test("caught: " + label, () => expect(gluedVerdict(text)).toBe(true));
+  for (const [label, text] of fine) test("left alone: " + label, () => expect(gluedVerdict(text)).toBe(false));
 });
 
 describe("the prompt's format leaked into the reply", () => {
@@ -111,6 +159,7 @@ describe("stuck repeating or rambling", () => {
     ["a loop inside dialogue that never closes", scene + "\"I do not know, " + "I do not know, ".repeat(25)],
     ["a loop inside asterisks that never close", scene + "*She ran and " + "she ran and ".repeat(25)],
     ["a pattern of digits after a colon", scene + "The total was: " + "1.".repeat(120)],
+    ["one word and a comma repeated to the end", scene + "The tired, hopeful, small, " + "and, ".repeat(40) + "and,"],
   ];
   const fine: Array<[string, string]> = [
     ["a chant with the scene carrying on after it", scene + "\"Run, run, run, run, run, run!\" Tamsin shouted, and they ran for the trees."],
@@ -138,6 +187,8 @@ describe("stuck repeating or rambling", () => {
     ["lines written out many times after a colon", scene + "She wrote it out: " + "I will not feed the mule from the table. ".repeat(20)],
     ["a chant in a quoted block", scene + "\n> " + "the bells, the bells, ".repeat(40)],
     ["a refrain sung three times", scene + "\"Down by the water, down by the water,\" she sang. \"Down by the water we go.\""],
+    ["one word shouted many times in quotation marks that close", scene + "\"" + "and, ".repeat(25) + "and!\" she shouted, then laughed."],
+    ["one word hummed fewer times than a loop needs, at the end", scene + "She hummed under her breath, " + "la ".repeat(24) + "la."],
   ];
   for (const [label, text] of broken) test("caught: " + label, () => expect(loopVerdict(text)).toBe(true));
   for (const [label, text] of fine) test("left alone: " + label, () => expect(loopVerdict(text)).toBe(false));
@@ -170,6 +221,12 @@ describe("each check has its switch, and they are on by default", () => {
   test("and not with its switch off", () => expect(replyProblem(loop, "", { ...cfg, retryOnLoop: false })).not.toBe("stuck repeating or rambling"));
   test("broken characters count as garbled", () => {
     expect(replyProblem(scene + "��\u0001 the �� lamp \u0002���\u0003 went �� out.", "", cfg)).toBe("garbled");
+  });
+  test("words run together count as garbled", () => {
+    expect(replyProblem(scene + "Hethoughtaboutthebridgeandtheriverthatnight and saidnothingatallforthelongestwhile, then sat.", "", cfg)).toBe("garbled");
+  });
+  test("a tokenizer's marks count as garbled", () => {
+    expect(replyProblem(scene + "He\u0120set\u0120the\u0120cup\u0120down.\u010A\"Fine.\"\u0120She\u0120turned\u0120away\u0120again.", "", cfg)).toBe("garbled");
   });
   test("all of them are on by default", () => {
     expect(cfg.retryOnGarbled && cfg.retryOnLeak && cfg.retryOnLoop).toBe(true);

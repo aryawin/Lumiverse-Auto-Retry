@@ -8,6 +8,19 @@ Versions follow [Semantic Versioning](https://semver.org). A new major version m
 
 ---
 
+## 5.19.4
+
+_2026-10-19_
+
+### Fixed
+
+- **Some broken replies were not retried.** Three kinds got past **It was garbled** and **It got stuck repeating or rambling**:
+  - A reply whose words run together with no spaces, such as `shesatbythewindowandwaited`. **It was garbled** now counts it. One long word, a held sound such as `nooooooo`, web addresses, and German or Dutch are left alone. See [Garbled replies](docs/detection.md#garbled-replies).
+  - A reply with a model's own marks for a space and a line break printed in it, `Ġ` and `Ċ`, as in `HeĠsatĠdown`. **It was garbled** now counts these as broken characters. Maltese, which writes them as letters, is left alone.
+  - One word repeated to the end, such as `and, and, and,`. **It got stuck repeating or rambling** needed 60 words of loop. It now needs 30, so one word repeated 30 times counts, and a phrase of three words still needs 10 repeats.
+
+---
+
 ## 5.19.3
 
 _2026-10-19_

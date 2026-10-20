@@ -67,14 +67,21 @@ One kind on its own is left alone, because each can turn up in a good reply.
 
 A reply that starts in English and then breaks into a jumble that is mostly Chinese still counts. The first 300 letters decide which alphabet the reply is written in.
 
-The same switch also covers two more kinds of breakdown.
+The same switch also covers three more kinds of breakdown.
 
-**Broken characters.** Text read with the wrong encoding looks like `cafÃ©` for `café`, or `Orrinâ€™s` for `Orrin's`. Some providers also send the replacement character `�` or invisible control characters. A reply counts when:
+**Broken characters.** Text read with the wrong encoding looks like `cafÃ©` for `café`, or `Orrinâ€™s` for `Orrin's`. Some providers also send the replacement character `�` or invisible control characters. A broken backend can also print the model's own marks for a space and a line break, `Ġ` and `Ċ`, as in `HeĠsatĠdown.ĊShe`. A reply counts when:
 
 - there are at least 8 of these, and
 - they are at least 2% of its characters.
 
-One or two in a reply that still reads are left alone.
+One or two in a reply that still reads are left alone. Maltese writes `Ġ` and `Ċ` as letters at the start of a word, so those are not counted: after a space, a hyphen as in `Il-Ġurnata`, or an opening bracket or quotation mark.
+
+**Words run together with no spaces.** A model can drop its spaces, as in `shesatbythewindowandwaited`. A run counts when it is at least 18 letters, a to z, with at least 10 different letters in it. A reply counts when any 80 words in a row hold:
+
+- three runs, or
+- two runs, where one is at least 30 letters.
+
+Only a reply in English is judged. A reply of 40 words or more counts as English when at least 6% of its words are among the most common English words, such as "the", "and" and "she".
 
 **A switch to another alphabet for the rest of the reply.** A model can drift from English into Russian or Chinese and never come back. A reply counts when:
 
@@ -98,6 +105,10 @@ One or two in a reply that still reads are left alone.
   - after a colon, as in "The letter read:"
 - a passage in another alphabet with English after it
 - a reply written in another alphabet from the start
+- one long word, or a well-known one such as "supercalifragilisticexpialidocious"
+- a held sound such as `nooooooo`, and a short keysmash
+- web addresses, hashtags, handles and email addresses
+- a reply in German or Dutch, which write long words on purpose, and any word with an accented letter in it
 
 The thinking is not checked, only the reply.
 
@@ -136,7 +147,7 @@ A model can get stuck. It repeats one word, phrase or sentence until it runs out
 
 Any one of these counts:
 
-- **A loop to the end.** A run of 1 to 12 words repeated at least 10 times in a row, at least 60 words in all, reaching the end of the reply. The last repeat can stop partway.
+- **A loop to the end.** A run of 1 to 12 words repeated at least 10 times in a row, at least 30 words in all, reaching the end of the reply. The last repeat can stop partway. So one word such as `and,` needs 30 repeats, and a phrase of three words needs 10.
 - **A short pattern repeated hundreds of times.** A pattern of 2 to 4 characters with a letter or a digit in it, repeated at least 60 times in a row, such as `1.1.1.1.` A pattern of letters only, such as `haha`, needs 150 repeats.
 - **A run-on to the end.** At least 150 words in a row on one line with no punctuation, reaching the end of the reply.
 

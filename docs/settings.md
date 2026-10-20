@@ -276,7 +276,7 @@ These are the defaults for a new install. They are in the `CONFIG` block at the 
 | retryOnEmpty | true | Retry empty replies, and replies cut off while the model is still thinking. |
 | retryOnSpam | true | Retry when the reply is one character over and over, such as `!!!!!!!!`. |
 | retryOnSpamThinking | true | Retry when the thinking is one character over and over, even when the reply after it looks fine. |
-| retryOnGarbled | true | Retry a reply that turned into a jumble: words from several languages and alphabets run together, broken characters, or a switch to another alphabet for the rest of the reply. See [Garbled replies](detection.md#garbled-replies). |
+| retryOnGarbled | true | Retry a reply that turned into a jumble: words from several languages and alphabets run together, words with no spaces between them, broken characters, or a switch to another alphabet for the rest of the reply. See [Garbled replies](detection.md#garbled-replies). |
 | retryOnLeak | true | Retry a reply that runs into the prompt's own markers, such as `[/INST]`, or a character card's data. See [Leaked prompt format](detection.md#leaked-prompt-format). |
 | retryOnLoop | true | Retry a reply that repeats a word or phrase over and over to the end, or runs on for hundreds of words with no punctuation. See [Stuck repeating or rambling](detection.md#stuck-repeating-or-rambling). |
 | retryOnTruncated | true | Retry a reply that ends mid-sentence. |
