@@ -8,9 +8,17 @@ Versions follow [Semantic Versioning](https://semver.org). A new major version m
 
 ---
 
-## 5.19.4
+## 5.20.0
 
 _2026-10-19_
+
+### Added
+
+- **The thinking is checked for a jumble and for a loop.** Two new switches, both on by default, under **When to count a reply as bad**, in **Broken replies**:
+  - **Its thinking was garbled** retries when the thinking turns into a jumble of languages, words with no spaces, or broken characters.
+  - **Its thinking got stuck repeating** retries when the thinking repeats a word or phrase over and over to its end.
+
+  Both retry even when the reply after the thinking looks fine. A switch to another alphabet and a long plan with no punctuation are left alone in the thinking, since models think that way on purpose. If you had turned off **It was garbled** or **It got stuck repeating or rambling**, the new thinking switch starts off too. See [The thinking](docs/detection.md#the-thinking).
 
 ### Fixed
 

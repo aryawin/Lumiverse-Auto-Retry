@@ -122,6 +122,50 @@ describe("words run together with no spaces", () => {
   for (const [label, text] of fine) test("left alone: " + label, () => expect(gluedVerdict(text)).toBe(false));
 });
 
+describe("the thinking, judged on its own", () => {
+  const plan =
+    "The reader wants Tamsin to answer Orrin about the bridge. Keep it short and dry. She is tired, so no long speech. " +
+    "Mention the coat on the peg, and leave the strap for him to bring up. ";
+  const reply = "\"It was out,\" Tamsin said, and sat down by the stove. Orrin went on with the strap.";
+  const jumble =
+    "然后system拒绝了道路data处理 cartQ 心理model训练集准确率 lampFRS 桥已经断了 stoveTL 没有人知道 strap路径 " +
+    "awlRMB 数据集验证结果为 barnLWN 他们的mapping继续 muleQ 水还在不断上涨 pegTRV 天也越来越黑 coatFRN 结果 ";
+  const loop = plan + "Wait, let me check the bridge again. ".repeat(14);
+  const caught: Array<[string, string, string, string]> = [
+    ["garbled thinking sent apart from the reply", reply, plan + plan + jumble.repeat(3), "thinking was garbled"],
+    ["garbled thinking written into the reply", "<think>" + plan + plan + jumble.repeat(3) + "</think>\n\n" + reply, "", "thinking was garbled"],
+    ["thinking with words run together", reply, plan + "Shewantstoanswerhimabouttheriverquickly and thenmaybementionthecoatonthepegafter, ok.", "thinking was garbled"],
+    ["thinking stuck repeating to its end, sent apart", reply, loop, "thinking got stuck repeating"],
+    ["thinking stuck repeating to its end, written into the reply", "<think>" + loop + "</think>\n\n" + reply, "", "thinking got stuck repeating"],
+    [
+      "a loop after a draft of the reply's first line, written into the reply",
+      "<think>" + plan + "Draft: " + reply + " " + "Wait, let me check the bridge again. ".repeat(14) + "</think>\n\n" + reply,
+      "",
+      "thinking got stuck repeating",
+    ],
+  ];
+  const fine: Array<[string, string, string]> = [
+    ["thinking in Chinese from the start", reply, "读者希望塔姆辛回答关于桥的问题。保持简短，语气干脆。她很累，所以不要长篇大论。提到挂在钉子上的外套。".repeat(4)],
+    ["thinking that switches to Chinese partway", reply, plan + plan + "然后我想一想，她应该怎么回答这个问题，保持简短，语气干脆，不要太长，提到外套。".repeat(2)],
+    ["thinking that says the same thing a few times and goes on", reply, plan + "Wait, let me check. ".repeat(4) + plan],
+    [
+      "a long plan with no punctuation",
+      reply,
+      Array.from({ length: 170 }, (_, i) => ["keep", "her", "voice", "short", "and", "tired", "then", "the", "coat", "goes", "on", "a", "peg", "by", "door"][i % 15] + (i % 4 ? "" : "s")).join(" "),
+    ],
+    ["a reply whose first line is drafted in the thinking", reply, plan + "Draft: \"It was out,\" Tamsin said, and sat down by the stove. Good."],
+  ];
+  for (const [label, content, thought, why] of caught)
+    test("caught: " + label, () => expect(replyProblem(content, thought, cfg)).toBe(why));
+  for (const [label, content, thought] of fine)
+    test("left alone: " + label, () => expect(replyProblem(content, thought, cfg)).toBe(""));
+  test("each has its own switch", () => {
+    expect(replyProblem(reply, plan + plan + jumble.repeat(3), { ...cfg, retryOnGarbledThinking: false })).toBe("");
+    expect(replyProblem(reply, loop, { ...cfg, retryOnLoopThinking: false })).toBe("");
+  });
+  test("and both are on by default", () => expect(cfg.retryOnGarbledThinking && cfg.retryOnLoopThinking).toBe(true));
+});
+
 describe("the prompt's format leaked into the reply", () => {
   const broken: Array<[string, string]> = [
     ["an instruction marker and card data", scene + "Here. [/INST] [Character(\"Pell\")][Occupation(\"miller\")] Backstory: Pell grew up by the weir."],

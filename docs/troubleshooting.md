@@ -37,6 +37,7 @@ To stop it happening again, look at the reason. Each has its own switch under **
 - **one character over and over**: turn off **It was one character over and over**. It only fires when one character is most of the reply.
 - **thinking was one character over and over**: turn off **Its thinking was one character over and over**. The reply may have looked fine, and it is kept on the **Replaced** tab.
 - **garbled**: turn off **It was garbled**. It only fires on many broken words or characters, or a long switch to another alphabet that runs to the end.
+- **thinking was garbled** or **thinking got stuck repeating**: turn off **Its thinking was garbled** or **Its thinking got stuck repeating**. The reply may have looked fine, and it is kept on the **Replaced** tab.
 - **leaked the prompt's format**: turn off **It leaked the prompt's format**. It only fires on markers no story uses, such as `[/INST]`, outside code.
 - **stuck repeating or rambling**: turn off **It got stuck repeating or rambling**. It only fires when the repeats or the run-on reach the end of the reply.
 - **short**: turn off **It was very short**, or lower **What counts as "very short"**.

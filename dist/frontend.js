@@ -142,7 +142,7 @@ const NOTE_FROM_TRY_MAX = 20;
 const STREAM_BUF_MAX = 200000;
 // Bumped on each release. Shown in the startup log and in the Copy debug info
 // report, so a bug report always says which version it came from.
-const VERSION = "5.19.4";
+const VERSION = "5.20.0";
 // Whether two saved settings hold the same values, whatever order their keys
 // were written in. A key left undefined counts as not there, the way it is
 // when saved. Used to tell an update or a put-back that would change nothing.
@@ -252,8 +252,10 @@ const CONFIG = {
     retryOnSpam: true, // the reply is one character over and over, such as "!!!!!!!!" (see spamVerdict)
     retryOnSpamThinking: true, // the thinking is one character over and over, even when the reply after it looks fine
     retryOnGarbled: true, // words run together across languages and scripts, words with no spaces between them, broken characters, or a switch to another alphabet for the rest of the reply (see garbledVerdict and gluedVerdict)
+    retryOnGarbledThinking: true, // the thinking is garbled, judged as the reply is apart from a switch to another alphabet, even when the reply after it looks fine (see thinkingProblem)
     retryOnLeak: true, // the prompt's own format written into the reply, such as [/INST] or a character card's data (see leakVerdict)
     retryOnLoop: true, // a word or phrase repeated over and over to the end of the reply, a short pattern repeated many times, or words with no punctuation running on to the end (see loopVerdict)
+    retryOnLoopThinking: true, // the thinking is stuck repeating to its end, even when the reply after it looks fine (see thinkingProblem)
     retryOnTruncated: true, // final content present but cut off mid-sentence (structural heuristic, see looksTruncated)
     // Also treat "the reply stops on a letter" as cut off. The test for an
     // ending reads any script's punctuation, and an emoji, so a scene closing on
@@ -717,6 +719,13 @@ const SCHEMA = [
                 hint: "Retry when the reply turns into a jumble: mixed languages, words with no spaces, broken characters, or a sudden switch to another alphabet.",
             },
             {
+                key: "retryOnGarbledThinking",
+                run: "broken",
+                label: "Its thinking was garbled",
+                type: "bool",
+                hint: "Retry when the thinking turns into a jumble or broken characters, even when the reply after it looks fine.",
+            },
+            {
                 key: "retryOnLeak",
                 run: "broken",
                 label: "It leaked the prompt's format",
@@ -729,6 +738,13 @@ const SCHEMA = [
                 label: "It got stuck repeating or rambling",
                 type: "bool",
                 hint: "Retry when a word or phrase repeats over and over to the end, or hundreds of words run on with no punctuation.",
+            },
+            {
+                key: "retryOnLoopThinking",
+                run: "broken",
+                label: "Its thinking got stuck repeating",
+                type: "bool",
+                hint: "Retry when the thinking repeats a word or phrase over and over to its end, even when the reply after it looks fine.",
             },
             {
                 key: "retryOnEmpty",
@@ -1533,15 +1549,22 @@ function spamVerdict(content, reasoning, cfg, look) {
         return "reply";
     return "";
 }
-// Settings saved before the thinking had a switch of its own. The one switch
-// then covered the reply and the thinking, so somebody who turned it off keeps
-// both off rather than finding the thinking check back on after updating.
-function carrySpamSwitch(saved) {
+// Settings saved before a check had a switch for the thinking. Somebody who
+// turned the reply's switch off keeps the thinking's off too, rather than
+// finding a new check on after updating.
+const THINKING_SWITCHES = [
+    ["retryOnSpam", "retryOnSpamThinking"],
+    ["retryOnGarbled", "retryOnGarbledThinking"],
+    ["retryOnLoop", "retryOnLoopThinking"],
+];
+function carryThinkingSwitches(saved) {
     if (!saved || typeof saved !== "object")
         return saved;
-    if (saved.retryOnSpam === false && !("retryOnSpamThinking" in saved))
-        return Object.assign({}, saved, { retryOnSpamThinking: false });
-    return saved;
+    let out = saved;
+    for (const [reply, thinking] of THINKING_SWITCHES)
+        if (saved[reply] === false && !(thinking in saved))
+            out = Object.assign({}, out, { [thinking]: false });
+    return out;
 }
 // A reply that has turned into a jumble: words from several languages and
 // scripts run together, capitals in the middle of words, scraps of other
@@ -1945,7 +1968,7 @@ const LOOP_MAX_UNIT = 12;
 const LOOP_CHAR_REPEATS = 60;
 const LOOP_LETTER_REPEATS = 150;
 const LOOP_RUN_ON = 150;
-function loopVerdict(visible) {
+function loopVerdict(visible, runOn = true) {
     const plain = withoutCode(visible);
     const chars = new RegExp("([^\\s]{2,4}?)\\1{" + (LOOP_CHAR_REPEATS - 1) + ",}", "gu");
     for (const hit of plain.matchAll(chars)) {
@@ -1967,7 +1990,7 @@ function loopVerdict(visible) {
             continue;
         run = /^[\p{Script=Latin}\p{Script=Greek}\p{Script=Cyrillic}\p{N}]+(?:['\u2019-][\p{Script=Latin}\p{Script=Greek}\p{Script=Cyrillic}\p{N}]+)*$/u.test(t) ? run + 1 : 0;
     }
-    if (run >= LOOP_RUN_ON)
+    if (runOn && run >= LOOP_RUN_ON)
         return true;
     // Each word with where it starts and ends, so a loop can be placed in the
     // text. A mark on its own, such as a lone quotation mark, is not a word.
@@ -3414,6 +3437,53 @@ function isOwnHardFailure(text, cfg) {
             return true;
     return false;
 }
+// The thinking judged on its own, with the reply's checks for a jumble and
+// for a loop. Each part of the thinking is judged apart: the thinking sent
+// separately, and the thinking written into the reply in front of it, so a
+// loop has to reach the end of its own part. Two of the reply's rules are left
+// out, since thinking does these on purpose: a switch to another alphabet,
+// which some models think in, and a long run of words with no punctuation.
+const THINKING_GARBLED_WHY = "thinking was garbled";
+const THINKING_LOOP_WHY = "thinking got stuck repeating";
+// Tags and control tokens around the thinking, which are not words in it.
+const THINKING_TAGS = /<\/?\|?[\w:|-]{1,40}\|?>|\[\/?[\w-]{1,40}\]/g;
+function thinkingParts(content, thought, cfg) {
+    const parts = [];
+    if (String(thought || "").trim())
+        parts.push(String(thought));
+    // The thinking written into the reply is whatever comes before the visible
+    // reply: a block at the start, or a plan and a block. With no visible reply
+    // at all, every word of it is thinking.
+    const raw = String(content == null ? "" : content);
+    const visible = stripThinkingAlways(raw, cfg).trim();
+    let inline = "";
+    if (!visible)
+        inline = raw;
+    else {
+        // The last place the reply's opening words stand where the whole reply
+        // still fits after them. A draft of the first line inside the thinking
+        // comes earlier and is passed over.
+        const at = raw.lastIndexOf(visible.slice(0, 40), Math.max(0, raw.length - visible.length));
+        if (at > 0)
+            inline = raw.slice(0, at);
+    }
+    inline = inline.replace(THINKING_TAGS, " ");
+    if (inline.trim())
+        parts.push(inline);
+    return parts;
+}
+function thinkingProblem(content, thought, cfg) {
+    if (!cfg.retryOnGarbledThinking && !cfg.retryOnLoopThinking)
+        return "";
+    for (const part of thinkingParts(content, thought, cfg)) {
+        const text = stripMarkup(part);
+        if (cfg.retryOnGarbledThinking && (garbledVerdict(text) || soupVerdict(text) || gluedVerdict(text)))
+            return THINKING_GARBLED_WHY;
+        if (cfg.retryOnLoopThinking && loopVerdict(text, false))
+            return THINKING_LOOP_WHY;
+    }
+    return "";
+}
 // What a reply with text in it should be retried for, in the order the checks
 // run, or "" when it passes. HARD_FAILURE means one of your own hard failures,
 // which is never retried. Used for a reply that ended in the chat and for each
@@ -3447,6 +3517,9 @@ function replyProblem(content, thought, cfg) {
         return LEAK_WHY;
     if (cfg.retryOnLoop && loopVerdict(stripMarkup(stripThinkingAlways(content, cfg))))
         return LOOP_WHY;
+    const inThinking = thinkingProblem(content, thought, cfg);
+    if (inThinking)
+        return inThinking;
     if (cfg.retryOnTruncated && looksTruncated(content, cfg.retryOnNoPunct, cfg))
         return "cut off";
     if (cfg.retryOnRefusal) {
@@ -7347,7 +7420,7 @@ export function setup(ctx, opts) {
         if (parsed.confirmButtonsCustom == null &&
             String(parsed.confirmButtonLabels || "").trim())
             parsed = Object.assign({}, parsed, { confirmButtonsCustom: true });
-        parsed = carrySpamSwitch(parsed);
+        parsed = carryThinkingSwitches(parsed);
         for (const g of SCHEMA)
             for (const f of g.fields) {
                 if (!(f.key in parsed))
@@ -7503,8 +7576,10 @@ export function setup(ctx, opts) {
                 "retryOnSpam",
                 "retryOnSpamThinking",
                 "retryOnGarbled",
+                "retryOnGarbledThinking",
                 "retryOnLeak",
                 "retryOnLoop",
+                "retryOnLoopThinking",
                 "retryOnTruncated",
                 "retryOnNoPunct",
                 "retryOnShort",
@@ -8106,7 +8181,7 @@ export function setup(ctx, opts) {
     // Copy a preset's stored values into the live config, coercing each key.
     function applyPresetValues(kind, values) {
         let n = 0;
-        values = carrySpamSwitch(values);
+        values = carryThinkingSwitches(values);
         for (const k of keysForKind(kind)) {
             if (!values || !(k in values))
                 continue;
@@ -10243,8 +10318,10 @@ export function setup(ctx, opts) {
         "thinking was one character over and over",
         "one character over and over",
         "garbled",
+        THINKING_GARBLED_WHY,
         LEAK_WHY,
         LOOP_WHY,
+        THINKING_LOOP_WHY,
         "cut off",
         REFUSAL_REASON,
         BREAKOFF_REASON,
@@ -16283,6 +16360,7 @@ export const __testing = {
     garbledVerdict,
     soupVerdict,
     gluedVerdict,
+    thinkingProblem,
     switchVerdict,
     leakVerdict,
     loopVerdict,
@@ -16299,7 +16377,7 @@ export const __testing = {
     errorText,
     looksTruncated,
     spamVerdict,
-    carrySpamSwitch,
+    carryThinkingSwitches,
     sayTime,
     normalizeForMatch,
     splitPhrases,

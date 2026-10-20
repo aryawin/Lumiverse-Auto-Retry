@@ -2244,9 +2244,20 @@ describe("one character over and over", () => {
   });
 
   test("somebody who turned the check off in 5.9.0 keeps the thinking check off too", () => {
-    expect(T.carrySpamSwitch({ retryOnSpam: false })).toEqual({ retryOnSpam: false, retryOnSpamThinking: false });
-    expect(T.carrySpamSwitch({ retryOnSpam: true })).toEqual({ retryOnSpam: true });
-    expect(T.carrySpamSwitch({ retryOnSpam: false, retryOnSpamThinking: true })).toEqual({ retryOnSpam: false, retryOnSpamThinking: true });
+    expect(T.carryThinkingSwitches({ retryOnSpam: false })).toEqual({ retryOnSpam: false, retryOnSpamThinking: false });
+    expect(T.carryThinkingSwitches({ retryOnSpam: true })).toEqual({ retryOnSpam: true });
+    expect(T.carryThinkingSwitches({ retryOnSpam: false, retryOnSpamThinking: true })).toEqual({ retryOnSpam: false, retryOnSpamThinking: true });
+  });
+
+  test("somebody who turned off the garbled or the loop check keeps its thinking check off too", () => {
+    expect(T.carryThinkingSwitches({ retryOnGarbled: false, retryOnLoop: false })).toEqual({
+      retryOnGarbled: false,
+      retryOnLoop: false,
+      retryOnGarbledThinking: false,
+      retryOnLoopThinking: false,
+    });
+    expect(T.carryThinkingSwitches({ retryOnGarbled: true, retryOnLoop: true })).toEqual({ retryOnGarbled: true, retryOnLoop: true });
+    expect(T.carryThinkingSwitches({ retryOnLoop: false, retryOnLoopThinking: true })).toEqual({ retryOnLoop: false, retryOnLoopThinking: true });
   });
 
   test("the end of a reply runs the check with the streamed thinking", () => {
