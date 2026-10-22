@@ -8,6 +8,16 @@ Versions follow [Semantic Versioning](https://semver.org). A new major version m
 
 ---
 
+## 5.20.3
+
+_2026-10-22_
+
+### Fixed
+
+- **A note in a built-in note set lit up.** Under **Refusal tuning**, a note in a built-in note set such as **A nudge** cannot be typed in, but it glowed when tapped and its border changed on hover. It now stays as it is. You can still select and copy the text.
+
+---
+
 ## 5.20.2
 
 _2026-10-22_

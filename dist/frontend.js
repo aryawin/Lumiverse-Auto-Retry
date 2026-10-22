@@ -155,7 +155,7 @@ const NOTE_FROM_TRY_MAX = 20;
 const STREAM_BUF_MAX = 200000;
 // Bumped on each release. Shown in the startup log and in the Copy debug info
 // report, so a bug report always says which version it came from.
-const VERSION = "5.20.2";
+const VERSION = "5.20.3";
 // Whether two saved settings hold the same values, whatever order their keys
 // were written in. A key left undefined counts as not there, the way it is
 // when saved. Used to tell an update or a put-back that would change nothing.
@@ -14918,12 +14918,16 @@ export function setup(ctx, opts) {
         // mark here at all.
         let focused = false;
         const dropdown = String(input.tagName || "").toUpperCase() === "SELECT";
+        // A box that cannot be typed in, such as a note in a built-in note set,
+        // takes neither mark. It can still be focused to select and copy from, and
+        // a ring there said it was waiting for typing.
+        const typeable = () => !dropdown && !input.readOnly;
         input.addEventListener("pointerenter", () => {
-            if (!focused && !dropdown)
+            if (!focused && typeable())
                 input.style.borderColor = "var(--lumiverse-border-hover,rgba(147,112,219,.25))";
         });
         input.addEventListener("pointerleave", () => {
-            if (!focused && !dropdown)
+            if (!focused && typeable())
                 input.style.borderColor = "var(--lumiverse-border,rgba(255,255,255,.16))";
         });
         // On focus, tint the border and put the ring around it.
@@ -14933,7 +14937,7 @@ export function setup(ctx, opts) {
         // of the thing it would be pointing at. Auto Refine does the same, so a
         // dropdown behaves the same in both.
         input.addEventListener("focus", () => {
-            if (dropdown)
+            if (!typeable())
                 return;
             focused = true;
             input.style.borderColor = "var(--lumiverse-primary,rgba(147,112,219,.9))";

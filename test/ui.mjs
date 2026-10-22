@@ -13875,9 +13875,9 @@ console.log("\na note set that comes with it cannot be typed into");
   // somebody who has never opened the list can type into every note.
   const openNotes = (page) =>
     page.evaluate(async () => {
-      for (const b of [...document.querySelectorAll("#modal button")]) {
+      for (const b of [...document.querySelectorAll("#modal [aria-expanded]")]) {
         const t = (b.textContent || "").trim();
-        if (/^Refusal tuning/.test(t) && b.getAttribute("aria-expanded") === "false") b.click();
+        if (/Refusal tuning/.test(t) && b.getAttribute("aria-expanded") === "false") b.click();
       }
       await new Promise((r) => setTimeout(r, 150));
       return !!document.querySelector("#modal select");
@@ -13924,6 +13924,77 @@ console.log("\na note set that comes with it cannot be typed into");
   check("no console errors", errors.length === 0, errors);
 }
 
+console.log("\na note in a built-in note set does not light up when tapped");
+{
+  // A note in a set that comes with the extension cannot be typed into, so a
+  // tapped one takes no glow and no hover mark. A note of your own still
+  // does. Read from what is drawn, at a phone width and a laptop width.
+  // Pixels that visibly differ. Two shots of an unchanged box are not always
+  // the same bytes, and a text cursor is a few pixels, while a glow around
+  // the border changes hundreds.
+  const changed = (a, b) => {
+    const x = decodePixels(a), y = decodePixels(b);
+    if (!x || !y || x.length !== y.length) return Infinity;
+    let n = 0;
+    for (let k = 0; k < x.length; k++)
+      if (Math.abs(x[k].r - y[k].r) + Math.abs(x[k].g - y[k].g) + Math.abs(x[k].b - y[k].b) > 24) n++;
+    return n;
+  };
+  const same = (a, b) => changed(a, b) <= 30;
+  for (const [label, viewport, touch] of [["phone", { width: 390, height: 900 }, true], ["laptop", { width: 1280, height: 900 }, false]]) {
+    for (const builtIn of [true, false]) {
+      const say = label + ", " + (builtIn ? "a built-in set" : "your own notes") + ": ";
+      const { out, errors } = await inPanel(browser, { viewport, touch, settings: { refusalNote: true } }, async (page) => {
+        await page.evaluate(async () => {
+          // The section header, which holds a caret before its name.
+          for (const b of [...document.querySelectorAll("#modal [aria-expanded]")]) {
+            const t = (b.textContent || "").trim();
+            if (/Refusal tuning/.test(t) && b.getAttribute("aria-expanded") === "false") b.click();
+          }
+          await new Promise((r) => setTimeout(r, 700));
+        });
+        if (builtIn)
+          await page.evaluate(async () => {
+            const sel = [...document.querySelectorAll("#modal select")].find((s) => [...s.options].some((o) => /A nudge/.test(o.textContent)));
+            sel.value = [...sel.options].find((o) => /A nudge/.test(o.textContent)).value;
+            sel.dispatchEvent(new Event("change", { bubbles: true }));
+            await new Promise((r) => setTimeout(r, 300));
+          });
+        const area = await page.evaluate(() => {
+          const ta = [...document.querySelectorAll('#modal textarea[aria-label^="Note "]')].find((n) => n.getClientRects().length && !n.closest("[hidden]"));
+          ta.setAttribute("data-probe", "1");
+          ta.scrollIntoView({ block: "center" });
+          const r = ta.getBoundingClientRect();
+          return { x: Math.max(0, r.left - 12), y: Math.max(0, r.top - 12), width: r.width + 24, height: Math.min(r.height + 24, 300) };
+        });
+        await page.mouse.move(2, 2);
+        await page.waitForTimeout(300);
+        const before = await page.screenshot({ clip: area });
+        if (touch) await page.tap('#modal [data-probe]');
+        else await page.click('#modal [data-probe]');
+        await page.waitForTimeout(300);
+        const hovered = await page.screenshot({ clip: area });
+        await page.mouse.move(2, 2);
+        await page.waitForTimeout(300);
+        const after = await page.screenshot({ clip: area });
+        const state = await page.evaluate(() => {
+          const ta = document.querySelector("#modal [data-probe]");
+          return { focused: document.activeElement === ta, readOnly: ta.readOnly };
+        });
+        return { state, still: same(before, after), stillHovered: same(before, hovered) };
+      });
+      if (builtIn) {
+        check(say + "the note is read-only and was focused", out.state.focused && out.state.readOnly, out.state);
+        check(say + "it is drawn the same as before, with no glow", out.still, out);
+        check(say + "and no mark while the pointer is on it", out.stillHovered, out);
+      } else {
+        check(say + "a tapped note lights up, since it can be typed in", out.state.focused && !out.state.readOnly && !out.still, out);
+      }
+      check(say + "no console errors", errors.length === 0, errors);
+    }
+  }
+}
+
 console.log("\na note set that comes with it cannot be added to or taken from");
 {
   // Picked by name: this set has three notes, so a minus button left enabled
@@ -13933,9 +14004,9 @@ console.log("\na note set that comes with it cannot be added to or taken from");
     { settings: { refusalNote: true } },
     async (page) =>
       page.evaluate(async () => {
-        for (const b of [...document.querySelectorAll("#modal button")]) {
+        for (const b of [...document.querySelectorAll("#modal [aria-expanded]")]) {
           const t = (b.textContent || "").trim();
-          if (/^Refusal tuning/.test(t) && b.getAttribute("aria-expanded") === "false") b.click();
+          if (/Refusal tuning/.test(t) && b.getAttribute("aria-expanded") === "false") b.click();
         }
         await new Promise((r) => setTimeout(r, 150));
         const sel = [...document.querySelectorAll("#modal select")].find((s) =>
@@ -13976,9 +14047,9 @@ console.log("\nwhen the notes stop matching the set named in the picker");
   // two had parted company.
   const openNotes = (page) =>
     page.evaluate(async () => {
-      for (const b of [...document.querySelectorAll("#modal button")]) {
+      for (const b of [...document.querySelectorAll("#modal [aria-expanded]")]) {
         const t = (b.textContent || "").trim();
-        if (/^Refusal tuning/.test(t) && b.getAttribute("aria-expanded") === "false") b.click();
+        if (/Refusal tuning/.test(t) && b.getAttribute("aria-expanded") === "false") b.click();
       }
       await new Promise((r) => setTimeout(r, 150));
       return !!document.querySelector("#modal select");
@@ -14053,10 +14124,10 @@ console.log("\nsaying the note sets have changed");
   // and a missing line look identical from here.
   const openNotes = (page) =>
     page.evaluate(async () => {
-      const heads = [...document.querySelectorAll("#modal button")];
+      const heads = [...document.querySelectorAll("#modal [aria-expanded]")];
       for (const b of heads) {
         const t = (b.textContent || "").trim();
-        if (/^Refusal tuning/.test(t) && b.getAttribute("aria-expanded") === "false") b.click();
+        if (/Refusal tuning/.test(t) && b.getAttribute("aria-expanded") === "false") b.click();
       }
       await new Promise((r) => setTimeout(r, 120));
       return !!document.querySelector('#modal [data-lvr-presetbar="notes"], #modal select');
