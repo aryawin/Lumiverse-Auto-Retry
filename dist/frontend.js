@@ -8723,14 +8723,17 @@ export function setup(ctx, opts) {
         // pop-up opened saying nothing about the wait, picking the countdown up a
         // quarter of a second later. Both are cleared together in clearTimers, so
         // this says exactly what the timer said and says it sooner.
-        // The countdown comes first. The line is one line with an ellipsis, so on
-        // a phone a long reason put first pushed the number out of sight, and the
-        // one figure that moves is what says the wait is working.
+        // The countdown comes first. The panel's line is one line with an
+        // ellipsis, so on a phone a long reason put first pushed the number out of
+        // sight, and the one figure that moves is what says the wait is working.
+        // The reason starts a new line, which the message box shows as a second
+        // line and the one-line status shows as a space. On one line in the box,
+        // a countdown that changed length moved where the reason wrapped.
         if (s.retryAt)
             return {
                 text: "Retrying in " + sayTime(s.retryAt - Date.now()) +
                     " (try " + s.attempts + " of " + cfg.maxRetries + ")" +
-                    (s.retryReason ? ". " + s.retryReason : ""),
+                    (s.retryReason ? ".\n" + s.retryReason : ""),
                 busy: true,
             };
         // Same reasoning as the two below, and this one already holds the moment it
@@ -10390,8 +10393,10 @@ export function setup(ctx, opts) {
     function atOnceFits(chatId, reason, attempt) {
         return !!cfg.tryAtOnce && chatId !== NO_CHAT && attempt >= 2 && AT_ONCE_REASONS.has(reason);
     }
+    // The count back starts a new line, the same as the reason after a
+    // countdown, so the clock after it can grow without moving the line above.
     function atOnceText(run) {
-        return ("Trying " + run.count + " at once (try " + run.attempt + " of " + cfg.maxRetries + "), " +
+        return ("Trying " + run.count + " at once (try " + run.attempt + " of " + cfg.maxRetries + ").\n" +
             run.back + " of " + run.count + " back");
     }
     // Ends a run: no more messages are read for it, and any calls still out are
@@ -11960,11 +11965,51 @@ export function setup(ctx, opts) {
         const t = typeof document !== "undefined" && document.getElementById("__lvRetryToast");
         if (!t || !t.__words || t.style.opacity !== "1")
             return;
-        t.__words.textContent = msg;
-        // The new words are a different length, so the box is refitted to them.
-        // Widening only: this is the same box being rewritten, and a box that
-        // narrows mid-message takes the Cancel button with it.
+        const span = t.__words;
+        span.textContent = msg;
+        // Words that still fit the box as it is leave it alone. Refitting them
+        // anyway moved it: shorter words can take one line fewer, and evened out
+        // over fewer lines they come out wider.
+        if (span.style.width && span.__hold) {
+            try {
+                const held = span.style.minHeight;
+                span.style.minHeight = "";
+                const r = span.getBoundingClientRect();
+                const zoom = span.offsetWidth > 0 && r.width > 0 ? r.width / span.offsetWidth : 1;
+                const h = r.height / (zoom > 0.01 ? zoom : 1);
+                span.style.minHeight = held;
+                if (h <= span.__hold + 0.5)
+                    return;
+            }
+            catch (_) { }
+        }
+        // The new words do not fit, so the box is refitted to them. Widening
+        // only: this is the same box being rewritten, and a box that narrows
+        // mid-message takes the Cancel button with it.
         hugToast(t, true);
+        holdToastHeight(t);
+    }
+    // The same for height. The box sits on the bottom edge, so words that take
+    // one line fewer drop its top and move Cancel down with it. The words keep
+    // the tallest height this message has had, and a new message starts afresh.
+    function holdToastHeight(t) {
+        const span = t && t.__words;
+        if (!span || !t.__holds)
+            return;
+        try {
+            const r = span.getBoundingClientRect();
+            const zoom = span.offsetWidth > 0 && r.width > 0 ? r.width / span.offsetWidth : 1;
+            const h = r.height / (zoom > 0.01 ? zoom : 1);
+            const had = span.__hold || 0;
+            // Grown only by more than half a pixel. Under UI Scale a height read
+            // back carries a fraction, and rounding it up on every read would grow
+            // the box a pixel at a time.
+            if (h > had + 0.5) {
+                span.__hold = Math.ceil(h);
+                span.style.minHeight = span.__hold + "px";
+            }
+        }
+        catch (_) { }
     }
     // The countdown behind a sticky retry message. One at a time: a second retry
     // replaces the first message, so it replaces the clock with it.
@@ -12039,7 +12084,8 @@ export function setup(ctx, opts) {
             // Sized to the words instead, then pinned to them by hugToast below.
             // balance asks the browser to even the lines out, so what gets pinned is
             // the width of two half lines rather than a full one and a stub.
-            span.style.cssText = "flex:0 1 auto;min-width:0;text-wrap:balance";
+            // pre-line keeps a reason on the line after a countdown.
+            span.style.cssText = "flex:0 1 auto;min-width:0;text-wrap:balance;white-space:pre-line";
             t.appendChild(span);
             // Kept so a countdown can rewrite the words without rebuilding the box.
             // Rebuilding would replace the Cancel button four times a second, which
@@ -12100,6 +12146,7 @@ export function setup(ctx, opts) {
             t.__holds = !!(opts && (opts.cancel || opts.sticky));
             t.__noEntrance = !!(opts && opts.noEntrance);
             hugToast(t);
+            holdToastHeight(t);
             toastIn(t);
             ensureReadableTree(t);
             clearTimeout(t.__h);

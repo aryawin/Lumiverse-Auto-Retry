@@ -9183,6 +9183,80 @@ console.log("\none-off messages are Lumiverse notifications, and the box is the 
   check("no console errors", errors.length === 0, errors);
 }
 
+console.log("\nthe countdown box holds still while it counts down");
+{
+  // The countdown before a retry is rewritten four times a second. As the
+  // time runs down the words get shorter, from minutes and seconds to one
+  // digit. The box sits on the bottom edge, so a line less would drop its top
+  // and take Cancel with it, and a narrower line would move it sideways. The
+  // reason is on a line of its own, and the box keeps its size until the
+  // message goes. Checked at phone and laptop widths, at three UI Scale steps.
+  for (const [label, vw, touch] of [["phone at 360", 360, true], ["phone at 412", 412, true], ["laptop", 1280, false]]) {
+    for (const zoom of [1, 1.25, 0.85]) {
+      const say = label + ", zoom " + zoom + ": ";
+      const page = await browser.newPage({ viewport: { width: vw, height: 800 }, hasTouch: touch, isMobile: touch });
+      const errors = [];
+      page.on("pageerror", (e) => errors.push("pageerror: " + e.message));
+      page.on("console", (m) => { if (m.type() === "error") errors.push("console: " + m.text()); });
+      await stage(page, '<div id=modal></div><button data-testid="regenerate">Regenerate</button>');
+      await page.addStyleTag({ content: THEME + "html{zoom:" + zoom + "}" });
+      await page.addScriptTag({ content: SOURCE, type: "module" });
+      await page.waitForFunction(() => !!window.__setup);
+      const out = await page.evaluate(async () => {
+        const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+        const realNow = Date.now.bind(Date);
+        let ahead = 0;
+        Date.now = () => realNow() + ahead;
+        const handlers = {};
+        const teardown = window.__setup(
+          { events: { on: (n, fn) => { handlers[n] = fn; return () => {}; } },
+            sendToBackend: () => {},
+            ui: { showModal: () => ({ root: document.getElementById("modal"), onDismiss: () => {}, dismiss: () => {} }),
+                  registerInputBarAction: () => ({ onClick: () => () => {}, destroy: () => {} }) } },
+          { toast: true, retryDelayMs: 75000, backoffFactor: 1, maxDelayMs: 75000, jitter: false,
+            maxRetries: 5, stuckTimeoutMs: 0, idleTimeoutMs: 0, pauseWhenFailing: false },
+        );
+        const box = () => document.getElementById("__lvRetryToast");
+        const read = () => {
+          const t = box();
+          const c = t && [...t.querySelectorAll("button")].find((b) => (b.textContent || "").trim() === "Cancel");
+          const sp = t && t.querySelector("span");
+          const r = t ? t.getBoundingClientRect() : null;
+          const cr = c ? c.getBoundingClientRect() : null;
+          const round = (n) => Math.round(n * 10) / 10;
+          return {
+            text: sp ? sp.textContent : "",
+            box: r ? [round(r.left), round(r.top), round(r.width), round(r.height)] : null,
+            cancel: cr ? [round(cr.left), round(cr.top)] : null,
+            sideways: document.documentElement.scrollWidth > window.innerWidth + 1,
+          };
+        };
+        handlers.GENERATION_STARTED({ chatId: "c", generationId: "g1" });
+        handlers.GENERATION_ENDED({ chatId: "c", content: "I'm sorry, but I can't continue with this story. As an AI, I have to step out of the scene here." });
+        for (let i = 0; i < 40 && !(box() && box().style.opacity === "1"); i++) await wait(50);
+        await wait(400);
+        const seen = [read()];
+        for (const secs of [20, 40, 6, 5]) {
+          ahead += secs * 1000;
+          await wait(400);
+          seen.push(read());
+        }
+        teardown();
+        return seen;
+      });
+      await page.close();
+      const texts = out.map((o) => o.text);
+      check(say + "it counted down from minutes to one digit", /^Retrying in 1m/.test(texts[0]) && /^Retrying in \ds /.test(texts[texts.length - 1]), texts);
+      check(say + "the reason is on its own line", out.every((o) => /\)\.\n\S/.test(o.text)), texts);
+      const same = (a, b) => !!a && !!b && a.every((n, i) => Math.abs(n - b[i]) <= 1);
+      check(say + "the box keeps its place and size", out.every((o) => same(o.box, out[0].box)), out.map((o) => o.box));
+      check(say + "Cancel does not move", out.every((o) => same(o.cancel, out[0].cancel)), out.map((o) => o.cancel));
+      check(say + "nothing runs off the side", out.every((o) => !o.sideways), out);
+      check(say + "no console errors", errors.length === 0, errors);
+    }
+  }
+}
+
 console.log("\nSave tells the truth about the browser copy");
 {
   for (const storageWorks of [true, false]) {

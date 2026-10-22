@@ -16,6 +16,10 @@ _2026-10-20_
 
 - **Auto Refine could refine a reply that Auto Retry was about to retry.** Auto Retry waits a few seconds before a retry, and in that time Auto Refine refined the reply and paid for a rewrite that was then replaced. Auto Retry now tells Auto Refine in the page when it sets a retry, and when it calls one off. With Auto Refine 1.46.0 or later, the reply is left, and it is refined after all if the retry is called off. See [With Auto Refine](docs/settings.md#with-auto-refine).
 
+### Changed
+
+- **The countdown message keeps its size.** The message with **Cancel** that counts down to a retry now puts the reason on a line of its own, such as **Retrying in 12s (try 2 of 5).** and then **Looks like an accidental refusal**. As the time runs down, the box keeps its size and place, so **Cancel** does not move. **Trying 3 at once** puts how many are back on the second line in the same way.
+
 ---
 
 ## 5.20.0
