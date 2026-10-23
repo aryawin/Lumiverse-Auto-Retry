@@ -180,9 +180,13 @@ async function inPanel(browser, { css = "", viewport, touch = false, scale = 0, 
           };
         },
         ui: {
+          // The close handler is kept, so a check can close the panel the
+          // way the host does when somebody taps outside it or presses X.
           showModal: () => ({
             root: document.getElementById("modal"),
-            onDismiss: () => {},
+            onDismiss: (fn) => {
+              window.__dismiss = fn;
+            },
             dismiss: () => {},
           }),
           registerInputBarAction: (o) => {
@@ -13888,40 +13892,52 @@ console.log("\na note set that comes with it cannot be typed into");
       // holds several and the first is not a note.
       const ta = document.querySelector('#modal textarea[aria-label^="Note "]');
       const line = document.querySelector("#modal [data-lvr-noteslocked]");
+      const row = document.querySelector('#modal [data-ar-row="refusalNotes"]');
       return {
         readOnly: ta ? !!ta.readOnly : null,
         said: !!(line && !line.hidden),
         text: line ? line.textContent : "",
+        // The try and the role: boxes on your own notes, plain text on a set
+        // that comes with it.
+        boxes: row.querySelectorAll('input[aria-label$="starts on try"], select[aria-label$="comes from"]').length,
+        plain: [...row.querySelectorAll("[data-ar-note-from], [data-ar-note-role]")].map((n) => n.textContent.trim()),
+        sideways: document.documentElement.scrollWidth > window.innerWidth + 1,
       };
     });
 
-  const { out, errors } = await inPanel(
-    browser,
-    { settings: { refusalNote: true } },
-    async (page) => {
-      const opened = await openNotes(page);
-      const fresh = await look(page);
-      const picked = await page.evaluate(async () => {
-        const sel = [...document.querySelectorAll("#modal select")].find((s) =>
-          [...s.options].some((o) => /A nudge/.test(o.textContent)),
-        );
-        if (!sel) return false;
-        sel.value = [...sel.options].find((o) => /A nudge/.test(o.textContent)).value;
-        sel.dispatchEvent(new Event("change", { bubbles: true }));
-        await new Promise((r) => setTimeout(r, 300));
-        return true;
-      });
-      return { opened, fresh, picked, held: await look(page) };
-    },
-  );
-  check("the section holding the note sets opened", out.opened, JSON.stringify(out.opened));
-  check("a fresh install can type into its notes", out.fresh.readOnly === false, JSON.stringify(out.fresh));
-  check("and is told nothing about a locked set", !out.fresh.said, JSON.stringify(out.fresh));
-  check("one of the sets was picked", out.picked, JSON.stringify(out.picked));
-  check("the notes stop taking typing", out.held.readOnly === true, JSON.stringify(out.held));
-  check("a line says why", out.held.said, JSON.stringify(out.held));
-  check("and says Save as new is the way round it", /Save as new/.test(out.held.text || ""), String(out.held.text).slice(0, 200));
-  check("no console errors", errors.length === 0, errors);
+  for (const viewport of [{ width: 390, height: 780 }, { width: 1280, height: 800 }]) {
+    const where = viewport.width < 600 ? "phone: " : "laptop: ";
+    const { out, errors } = await inPanel(
+      browser,
+      { viewport, touch: viewport.width < 600, settings: { refusalNote: true } },
+      async (page) => {
+        const opened = await openNotes(page);
+        const fresh = await look(page);
+        const picked = await page.evaluate(async () => {
+          const sel = [...document.querySelectorAll("#modal select")].find((s) =>
+            [...s.options].some((o) => /A nudge/.test(o.textContent)),
+          );
+          if (!sel) return false;
+          sel.value = [...sel.options].find((o) => /A nudge/.test(o.textContent)).value;
+          sel.dispatchEvent(new Event("change", { bubbles: true }));
+          await new Promise((r) => setTimeout(r, 300));
+          return true;
+        });
+        return { opened, fresh, picked, held: await look(page) };
+      },
+    );
+    check(where + "the section holding the note sets opened", out.opened, JSON.stringify(out.opened));
+    check(where + "a fresh install can type into its notes", out.fresh.readOnly === false, JSON.stringify(out.fresh));
+    check(where + "and is told nothing about a locked set", !out.fresh.said, JSON.stringify(out.fresh));
+    check(where + "one of the sets was picked", out.picked, JSON.stringify(out.picked));
+    check(where + "the notes stop taking typing", out.held.readOnly === true, JSON.stringify(out.held));
+    check(where + "a line says why", out.held.said, JSON.stringify(out.held));
+    check(where + "and says Save as new is the way round it", /Save as new/.test(out.held.text || ""), String(out.held.text).slice(0, 200));
+    check(where + "your own notes have the try box and the role picker", out.fresh.boxes === 2 && out.fresh.plain.length === 0, JSON.stringify(out.fresh));
+    check(where + "a set that comes with it shows the try and the role as text", out.held.boxes === 0 && out.held.plain.length === 2 && /^from try \d+$/.test(out.held.plain[0]) && /^(System|User|Assistant)$/.test(out.held.plain[1]), JSON.stringify(out.held));
+    check(where + "nothing runs off the side", !out.fresh.sideways && !out.held.sideways, JSON.stringify(out.held));
+    check(where + "no console errors", errors.length === 0, errors);
+  }
 }
 
 console.log("\na note in a built-in note set does not light up when tapped");
@@ -14303,6 +14319,104 @@ console.log("\na set that comes with it stays picked after Save");
   check("and the set that comes with it is still picked", out.pick === "A nudge", out);
   check("and its notes are still locked", out.locked === true, out);
   check("no console errors", errors.length === 0, errors);
+}
+
+console.log("\nclosing without Save puts the note set back");
+// Picking a set fills in the notes, the same as any other change in the
+// panel. Closing without Save brings back the set that was saved, in the
+// boxes and in the picker. Save keeps the new one.
+for (const viewport of [{ width: 390, height: 780 }, { width: 1280, height: 800 }]) {
+  const where = viewport.width < 600 ? "phone" : "laptop";
+  const { out, errors } = await inPanel(browser, { viewport, touch: viewport.width < 600, settings: { retryOnRefusal: true, refusalNote: true } }, async (page) =>
+    page.evaluate(async () => {
+      const frame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+      const open = async () => { for (let k = 0; k < 2; k++) { for (const h of document.querySelectorAll('[role="button"][aria-expanded="false"]')) h.click(); await wait(260); } await frame(); };
+      const bar = () => document.querySelector('[data-ar-presets="notes"]');
+      const notes = () => [...document.querySelectorAll('[data-ar-row="refusalNotes"] textarea')].map((x) => x.value).join("|");
+      const state = () => ({ pick: bar().querySelector("select").value, notes: notes() });
+      const pick = async (name) => {
+        const sel = bar().querySelector("select");
+        sel.value = name;
+        sel.dispatchEvent(new Event("change", { bubbles: true }));
+        await frame();
+      };
+      const save = async () => {
+        [...document.querySelectorAll("button")].find((x) => x.textContent.trim() === "Save").click();
+        await wait(300);
+      };
+      const closeAndOpen = async () => {
+        if (window.__dismiss) window.__dismiss();
+        document.getElementById("modal").innerHTML = "";
+        window.__acts["auto-retry-settings"].cb();
+        await wait(300);
+        await open();
+      };
+      await open();
+      const sets = [...bar().querySelectorAll("optgroup")[0].querySelectorAll("option")].map((o) => o.value);
+      const first = sets[0];
+      const second = sets[1];
+      await pick(first);
+      await save();
+      await closeAndOpen();
+      const saved = state();
+      await pick(second);
+      const picked = state();
+      const said = bar().textContent;
+      await closeAndOpen();
+      const afterClose = state();
+      await pick(second);
+      await save();
+      await closeAndOpen();
+      const afterSave = state();
+      return { first, second, saved, picked, said, afterClose, afterSave, hasDismiss: !!window.__dismiss };
+    }));
+  check(where + ": the panel's close handler is reached", out.hasDismiss === true, out);
+  check(where + ": two different sets to pick", !!out.first && !!out.second && out.first !== out.second, out);
+  check(where + ": picking a set fills in its notes", out.picked.pick === out.second && out.picked.notes !== out.saved.notes, out);
+  check(where + ": the line under the picker says to press Save", out.said.includes("Press Save to keep it"), out.said);
+  check(where + ": closing without Save names the saved set again", out.afterClose.pick === out.first, out.afterClose);
+  check(where + ": and its notes come back", out.afterClose.notes === out.saved.notes, out);
+  check(where + ": after Save, the new set stays", out.afterSave.pick === out.second && out.afterSave.notes === out.picked.notes, out.afterSave);
+  check(where + ": no console errors", errors.length === 0, errors);
+}
+
+console.log("\nSave after changing the notes saves them");
+// A change to the notes, typed or from a picked set, is waiting on Save. Save
+// has to save it, not say that nothing changed.
+for (const viewport of [{ width: 390, height: 780 }, { width: 1280, height: 800 }]) {
+  const where = viewport.width < 600 ? "phone" : "laptop";
+  const { out, errors } = await inPanel(browser, { viewport, touch: viewport.width < 600, settings: { retryOnRefusal: true, refusalNote: true } }, async (page) =>
+    page.evaluate(async () => {
+      const frame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+      const open = async () => { for (let k = 0; k < 2; k++) { for (const h of document.querySelectorAll('[role="button"][aria-expanded="false"]')) h.click(); await wait(260); } await frame(); };
+      const modal = () => document.getElementById("modal");
+      const saveSays = async () => {
+        [...modal().querySelectorAll("button")].find((x) => x.textContent.trim() === "Save").click();
+        await wait(100);
+        const text = modal().textContent;
+        return text.includes("already saved") ? "nothing changed" : text.includes("Saved. Takes effect") ? "saved" : "neither";
+      };
+      await open();
+      const ta = document.querySelector('[data-ar-row="refusalNotes"] textarea');
+      ta.value = "Pick the duel back up at the harbor wall.";
+      ta.dispatchEvent(new Event("input", { bubbles: true }));
+      const typed = await saveSays();
+      await wait(2800);
+      const sel = document.querySelector('[data-ar-presets="notes"] select');
+      sel.value = sel.querySelectorAll("optgroup")[0].querySelectorAll("option")[0].value;
+      sel.dispatchEvent(new Event("change", { bubbles: true }));
+      await frame();
+      const picked = await saveSays();
+      await wait(2800);
+      const again = await saveSays();
+      return { typed, picked, again };
+    }));
+  check(where + ": Save after typing in a note saves it", out.typed === "saved", out);
+  check(where + ": Save after picking a set saves it", out.picked === "saved", out);
+  check(where + ": Save a second time says nothing changed", out.again === "nothing changed", out);
+  check(where + ": no console errors", errors.length === 0, errors);
 }
 
 console.log("\na permission notice follows its setting while the panel is open");

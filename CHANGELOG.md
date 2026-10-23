@@ -8,6 +8,22 @@ Versions follow [Semantic Versioning](https://semver.org). A new major version m
 
 ---
 
+## 5.20.4
+
+_2026-10-22_
+
+### Changed
+
+- **Picking a note set waits for Save.** Under **Refusal tuning**, picking a set fills in its notes but does not save them. Press **Save** to keep it. Close the panel without saving, and the set you had before comes back, in the boxes and in the picker. This is how every other change in the panel works. **Put it back** still undoes a pick while the panel is open. See [Saving a set of notes](docs/detection.md#saving-a-set-of-notes).
+- **The try and the role of a note in a built-in note set are plain text.** In a set such as **A nudge**, each note now shows **from try** and its role, such as **User**, as text instead of grayed boxes. To change them, save the set as your own first.
+
+### Fixed
+
+- **Save said nothing had changed after picking a note set.** Picking a set saved it at once, so pressing **Save** then said "These settings are already saved. Nothing changed." Save now saves the set you picked.
+- **Picking a note set saved other changes too.** A pick saved every setting in the panel, including changes you had not pressed **Save** for. Now nothing is saved until you press **Save**.
+
+---
+
 ## 5.20.3
 
 _2026-10-22_

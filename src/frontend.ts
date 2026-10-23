@@ -165,7 +165,7 @@ const STREAM_BUF_MAX = 200000;
 
 // Bumped on each release. Shown in the startup log and in the Copy debug info
 // report, so a bug report always says which version it came from.
-const VERSION = "5.20.3";
+const VERSION = "5.20.4";
 
 // Whether two saved settings hold the same values, whatever order their keys
 // were written in. A key left undefined counts as not there, the way it is
@@ -7863,7 +7863,7 @@ export function setup(ctx: Ctx, opts?: any) {
     saveStateToAccount();
   }
 
-  // Written down as seen. Called when one of the sets is loaded, when the panel
+  // Written down as seen. Called when one of the sets is saved, when the panel
   // first comes up with nothing stored, and when the line saying they moved is
   // dismissed.
   function markBuiltInSeen() {
@@ -12266,12 +12266,19 @@ export function setup(ctx: Ctx, opts?: any) {
           if (fl.type === "num") cfg[fl.key] = clampField(fl, cfg[fl.key]);
     };
     // Everything a change to cfg needs to take effect: written to both stores,
-    // then each surface that reads cfg brought into line. Saving and loading a
-    // preset both end here, and missing one line is a surface left stale.
+    // then each surface that reads cfg brought into line. Save ends here, and
+    // missing one line is a surface left stale.
     // One per preset bar on this build of the panel. Emptied here rather than
     // added to, so a rebuild does not leave the old panel's bars listening.
     cfgWatchers = [];
     const driftSyncers: Array<() => void> = [];
+    // One per preset bar. A pick only fills in the panel, so which preset is
+    // picked is written down when the settings are saved, and closing the
+    // panel without saving leaves the one that was saved before.
+    const pickKeepers: Array<() => void> = [];
+    const keepPicks = () => {
+      for (const keep of pickKeepers) keep();
+    };
 
     const applyAndSave = (): boolean => {
       const storedHere = saveSaved();
@@ -12292,6 +12299,7 @@ export function setup(ctx: Ctx, opts?: any) {
         } catch (_) {}
       }
       saveToAccount();
+      keepPicks();
       syncLiveLog();
       syncFloat();
       syncInputBarActions();
@@ -12325,8 +12333,8 @@ export function setup(ctx: Ctx, opts?: any) {
     }
     function buildPresetBar(kind: string): HTMLElement {
       const wrap = document.createElement("div");
-      // The preset this bar was last on, kept across the panel closing and
-      // across a reload. Saving closes the panel, and a bar that came back
+      // The preset this bar was on when the settings were last saved, kept
+      // across the panel closing and across a reload. A bar that came back
       // naming nothing let go of a set that comes with the extension: its
       // notes were still on screen, and unlocked, as if they were yours.
       // What this bar's settings held before the last pick loaded a preset over
@@ -12446,7 +12454,6 @@ export function setup(ctx: Ctx, opts?: any) {
       };
       const syncPresetButtons = () => {
         const picked = !!select.value;
-        writePick(kind, select.value);
         // Hidden rather than grayed: an always-present button offering to put
         // back nothing is a question the reader has to answer every time they
         // look at the row.
@@ -12587,10 +12594,6 @@ export function setup(ctx: Ctx, opts?: any) {
           pick: wasPick === undefined ? select.value : wasPick,
         };
         const took = applyPresetValues(kind, p.values);
-        // Taking one of the sets that come with it marks them as seen, so a change to
-        // them later is worth a line and a change for somebody who has never
-        // taken one is not.
-        if (kind === "notes" && isBuiltIn(name)) markBuiltInSeen();
         // Reflect the new values in the on-screen fields without a rebuild.
         for (const k of keysForKind(kind)) {
           const fld = fieldByKey[k];
@@ -12598,12 +12601,14 @@ export function setup(ctx: Ctx, opts?: any) {
           if (fieldSetters[k]) fieldSetters[k](cfg[k]);
         }
         applyDeps();
-        applyAndSave();
+        // Filled in, not saved, the same as an import or a reset. Save keeps
+        // it, and closing the panel puts back what was saved.
+        cfgChanged();
         // Nothing changed means nothing to put back, and an offer to undo a
         // load that did nothing reads as though something happened.
         undoTo = took ? before : null;
         syncPresetButtons();
-        status.textContent = "Loaded preset: " + name + ". It is in effect now.";
+        status.textContent = "Loaded preset: " + name + ". Press Save to keep it.";
         log("loaded the " + kindLabel + " preset " + JSON.stringify(name));
       };
 
@@ -12632,7 +12637,7 @@ export function setup(ctx: Ctx, opts?: any) {
           if (fieldSetters[k]) fieldSetters[k](cfg[k]);
         }
         applyDeps();
-        applyAndSave();
+        cfgChanged();
         // The picker goes back with it. Leaving it on the preset that was just
         // undone is the same mismatch this whole change is here to stop.
         select.value = back.pick;
@@ -12710,6 +12715,9 @@ export function setup(ctx: Ctx, opts?: any) {
           return;
         }
         nameInput.value = "";
+        // The saved pick follows the name, or the panel opens next time
+        // naming nothing.
+        if (readPick(kind) === cur) writePick(kind, newName);
         refreshSelect(newName);
         status.textContent = "Renamed " + cur + " to " + newName + ".";
         log("renamed a " + kindLabel + " preset to " + JSON.stringify(newName));
@@ -12767,6 +12775,7 @@ export function setup(ctx: Ctx, opts?: any) {
               status.textContent = "Could not save on this browser.";
               return;
             }
+            if (readPick(kind) === name) writePick(kind, "");
             refreshSelect();
             status.textContent = "Deleted preset: " + name + ".";
             log("deleted the " + kindLabel + " preset " + JSON.stringify(name));
@@ -12791,7 +12800,7 @@ export function setup(ctx: Ctx, opts?: any) {
           "flex:1;min-width:180px;font-size:12px;line-height:1.45;" +
           "color:var(--lumiverse-text-muted,rgba(255,255,255,.7))";
         what.textContent =
-          "The note sets that come with Auto Retry have changed since you last loaded one. Your own notes are untouched. To take the new wording, load a set below, which writes over the notes you have.";
+          "The note sets that come with Auto Retry have changed since you last saved one. Your own notes are untouched. To take the new wording, load a set below and press Save. This writes over the notes you have.";
         const gotIt = smallBtn(btn("Got it", false));
         gotIt.setAttribute("data-lvr-builtinmoved", "dismiss");
         gotIt.addEventListener("click", () => {
@@ -12815,6 +12824,16 @@ export function setup(ctx: Ctx, opts?: any) {
       syncDrift();
       driftSyncers.push(syncDrift);
       cfgWatchers.push(syncDrift);
+      pickKeepers.push(() => {
+        writePick(kind, select.value);
+        // Keeping one of the sets that come with it marks them as seen, so a
+        // change to them later is worth a line and a change for somebody who
+        // has never taken one is not.
+        if (kind === "notes" && select.value && isBuiltIn(select.value)) markBuiltInSeen();
+        // Put it back after saving would mean two things at once.
+        undoTo = null;
+        syncPresetButtons();
+      });
       return wrap;
     }
 
@@ -13799,6 +13818,9 @@ export function setup(ctx: Ctx, opts?: any) {
         const now: any = {};
         for (const g of SCHEMA) for (const fl of g.fields) now[fl.key] = cfg[fl.key];
         if (sameSettings(now, modalBaseline)) {
+          // A pick of a preset that holds the saved settings changes no
+          // setting, and is still kept.
+          keepPicks();
           say("These settings are already saved. Nothing changed.");
           setTimeout(() => {
             if (status.textContent === "These settings are already saved. Nothing changed.") say("");
@@ -14282,7 +14304,6 @@ export function setup(ctx: Ctx, opts?: any) {
           styleField(who);
           who.style.cssText += "flex:none;padding:5px 8px;font-size:12px";
           who.setAttribute("aria-label", "Who note " + (i + 1) + " comes from");
-          if (held) lockForBuiltIn(who);
           who.addEventListener("change", () => {
             note.role = coerce("pick", who.value, "system", {
               options: NOTE_ROLE_OPTIONS,
@@ -14299,7 +14320,6 @@ export function setup(ctx: Ctx, opts?: any) {
           const fromLabel = document.createElement("span");
           fromLabel.textContent = "from try";
           const from = document.createElement("input");
-          if (held) lockForBuiltIn(from);
           from.type = "number";
           from.inputMode = "numeric";
           from.min = "1";
@@ -14361,8 +14381,26 @@ export function setup(ctx: Ctx, opts?: any) {
             );
           });
           bar.appendChild(num);
-          bar.appendChild(fromWrap);
-          bar.appendChild(who);
+          // On a set that comes with it, the try and the role are plain text.
+          // A grayed box there looked like a field that refused the tap.
+          if (held) {
+            const fixedFrom = document.createElement("span");
+            fixedFrom.setAttribute("data-ar-note-from", String(i));
+            fixedFrom.style.cssText =
+              "flex:none;font-size:11px;color:var(--lumiverse-text-muted,rgba(255,255,255,.65))";
+            fixedFrom.textContent = "from try " + note.fromTry;
+            const role = NOTE_ROLE_OPTIONS.find((o) => o.value === note.role);
+            const fixedWho = document.createElement("span");
+            fixedWho.setAttribute("data-ar-note-role", String(i));
+            fixedWho.style.cssText =
+              "flex:none;font-size:12px;color:var(--lumiverse-text,#eee)";
+            fixedWho.textContent = role ? role.label : String(note.role || "");
+            bar.appendChild(fixedFrom);
+            bar.appendChild(fixedWho);
+          } else {
+            bar.appendChild(fromWrap);
+            bar.appendChild(who);
+          }
           bar.appendChild(drop);
 
           const ta = document.createElement("textarea");

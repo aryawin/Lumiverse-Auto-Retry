@@ -491,6 +491,7 @@ When **Send a note with a refusal retry** is on, a **Note presets** bar appears 
 A set holds the notes and **Where the notes go**. It does not hold **Send a note with a refusal retry**, so loading a set never starts sending notes by itself.
 
 - **Picking a set loads it.** Its notes go straight into the boxes. So the boxes always match the name in the picker, and **Update selected** can never save one set over another.
+- **Press Save to keep it.** A pick fills in the boxes but does not save them, the same as any other change in the panel. Close the panel without saving, and the set you had before comes back, in the boxes and in the picker.
 - **Put it back** appears after a pick replaced what you had. One press brings back what was there. It goes away once you save.
 - **Load it again** reloads the set you are on, which throws away your edits.
 
