@@ -8,6 +8,20 @@ Versions follow [Semantic Versioning](https://semver.org). A new major version m
 
 ---
 
+## 5.20.5
+
+_2026-10-23_
+
+### Changed
+
+- **The two lists under Import / export fold away.** Each list of ticks now sits under a heading you tap to open it, and both start shut. The headings are now **What goes in the file** and **What to take from a file**, the same names Auto Refine uses. They were **What to put in the file** and **What to accept from one**.
+
+### Fixed
+
+- **The note presets description gave the steps in the wrong order.** It said to load a built-in set, edit the boxes, and then save it under a name of your own. A built-in set cannot be changed. The description now says to put a name in the box below and press **Save as new** first. The copy is yours and opens for editing.
+
+---
+
 ## 5.20.4
 
 _2026-10-22_

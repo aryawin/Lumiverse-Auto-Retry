@@ -514,8 +514,8 @@ About the sets:
 
 - Every note in them is a **User** note, and none of them goes out before try 2. The first retry is often enough on its own.
 - None of them ends on an **Assistant** note. An assistant message at the end of a request is a prefill, and some providers no longer accept one. Your own notes can use any role.
-- They can only be loaded. **Update selected**, **Delete** and **Rename** are off while one is picked, and their names cannot be used for your own sets. To change one, load it, edit the boxes, and save it under your own name.
-- If a later version changes them, a line above the picker says so, and **Got it** hides it. It only shows if you have loaded one before and notes are on. It never loads anything for you.
+- They can only be loaded. **Update selected**, **Delete** and **Rename** are off while one is picked, and their names cannot be used for your own sets. To change one, load it, put a name in the box under **Saved presets**, and press **Save as new**. The copy is yours and opens for editing.
+- If a later version changes them, a line above the picker says so, and **Got it** hides it. It only shows if you have saved one before and notes are on. It never loads anything for you.
 
 ### Keep them short
 

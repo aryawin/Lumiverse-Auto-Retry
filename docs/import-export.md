@@ -6,10 +6,10 @@ Your settings and saved presets already follow your Lumiverse account to other b
 
 ## How to do it
 
-In the settings window, open **Import / export**. It has two lists of ticks:
+In the settings window, open **Import / export**. It has two lists of ticks. Each one is folded shut until you tap its heading:
 
-- **What to put in the file** decides what **Export to file** saves.
-- **What to accept from one** decides what **Import from files** is allowed to change.
+- **What goes in the file** decides what **Export to file** saves.
+- **What to take from a file** decides what **Import from files** is allowed to change.
 
 The two lists are separate, so you can export everything but import only one part.
 

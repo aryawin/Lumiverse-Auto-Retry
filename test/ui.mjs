@@ -1447,9 +1447,10 @@ console.log("\nkeyboard and search");
     }),
   );
   // Four sections start shut: refusal tuning, buttons, debug info and
-  // import / export. The count is asserted exactly, so a section that
-  // stops being collapsible is caught here.
-  check("every section header is focusable", out.focusable && out.sections === 4, out.sections);
+  // import / export. Inside import / export, its two lists of ticks fold the
+  // same way. The count is asserted exactly, so a heading that stops being
+  // collapsible is caught here.
+  check("every section header is focusable", out.focusable && out.sections === 6, out.sections);
   check("Enter opens a section", out.afterEnter.exp === "true" && out.afterEnter.vis === 1, out.afterEnter);
   check("Space closes it", out.afterSpace.exp === "false" && out.afterSpace.vis === 0, out.afterSpace);
   check("search filters", out.filtered.hit === 1 && out.filtered.miss === 0, out.filtered);
@@ -13901,6 +13902,7 @@ console.log("\na note set that comes with it cannot be typed into");
         // that comes with it.
         boxes: row.querySelectorAll('input[aria-label$="starts on try"], select[aria-label$="comes from"]').length,
         plain: [...row.querySelectorAll("[data-ar-note-from], [data-ar-note-role]")].map((n) => n.textContent.trim()),
+        panel: document.getElementById("modal").textContent,
         sideways: document.documentElement.scrollWidth > window.innerWidth + 1,
       };
     });
@@ -13936,6 +13938,9 @@ console.log("\na note set that comes with it cannot be typed into");
     check(where + "your own notes have the try box and the role picker", out.fresh.boxes === 2 && out.fresh.plain.length === 0, JSON.stringify(out.fresh));
     check(where + "a set that comes with it shows the try and the role as text", out.held.boxes === 0 && out.held.plain.length === 2 && /^from try \d+$/.test(out.held.plain[0]) && /^(System|User|Assistant)$/.test(out.held.plain[1]), JSON.stringify(out.held));
     check(where + "nothing runs off the side", !out.fresh.sideways && !out.held.sideways, JSON.stringify(out.held));
+    // The description says to save a copy before changing a set, since the
+    // set itself cannot be typed in.
+    check(where + "the description says to save a copy before changing a set", /They cannot be changed\. To change one, put a name in the box below and press Save as new/.test(out.fresh.panel) && !/then edit the boxes/.test(out.fresh.panel), "");
     check(where + "no console errors", errors.length === 0, errors);
   }
 }
@@ -14416,6 +14421,64 @@ for (const viewport of [{ width: 390, height: 780 }, { width: 1280, height: 800 
   check(where + ": Save after typing in a note saves it", out.typed === "saved", out);
   check(where + ": Save after picking a set saves it", out.picked === "saved", out);
   check(where + ": Save a second time says nothing changed", out.again === "nothing changed", out);
+  check(where + ": no console errors", errors.length === 0, errors);
+}
+
+console.log("\nthe import and export lists fold away");
+// Each list of ticks under Import / export sits under a heading that folds it
+// shut, so ten ticks are not all on screen at once. Shut to begin with, and a
+// tap on the heading opens it.
+for (const viewport of [{ width: 390, height: 780 }, { width: 1280, height: 800 }]) {
+  const where = viewport.width < 600 ? "phone" : "laptop";
+  const { out, errors } = await inPanel(browser, { viewport, touch: viewport.width < 600 }, async (page) => {
+    const tap = async (sel) => {
+      if (viewport.width < 600) await page.tap(sel);
+      else await page.click(sel);
+      await page.waitForTimeout(500);
+    };
+    await page.evaluate(() => {
+      const head = [...document.querySelectorAll("#modal [data-ar-sechead]")].find((h) => /Import \/ export/.test(h.textContent || ""));
+      head.setAttribute("data-probe", "section");
+      head.scrollIntoView({ block: "center" });
+    });
+    await tap('[data-probe="section"]');
+    const read = () =>
+      page.evaluate(() => {
+        const heads = [...document.querySelectorAll("#modal [data-ar-sechead]")].filter((h) => /^.?\s*What (goes in the file|to take from a file)$/.test((h.textContent || "").trim()));
+        heads.forEach((h, k) => h.setAttribute("data-probe", "list" + k));
+        const shown = (kind) => {
+          const list = document.querySelector('[data-ar-parts="' + kind + '"]');
+          return !!list && list.getBoundingClientRect().height > 0;
+        };
+        return {
+          heads: heads.map((h) => ({ text: h.textContent.trim(), exp: h.getAttribute("aria-expanded"), tall: Math.round(h.getBoundingClientRect().height) })),
+          exportShown: shown("export"),
+          importShown: shown("import"),
+          sideways: document.documentElement.scrollWidth > window.innerWidth + 1,
+        };
+      });
+    const start = await read();
+    // No headings to tap is a failure of the first two checks, not a crash.
+    if (start.heads.length < 2) return { start, openedFirst: start, openedBoth: start, shutFirst: { ...start, exportShown: true } };
+    await page.evaluate(() => document.querySelector('[data-probe="list0"]').scrollIntoView({ block: "center" }));
+    await tap('[data-probe="list0"]');
+    const openedFirst = await read();
+    await page.evaluate(() => document.querySelector('[data-probe="list1"]').scrollIntoView({ block: "center" }));
+    await tap('[data-probe="list1"]');
+    const openedBoth = await read();
+    await tap('[data-probe="list0"]');
+    const shutFirst = await read();
+    return { start, openedFirst, openedBoth, shutFirst };
+  });
+  check(where + ": both lists have a heading of their own", out.start.heads.length === 2 && /What goes in the file/.test(out.start.heads[0].text) && /What to take from a file/.test(out.start.heads[1].text), out.start.heads);
+  check(where + ": both lists start shut", !out.start.exportShown && !out.start.importShown && out.start.heads.every((h) => h.exp === "false"), out.start);
+  check(where + ": a tap on the first heading opens only its list", out.openedFirst.exportShown && !out.openedFirst.importShown, out.openedFirst);
+  check(where + ": a tap on the second opens its list too", out.openedBoth.exportShown && out.openedBoth.importShown, out.openedBoth);
+  check(where + ": a second tap shuts it again", !out.shutFirst.exportShown && out.shutFirst.importShown, out.shutFirst);
+  // A tap target on a phone. Under a mouse the heading is the height of its
+  // text, the same as the section headings.
+  if (where === "phone") check(where + ": each heading is at least 32 pixels high", out.start.heads.every((h) => h.tall >= 32), out.start.heads);
+  check(where + ": nothing runs off the side", !out.start.sideways && !out.openedBoth.sideways, "");
   check(where + ": no console errors", errors.length === 0, errors);
 }
 

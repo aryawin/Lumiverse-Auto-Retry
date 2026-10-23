@@ -155,7 +155,7 @@ const NOTE_FROM_TRY_MAX = 20;
 const STREAM_BUF_MAX = 200000;
 // Bumped on each release. Shown in the startup log and in the Copy debug info
 // report, so a bug report always says which version it came from.
-const VERSION = "5.20.4";
+const VERSION = "5.20.5";
 // Whether two saved settings hold the same values, whatever order their keys
 // were written in. A key left undefined counts as not there, the way it is
 // when saved. Used to tell an update or a put-back that would change nothing.
@@ -7754,7 +7754,7 @@ export function setup(ctx, opts) {
     // Note sets that come with the extension, so the box is not blank the first
     // time somebody switches notes on. They load like any saved set and cannot be
     // renamed, changed or deleted: the way to make one your own is to load it,
-    // edit the boxes, and save it under a name of your own.
+    // press Save as new under a name of your own, and edit the copy.
     //
     // All of them are short. A note is read alongside the whole prompt, and a
     // paragraph of instruction competes with the card, the scene and the
@@ -12689,9 +12689,9 @@ export function setup(ctx, opts) {
             // Said once what is set stops matching the preset the picker still names.
             //
             // Loading one sets the picker, and changing a note afterwards does not
-            // clear it, so this line is what says the two differ. The notes stay
-            // editable while a built-in set is picked: loading one and changing it
-            // is how you start, and Save as new keeps the result.
+            // clear it, so this line is what says the two differ. The notes of a
+            // built-in set cannot be typed in, so the way to change one is Save as
+            // new first, then edit the copy.
             const drift = document.createElement("div");
             drift.setAttribute("data-lvr-presetdrift", "1");
             drift.style.cssText =
@@ -12733,7 +12733,7 @@ export function setup(ctx, opts) {
                 undoBtn.hidden = !undoTo;
                 // A set that comes with the extension can be loaded and nothing else.
                 // It is not stored here, so there is nothing for Update, Delete or
-                // Rename to act on; the way to make one yours is pick it, edit, Save as new.
+                // Rename to act on; the way to make one yours is pick it, Save as new, edit.
                 const mine = picked && !isBuiltIn(select.value);
                 setEnabled(loadBtn, picked);
                 setEnabled(update, mine);
@@ -13567,7 +13567,7 @@ export function setup(ctx, opts) {
                     return wrap;
                 };
                 if (hasExtra("notePresets")) {
-                    const block = presetBlock("notes", "Note presets", "Save the notes above as a named set and switch between them. A set carries the notes and where they go, and nothing else: loading one never turns notes on or off. Saved to your account, so they follow you to other devices. Six sets come with it under Comes with it, ordered from the gentlest to the most direct: load one to see the shape, then edit the boxes and save it under a name of your own.");
+                    const block = presetBlock("notes", "Note presets", "Save the notes above as a named set and switch between them. A set carries the notes and where they go, and nothing else: loading one never turns notes on or off. Saved to your account, so they follow you to other devices. Six sets come with it under Comes with it, ordered from the gentlest to the most direct: load one to see the notes in it. They cannot be changed. To change one, put a name in the box below and press Save as new. The copy is yours and opens for editing.");
                     // Same switch the note boxes above hang off. With notes off there is
                     // nothing here to save and nothing a loaded set would reach, so the
                     // block goes with them.
@@ -13689,20 +13689,38 @@ export function setup(ctx, opts) {
             // them back the next time you export. What you want out of a file and
             // what you are willing to let a file change are different questions and
             // they get one answer each.
-            const takeWrap = document.createElement("div");
-            takeWrap.style.cssText = "display:flex;flex-direction:column;gap:6px";
-            takeWrap.appendChild(sectionDesc("What to put in the file", false));
+            //
+            // Each list folds away under its own heading, shut to begin with, the
+            // same as the two in Auto Refine. Ten ticks shown at once filled the
+            // section.
+            const listFold = (title, list) => {
+                const wrap = document.createElement("div");
+                wrap.style.cssText = "display:flex;flex-direction:column;gap:6px";
+                const head = document.createElement("div");
+                head.style.cssText =
+                    "display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;" +
+                        "border-radius:var(--lumiverse-radius,8px);font-size:12px;line-height:1.45;color:" +
+                        MUTED;
+                const caret = document.createElement("span");
+                caret.style.cssText = "font-size:9px";
+                const label = document.createElement("span");
+                label.textContent = title;
+                head.appendChild(caret);
+                head.appendChild(label);
+                const inside = document.createElement("div");
+                inside.style.cssText = "display:none;flex-direction:column;gap:6px";
+                inside.appendChild(list);
+                wrap.appendChild(head);
+                wrap.appendChild(inside);
+                makeCollapsible(head, inside, caret, title);
+                return wrap;
+            };
             const { wrap: outWrap, checks: outChecks } = buildCheckList(EXPORT_CATEGORIES);
             outWrap.setAttribute("data-ar-parts", "export");
-            takeWrap.appendChild(outWrap);
-            body.appendChild(takeWrap);
-            const inWrap2 = document.createElement("div");
-            inWrap2.style.cssText = "display:flex;flex-direction:column;gap:6px";
-            inWrap2.appendChild(sectionDesc("What to accept from one", false));
+            body.appendChild(listFold("What goes in the file", outWrap));
             const { wrap: inWrap, checks: inChecks } = buildCheckList(EXPORT_CATEGORIES);
             inWrap.setAttribute("data-ar-parts", "import");
-            inWrap2.appendChild(inWrap);
-            body.appendChild(inWrap2);
+            body.appendChild(listFold("What to take from a file", inWrap));
             const chosen = () => outChecks.filter((x) => x.input.checked).map((x) => x.id);
             const taking = () => inChecks.filter((x) => x.input.checked).map((x) => x.id);
             const status = document.createElement("div");
@@ -13713,7 +13731,7 @@ export function setup(ctx, opts) {
             exportBtn.addEventListener("click", () => {
                 const ids = chosen();
                 if (!ids.length) {
-                    status.textContent = "Tick at least one part under What to put in the file.";
+                    status.textContent = "Tick at least one part under What goes in the file.";
                     return;
                 }
                 const ok = downloadText("auto-retry-settings.json", buildExport(ids));
@@ -13735,7 +13753,7 @@ export function setup(ctx, opts) {
                     return;
                 const ids = taking();
                 if (!ids.length) {
-                    status.textContent = "Tick at least one part under What to accept from one.";
+                    status.textContent = "Tick at least one part under What to take from a file.";
                     return;
                 }
                 // Named where there is more than one, because "that file" leaves you
@@ -13822,7 +13840,7 @@ export function setup(ctx, opts) {
             const importBtn = btn("Import from files", false);
             importBtn.addEventListener("click", () => {
                 if (!taking().length) {
-                    status.textContent = "Tick at least one part under What to accept from one first.";
+                    status.textContent = "Tick at least one part under What to take from a file first.";
                     return;
                 }
                 fileInput.click();
