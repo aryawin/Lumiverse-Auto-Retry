@@ -1494,9 +1494,11 @@ console.log("\nwhat is on screen straight away");
   check("and neither does the reroll choice", out.rerollSwitch, out);
   check("the frozen-reply rows are under their own heading", out.frozenRun && out.frozenRow, out);
   check("the broken-reply switches, garbled among them, are under their own heading", out.brokenRun && out.garbledRow, out);
+  // Four sections are shut, and so are the two lists of ticks inside
+  // Import / export, each under a heading of its own.
   check(
-    "three headings are open and four are shut",
-    out.openHeadings.length === 3 && out.shutHeadings.length === 4,
+    "three headings are open and six are shut",
+    out.openHeadings.length === 3 && out.shutHeadings.length === 6,
     out,
   );
   check("no console errors", errors.length === 0, errors);
