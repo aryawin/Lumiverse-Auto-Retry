@@ -60,23 +60,23 @@ Every reason for a retry uses it: a reply that failed a check, a refusal, an err
 - A wait the provider asks for, such as for a rate limit, is waited out first. Then the tries go out at once.
 - Every reply sent at once to a provider in trouble can fail the same way, and each one may still be charged. If your provider is often busy, a lower **Most at once** costs less.
 
-This case always uses a normal retry, even with the setting on:
+This case falls back to a normal retry, even with the setting on:
 
-- **No reply to add a reroll to.** If the last message in the chat is not a reply, the try is made by pressing the retry button instead. The log says why.
+- **No message to add to.** If the chat has no messages or the last message is not a reply or a user prompt, the try is made by pressing the retry button instead. The log says why.
 
 ## What is sent
 
 The prompt is the one your failed reply was sent with.
 
 - Auto Retry keeps a copy of the last prompt in each chat while the setting is on. It is kept in memory on the server, for up to 12 chats, for 30 minutes. Turning the setting off drops every copy.
-- If there is no copy, Lumiverse builds the prompt for a new reroll. That prompt has your card, preset, lore and history, but it leaves out anything another extension adds to the prompt as it is sent, and Lumiverse's council feature.
+- If there is no copy, Lumiverse builds the prompt. When retrying an existing reply, it builds the prompt for a reroll. When retrying a turn where no reply was created yet (such as after an early error), it builds the prompt for a new reply. That prompt has your card, preset, lore and history, but it leaves out anything another extension adds to the prompt as it is sent, and Lumiverse's council feature.
 - The log says which of the two was used.
 - If **Send a note with a refusal retry** is on, the note goes with these replies the same way it goes with a normal retry.
 
 ## What you see
 
 - The pop-up and the panel say how many were sent, how many are back, and how long they have been out.
-- These replies do not stream into the chat. The reply that passes appears all at once when it is added.
+- These replies do not stream into the chat. The reply that passes appears all at once when it is added, either as a new reroll or as a new reply.
 - **Stop** or **Cancel** stops every reply still being written. Nothing is added after that.
 - Sending a new message yourself stops them too.
 

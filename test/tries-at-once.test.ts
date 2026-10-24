@@ -30,6 +30,7 @@ function boot(opts?: {
   const quietCalls: any[] = [];
   const dryCalls: any[] = [];
   const updates: any[] = [];
+  const appends: any[] = [];
   let messages: Msg[] = opts && opts.messages
     ? opts.messages
     : [
@@ -57,6 +58,12 @@ function boot(opts?: {
       updateMessage: async (chatId: string, id: string, patch: any) => {
         updates.push({ chatId, id, patch });
       },
+      appendMessage: async (chatId: string, message: any) => {
+        const id = "m" + (messages.length + 1);
+        messages.push({ id, role: message.role, content: message.content, swipes: [message.content] });
+        appends.push({ chatId, message, id });
+        return { id };
+      },
     },
     generate: {
       quiet: (req: any) => {
@@ -80,6 +87,7 @@ function boot(opts?: {
     quietCalls,
     dryCalls,
     updates,
+    appends,
     setMessages: (m: Msg[]) => { messages = m; },
     setAccount: (v: any) => { account = v; },
     tell: (payload: any, userId?: string) => onFrontend(payload, userId),
@@ -287,13 +295,21 @@ describe("the calls", () => {
   });
 });
 
-describe("nothing is sent when there is no reply to add to", () => {
-  test("the last message is the user's", async () => {
-    const h = boot({ messages: [{ id: "m1", role: "user", content: "Hello?" }] });
+describe("nothing is sent when the chat has no valid target", () => {
+  test("the chat is empty", async () => {
+    const h = boot({ messages: [] });
     await h.tell({ type: "try_at_once", requestId: "r1", chatId: "c1", count: 2 });
     await h.settle();
     expect(h.quietCalls.length).toBe(0);
-    expect(h.stage("failed")[0].msg.why).toBe("the last message in the chat is not a reply");
+    expect(h.stage("failed")[0].msg.why).toBe("the chat has no messages");
+  });
+
+  test("the last message is a system message", async () => {
+    const h = boot({ messages: [{ id: "m1", role: "system", content: "Instruction." }] });
+    await h.tell({ type: "try_at_once", requestId: "r1", chatId: "c1", count: 2 });
+    await h.settle();
+    expect(h.quietCalls.length).toBe(0);
+    expect(h.stage("failed")[0].msg.why).toBe("the last message in the chat is not a user message or a reply");
   });
 
   test("the chat cannot be read, and the permission is named", async () => {
@@ -302,6 +318,25 @@ describe("nothing is sent when there is no reply to add to", () => {
     await h.settle();
     expect(h.quietCalls.length).toBe(0);
     expect(h.stage("failed")[0].msg.why).toContain("chat_mutation");
+  });
+});
+
+describe("tries are sent when the last message is the user's", () => {
+  test("it sends tries as a new reply", async () => {
+    const h = boot({ messages: [{ id: "m1", role: "user", content: "Hello?" }] });
+    await h.tell({ type: "try_at_once", requestId: "r1", chatId: "c1", count: 2 });
+    await h.settle();
+    expect(h.quietCalls.length).toBe(2);
+    expect(h.stage("sent")[0].msg).toMatchObject({
+      requestId: "r1",
+      mode: "new_reply",
+      messageId: "m1",
+      count: 2,
+    });
+    expect(h.dryCalls[0].input).toMatchObject({
+      chatId: "c1",
+      generationType: "normal",
+    });
   });
 });
 
@@ -357,6 +392,55 @@ describe("adding the reply that passed", () => {
     });
     expect(added(h)[0].ok).toBe(false);
     expect(h.updates.length).toBe(0);
+  });
+
+  test("it becomes a new reply when mode is new_reply", async () => {
+    const h = boot({ messages: [{ id: "m1", role: "user", content: "Hello?" }] });
+    await h.tell({
+      type: "add_reroll", requestId: "a2", chatId: "c1", mode: "new_reply", messageId: "m1",
+      text: "She lit the lamp and waited.",
+    });
+    expect(added(h)[0]).toMatchObject({ requestId: "a2", ok: true });
+    expect(h.appends).toEqual([
+      {
+        chatId: "c1",
+        id: "m2",
+        message: {
+          role: "assistant",
+          content: "She lit the lamp and waited.",
+        },
+      },
+    ]);
+  });
+
+  test("its thinking goes with it when adding a new reply", async () => {
+    const h = boot({ messages: [{ id: "m1", role: "user", content: "Hello?" }] });
+    await h.tell({
+      type: "add_reroll", requestId: "a3", chatId: "c1", mode: "new_reply", messageId: "m1",
+      text: "She lit the lamp and waited.", reasoning: "The storm is the point of the scene.",
+    });
+    expect(added(h)[0]).toMatchObject({ requestId: "a3", ok: true });
+    expect(h.appends[0].message).toEqual({
+      role: "assistant",
+      content: "She lit the lamp and waited.",
+    });
+    expect(h.updates[0]).toEqual({
+      chatId: "c1", id: "m2", patch: { reasoning: { text: "The storm is the point of the scene.", duration: null } },
+    });
+  });
+
+  test("not when a new message was sent while new_reply tries were out", async () => {
+    const h = boot({ messages: [{ id: "m1", role: "user", content: "Hello?" }] });
+    h.setMessages([
+      { id: "m1", role: "user", content: "Hello?" },
+      { id: "m2", role: "user", content: "Another prompt." },
+    ]);
+    await h.tell({
+      type: "add_reroll", requestId: "a4", chatId: "c1", mode: "new_reply", messageId: "m1",
+      text: "She lit the lamp and waited.",
+    });
+    expect(added(h)[0].ok).toBe(false);
+    expect(h.appends.length).toBe(0);
   });
 });
 

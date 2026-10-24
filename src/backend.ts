@@ -492,11 +492,15 @@ function sayError(e: any): string {
   return m ? String(m) : 'no reason was given';
 }
 
-// The reply a try is for: the last message in the chat, which has to be the
-// reply that failed its check. Anything else means the chat has moved on.
-async function lastReply(chatId: string): Promise<{ id: string; swipes: string[] } | { why: string }> {
+// The reply a try is for: either an existing reply to add a reroll to, or
+// a user turn that never received a reply. Anything else means the chat has moved on.
+async function lastTarget(chatId: string): Promise<
+  | { mode: 'reroll'; id: string; swipes: string[] }
+  | { mode: 'new_reply'; id: string }
+  | { why: string }
+> {
   if (!spindle.chat || typeof spindle.chat.getMessages !== 'function')
-    return { why: 'this Lumiverse cannot add a reroll for an extension' };
+    return { why: 'this Lumiverse cannot add a reply for an extension' };
   let list: any[];
   try {
     list = await spindle.chat.getMessages(chatId);
@@ -504,11 +508,17 @@ async function lastReply(chatId: string): Promise<{ id: string; swipes: string[]
     return { why: 'Auto Retry could not read the chat. Check that the chat_mutation permission is granted (' + sayError(e) + ')' };
   }
   const last = Array.isArray(list) && list.length ? list[list.length - 1] : null;
-  if (!last || last.role !== 'assistant' || !last.id) return { why: 'the last message in the chat is not a reply' };
-  const swipes = Array.isArray(last.swipes) && last.swipes.length
-    ? last.swipes.map((x: any) => String(x == null ? '' : x))
-    : [String(last.content == null ? '' : last.content)];
-  return { id: String(last.id), swipes: swipes };
+  if (!last || !last.id) return { why: 'the chat has no messages' };
+  if (last.role === 'assistant') {
+    const swipes = Array.isArray(last.swipes) && last.swipes.length
+      ? last.swipes.map((x: any) => String(x == null ? '' : x))
+      : [String(last.content == null ? '' : last.content)];
+    return { mode: 'reroll', id: String(last.id), swipes: swipes };
+  }
+  if (last.role === 'user') {
+    return { mode: 'new_reply', id: String(last.id) };
+  }
+  return { why: 'the last message in the chat is not a user message or a reply' };
 }
 
 async function tryAtOnce(payload: any, userId?: string): Promise<void> {
@@ -518,7 +528,7 @@ async function tryAtOnce(payload: any, userId?: string): Promise<void> {
   const say = (m: any) => replyTo(userId, Object.assign({ type: 'at_once', requestId: requestId }, m));
   if (!requestId) return;
   if (!chatId) return say({ stage: 'failed', why: 'the host did not say which chat this is' });
-  const target = await lastReply(chatId);
+  const target = await lastTarget(chatId);
   if ('why' in target) return say({ stage: 'failed', why: target.why });
 
   const who = watcherKey(userId);
@@ -530,7 +540,8 @@ async function tryAtOnce(payload: any, userId?: string): Promise<void> {
     if (!spindle.generate || typeof spindle.generate.dryRun !== 'function')
       return say({ stage: 'failed', why: 'this Lumiverse cannot build a prompt for an extension' });
     try {
-      const dry = await spindle.generate.dryRun({ chatId: chatId, generationType: 'swipe' }, userId);
+      const genType = target.mode === 'reroll' ? 'swipe' : 'normal';
+      const dry = await spindle.generate.dryRun({ chatId: chatId, generationType: genType }, userId);
       messages = dry && Array.isArray(dry.messages) ? plainMessages(dry.messages) : null;
     } catch (e) {
       return say({ stage: 'failed', why: 'Lumiverse could not build the prompt (' + sayError(e) + ')' });
@@ -559,7 +570,15 @@ async function tryAtOnce(payload: any, userId?: string): Promise<void> {
   const Ctl = (globalThis as any).AbortController;
   const controller = typeof Ctl === 'function' ? new Ctl() : null;
   atOnceRuns.set(requestId, { controller: controller, who: who });
-  say({ stage: 'sent', count: count, from: from, notes: notes, messageId: target.id, swipeCount: target.swipes.length });
+  say({
+    stage: 'sent',
+    count: count,
+    from: from,
+    notes: notes,
+    mode: target.mode,
+    messageId: target.id,
+    swipeCount: target.mode === 'reroll' ? target.swipes.length : 0,
+  });
   let left = count;
   for (let i = 0; i < count; i++) {
     const req: any = { messages: messages };
@@ -604,31 +623,61 @@ function stopAtOnce(requestId: string, userId?: string): void {
   try { if (run.controller) run.controller.abort(); } catch (_) {}
 }
 
-// The reply that passed goes on the failed reply as a new reroll and is shown.
+// The reply that passed goes on the failed reply as a new reroll, or into
+// the chat as a new reply when the turn never received one.
 // The chat is read again first: if a message was sent or the reply deleted
 // while the tries were out, the reply is not put on the wrong message.
 async function addReroll(payload: any): Promise<{ ok: boolean; why?: string }> {
   const chatId = payload.chatId ? String(payload.chatId) : '';
   const text = String(payload.text == null ? '' : payload.text);
   if (!chatId || !text.trim()) return { ok: false, why: 'there was nothing to add' };
-  const target = await lastReply(chatId);
+  const target = await lastTarget(chatId);
   if ('why' in target) return { ok: false, why: target.why };
-  if (target.id !== String(payload.messageId || '') || target.swipes.length !== Number(payload.swipeCount))
-    return { ok: false, why: 'the reply changed while the tries were out' };
+  const mode = payload.mode === 'new_reply' ? 'new_reply' : 'reroll';
+  if (target.mode !== mode)
+    return { ok: false, why: 'the chat moved on while the tries were out' };
+  if (target.mode === 'reroll') {
+    if (target.id !== String(payload.messageId || '') || target.swipes.length !== Number(payload.swipeCount))
+      return { ok: false, why: 'the reply changed while the tries were out' };
+    try {
+      await spindle.chat.updateMessage(chatId, target.id, {
+        swipes: target.swipes.concat([text]),
+        swipe_id: target.swipes.length,
+      });
+    } catch (e) {
+      return { ok: false, why: 'Lumiverse would not add the reroll (' + sayError(e) + ')' };
+    }
+    const reasoning = String(payload.reasoning == null ? '' : payload.reasoning);
+    if (reasoning.trim()) {
+      try {
+        await spindle.chat.updateMessage(chatId, target.id, { reasoning: { text: reasoning, duration: null } });
+      } catch (_) {
+        try { spindle.log.warn('auto-retry: the reroll was added, but its thinking could not be saved with it'); } catch (__) {}
+      }
+    }
+    return { ok: true };
+  }
+
+  // New reply mode: the failed turn never wrote an assistant message to screen.
+  if (target.id !== String(payload.messageId || ''))
+    return { ok: false, why: 'the chat moved on while the tries were out' };
+  if (!spindle.chat || typeof spindle.chat.appendMessage !== 'function')
+    return { ok: false, why: 'this Lumiverse cannot add a reply for an extension' };
+  let created: any;
   try {
-    await spindle.chat.updateMessage(chatId, target.id, {
-      swipes: target.swipes.concat([text]),
-      swipe_id: target.swipes.length,
+    created = await spindle.chat.appendMessage(chatId, {
+      role: 'assistant',
+      content: text,
     });
   } catch (e) {
-    return { ok: false, why: 'Lumiverse would not add the reroll (' + sayError(e) + ')' };
+    return { ok: false, why: 'Lumiverse would not add the reply (' + sayError(e) + ')' };
   }
   const reasoning = String(payload.reasoning == null ? '' : payload.reasoning);
-  if (reasoning.trim()) {
+  if (reasoning.trim() && created && created.id) {
     try {
-      await spindle.chat.updateMessage(chatId, target.id, { reasoning: { text: reasoning, duration: null } });
+      await spindle.chat.updateMessage(chatId, created.id, { reasoning: { text: reasoning, duration: null } });
     } catch (_) {
-      try { spindle.log.warn('auto-retry: the reroll was added, but its thinking could not be saved with it'); } catch (__) {}
+      try { spindle.log.warn('auto-retry: the reply was added, but its thinking could not be saved with it'); } catch (__) {}
     }
   }
   return { ok: true };

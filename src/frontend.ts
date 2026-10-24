@@ -10351,6 +10351,7 @@ export function setup(ctx: Ctx, opts?: any) {
     if (msg.stage === "failed") return fallBack(String(msg.why || "no reason was given"));
     if (msg.stage === "sent") {
       armAtOnceWait(chatId, run);
+      run.mode = String(msg.mode || (msg.messageId ? "reroll" : "new_reply"));
       run.messageId = String(msg.messageId || "");
       run.swipeCount = Number(msg.swipeCount) || 0;
       stats.extraReplies += Math.max(0, run.count - 1);
@@ -10358,7 +10359,7 @@ export function setup(ctx: Ctx, opts?: any) {
       if (armedNoteChat === String(chatId)) armedNoteChat = null;
       log(
         "sent " + run.count + " at once, with the prompt " +
-          (msg.from === "kept" ? "the last reply went out with" : "Lumiverse built for a new reroll") +
+          (msg.from === "kept" ? "the last reply went out with" : "Lumiverse built for a new " + (run.mode === "new_reply" ? "reply" : "reroll")) +
           (msg.notes ? ", and the refusal note" : ""),
       );
       return;
@@ -10440,13 +10441,22 @@ export function setup(ctx: Ctx, opts?: any) {
         pausedUntil = 0;
         stats.good += 1;
         s.attempts = 0;
-        log("added a reply that passed as a new reroll", content.length + " chars");
-        showToast("Auto Retry added a reply that passed, as a new reroll.", { kind: "success" });
+        const asReroll = run.mode !== "new_reply";
+        log(
+          asReroll ? "added a reply that passed as a new reroll" : "added a reply that passed",
+          content.length + " chars",
+        );
+        showToast(
+          asReroll
+            ? "Auto Retry added a reply that passed, as a new reroll."
+            : "Auto Retry added a reply that passed.",
+          { kind: "success" },
+        );
         // Lumiverse raises no end event for a reroll an extension writes, so
         // anything that acts on a finished reply, such as Auto Refine, is told
         // in the page.
         try {
-          if (typeof window !== "undefined" && typeof CustomEvent === "function")
+          if (asReroll && typeof window !== "undefined" && typeof CustomEvent === "function")
             window.dispatchEvent(new CustomEvent(REROLL_EVENT, {
               detail: { chatId: String(chatId), messageId: run.messageId, swipe: run.swipeCount },
             }));
@@ -10471,6 +10481,7 @@ export function setup(ctx: Ctx, opts?: any) {
         type: "add_reroll",
         requestId: reqId,
         chatId: chatId,
+        mode: run.mode,
         messageId: run.messageId,
         swipeCount: run.swipeCount,
         text: content,
