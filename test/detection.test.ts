@@ -601,6 +601,17 @@ describe("refusal detection ignores the model's thinking", () => {
         const text = "She opened the door. <thought>Too cold.</thought> She went out anyway.";
         expect(stripThinking(text, {})).toContain("She opened the door.");
       });
+      test("a character thought block with attributes stays part of the reply", () => {
+        const text = "She opened the door.\n<thought char=\"Natsumi\">\nToo cold.\n</thought>\nShe went out anyway.";
+        const out = stripThinking(text, {});
+        expect(out).toContain("She opened the door.");
+        expect(out).toContain("<thought char=\"Natsumi\">");
+      });
+      test("narrative prose with dialogue quotes in front of a block is not treated as a plan", () => {
+        const text = "\"Wait here,\" she said quietly.\n<reasoning>\nnotes\n</reasoning>\nShe slipped through the gate.";
+        const out = stripThinking(text, {});
+        expect(out).toContain("\"Wait here,\" she said quietly.");
+      });
       test("a block with nothing after it leaves the text in front of it", () => {
         expect(stripThinking("She opened the door.\n<reasoning>\nnotes\n</reasoning>", {})).toContain("She opened the door.");
       });

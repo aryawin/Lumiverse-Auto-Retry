@@ -412,6 +412,8 @@ Nine formats are recognized. The first three use tag names like `think`, `thinki
 - The block has to start a line and have more text after it.
 - Then everything up to the end of the block is thinking.
 - A block that uses a tag name, such as `<thought>`, also has to end its line. So a thought tagged inside a sentence, such as `She looked away. <thought>Too late.</thought>`, stays part of the reply.
+- A tag attributed to a character (such as `<thought char="Natsumi">` or `<thought speaker="...">`) is roleplay dialogue or tracker state, not model reasoning, and stays part of the reply.
+- Narrative prose with dialogue quotes in front of a block is not treated as a plan.
 
 **Thinking sent separately.** Some providers send thinking apart from the reply. It never reaches the reply text, so there is nothing to remove.
 

@@ -3039,7 +3039,7 @@ function hideExampleTags(text: string, names: string[]): string {
     "gi",
   );
   const seen = out.join("");
-  const open: Array<{ name: string; at: number; end: number }> = [];
+  const open: Array<{ name: string; at: number; end: number; isChar: boolean }> = [];
   const pairs: Array<{ at: number; end: number; closeAt: number; closeEnd: number }> = [];
   let orphan = -1;
   let first = -1;
@@ -3048,12 +3048,15 @@ function hideExampleTags(text: string, names: string[]): string {
     const end = m.index + m[0].length;
     const closes = !!(m[1] || m[3]);
     const name = String(m[2] || m[4]).toLowerCase();
-    if (first < 0) {
+    // A tag carrying character attribution (e.g. <thought char="Natsumi">)
+    // is a character's inner monologue or RP tracker, not model reasoning.
+    const isChar = !closes && /\b(?:char|character|speaker|who|actor|persona)\s*=/i.test(m[0]);
+    if (first < 0 && !isChar) {
       first = m.index;
       firstOpens = !closes;
     }
     if (!closes) {
-      open.push({ name: name, at: m.index, end: end });
+      open.push({ name: name, at: m.index, end: end, isChar: isChar });
       continue;
     }
     let k = open.length - 1;
@@ -3064,7 +3067,10 @@ function hideExampleTags(text: string, names: string[]): string {
     }
     const o = open[k];
     open.length = k;
-    if (k > 0) {
+    if (o.isChar) {
+      hide(o.at, o.end);
+      hide(m.index, end);
+    } else if (k > 0) {
       hide(o.at, o.end);
       hide(m.index, end);
     } else pairs.push({ at: o.at, end: o.end, closeAt: m.index, closeEnd: end });
@@ -3117,7 +3123,12 @@ function planThenBlockEnd(t: string, alt: string): number {
     );
     const hit = block.exec(t);
     if (!hit || (at >= 0 && hit.index >= at)) continue;
-    if (!t.slice(0, hit.index).trim()) continue;
+    const before = t.slice(0, hit.index).trim();
+    if (!before) continue;
+    // A written plan before thinking is a brief preamble at the start. If the
+    // preceding text is long (>1200 chars) or contains dialogue quotes, it is
+    // narrative prose rather than a plan before thinking.
+    if (before.length > 1200 || /["\u201c\u201d\u00ab\u00bb]/.test(before)) continue;
     const stop = hit.index + hit[0].length;
     if (!t.slice(stop).trim()) continue;
     at = hit.index;
@@ -3659,10 +3670,16 @@ function splitLeadingThinking(content: string, thought: string, cfg: any): { tex
   if (!visible || visible === content) return { text: content, thinking: thought };
   const at = content.lastIndexOf(visible);
   if (at <= 0 || at + visible.length !== content.length) return { text: content, thinking: thought };
+  const head = content.slice(0, at).trim();
+  const endsWithThinkClose = /(?:<\/(?:[a-zA-Z_-]+)\s*>|\[\/(?:[a-zA-Z_-]+)\s*\]|<\|?\/?(?:[a-zA-Z_-]+)\|>|<\|end\|>|```)\s*$/i.test(head);
+  if (!endsWithThinkClose) return { text: content, thinking: thought };
+  // A genuine leading thinking block starts with a tag/channel, or a brief plan (<1200 chars, no dialogue quotes).
+  if (!/^[ \t`>*_]*(?:<|\[|<\|)/.test(head) && (head.length > 1200 || /["\u201c\u201d\u00ab\u00bb]/.test(head))) {
+    return { text: content, thinking: thought };
+  }
   if (thought.trim()) return { text: visible, thinking: thought };
   // The tags around it go: what is left is what the model thought.
-  const inner = content
-    .slice(0, at)
+  const inner = head
     .trim()
     .replace(/^<[^>\n]*>\s*/, "")
     .replace(/\s*<[^>\n]*>$/, "")

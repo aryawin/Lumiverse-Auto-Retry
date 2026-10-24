@@ -496,6 +496,13 @@ describe("thinking written into the reply text", () => {
       thinking: "",
     });
   });
+  test("a reply with character-attributed thoughts or telemetry keeps the full text", () => {
+    const reply = "The shutters banged twice.\n\n<thought char=\"Natsumi\">Too loud.</thought>\n\n<current>State: Dormant</current>";
+    expect(T.splitLeadingThinking(reply, "Keep the storm loud.", cfg)).toEqual({
+      text: reply,
+      thinking: "Keep the storm loud.",
+    });
+  });
 });
 
 describe("a new device", () => {
